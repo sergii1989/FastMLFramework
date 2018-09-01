@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="f445f148-be77-4f8b-81ff-ecf6f9ca60fc" name="Default" comment="" />
+    <list default="true" id="f445f148-be77-4f8b-81ff-ecf6f9ca60fc" name="Default" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -56,22 +58,10 @@
       <file leaf-file-name="cross_validation.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/modeling/cross_validation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="283">
-              <caret line="59" column="64" selection-start-line="59" selection-start-column="52" selection-end-line="59" selection-end-column="64" />
+            <state relative-caret-position="844">
+              <caret line="50" column="91" lean-forward="true" selection-start-line="50" selection-start-column="91" selection-end-line="50" selection-end-column="91" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="place_orders.py" pinned="false" current-in-tab="false">
-        <entry file="file://C:/DCM/Work/dcm-intuition/integration/broker/flextrade/services/orders/place_orders.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1547">
-              <caret line="91" column="14" selection-start-line="91" selection-start-column="4" selection-end-line="91" selection-end-column="14" />
-              <folding>
-                <element signature="e#0#14#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -131,10 +121,10 @@
       <find>sub_preds</find>
       <find>_get_feature_importances_in_fold</find>
       <find>BayesianOptimization</find>
-      <find>countplot_cat_feature_train_vs_test</find>
       <find>model_name</find>
       <find>eval_metric</find>
       <find>show_features_importance</find>
+      <find>countplot_cat_feature_train_vs_test</find>
     </findStrings>
     <replaceStrings>
       <replace>oof_eval_result</replace>
@@ -144,6 +134,9 @@
       <replace>opt_weights</replace>
       <replace>optimal_weights</replace>
     </replaceStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -166,6 +159,7 @@
     <option name="width" value="620" />
     <option name="height" value="335" />
   </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
@@ -375,7 +369,7 @@
       <window_info active="true" content_ui="combo" id="Project" order="1" sideWeight="0.5123967" visible="true" weight="0.219375" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
-      <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Python Console" order="7" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.3181818" />
       <window_info id="Structure" order="2" sideWeight="0.4876033" side_tool="true" visible="true" weight="0.219375" />
@@ -717,7 +711,7 @@
     </entry>
     <entry file="file://C:/DCM/Work/dcm-intuition/integration/broker/flextrade/services/orders/place_orders.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1547">
+        <state relative-caret-position="-124">
           <caret line="91" column="14" selection-start-line="91" selection-start-column="4" selection-end-line="91" selection-end-column="14" />
           <folding>
             <element signature="e#0#14#0" expanded="true" />
@@ -727,8 +721,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/modeling/cross_validation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="283">
-          <caret line="59" column="64" selection-start-line="59" selection-start-column="52" selection-end-line="59" selection-end-column="64" />
+        <state relative-caret-position="844">
+          <caret line="50" column="91" lean-forward="true" selection-start-line="50" selection-start-column="91" selection-end-line="50" selection-end-column="91" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
