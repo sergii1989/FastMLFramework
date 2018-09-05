@@ -106,7 +106,7 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         """
 
         # TODO: to refactor run() function so to make it general for all type of optimizers
-        
+
         bo = BayesianOptimization(self.hp_optimizer, hp_optimization_space)
         bo.maximize(init_points=init_points, n_iter=n_iter)
 

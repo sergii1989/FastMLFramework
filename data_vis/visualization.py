@@ -37,25 +37,31 @@ def plot_features_corr_heatmap(df, vmin=-1, vmax=1, center=0, square=True,
 # Functions to plot statistics on missing values
 # ======================================================================
 
-def plot_missing_values_stats(train_df, test_df=None, grid=(1, 1),
-                              figsize_x=7, figsize_y=9): # type: (pd.DataFrame, pd.DataFrame, tuple, Any, Any) -> None
+def plot_missing_values_stats(df, target_column, grid=(1, 1), figsize_x=7, figsize_y=9): # type: (pd.DataFrame, str, tuple, Any, Any) -> None
     """
     This method plots barplot with relative number of missing values in feature columns
-    :param train_df: pandas DF containing train data set
-    :param test_df: pandas DF containing test data set
+    :param df: pandas DF containing train (and test) data set
+    :param target_column: target column (to be predicted)
     :param grid: figure's grid (by default (2, 1))
     :param figsize_x: size of figure in x-direction
     :param figsize_y: size of figure in y-direction
     :return: None
     """
-    if test_df is not None:
+
+    assert isinstance(target_column, basestring), 'Target column should be string. Instead received {0}'\
+        .format(type(target_column))
+
+    train_df = df[df[target_column].notnull()]
+    test_df = df[df[target_column].isnull()]
+
+    if test_df.shape[0] > 0:
         assert any(map(lambda x: x > 1, grid)), 'Please set the grid to either (1, 2) or (2, 1)..'
 
     fig, ax = plt.subplots(*grid, figsize=(figsize_x, figsize_y))
 
     # DF with missing values only
     train_df_na = missing_data(train_df)
-    test_df_na = missing_data(test_df) if test_df is not None else None
+    test_df_na = missing_data(test_df.loc[:, ~test_df.columns.isin([target_column])]) if test_df.shape[0] > 0 else None
     list_df = [train_df_na, test_df_na] if test_df_na is not None else [train_df_na]
 
     for i, df in enumerate(list_df):
@@ -69,48 +75,16 @@ def plot_missing_values_stats(train_df, test_df=None, grid=(1, 1),
 
 
 # ======================================================================
-# Functions to aggregate differences between train and test datasets
-# ======================================================================
-
-def get_categorical_features_diff_between_train_and_test(train_df, test_df, rtol_thresh=0.08, atol_thresh=0.1):
-    """
-    This method constructs DF with the categorical features having considerable diff in train VS test data sets
-    :param train_df: pandas DF containing train data set
-    :param test_df: pandas DF containing test data set
-    :param rtol_thresh: threshold for max acceptable relative diff between two values
-    :param atol_thresh: threshold for max acceptable abs diff between two values
-    :return: pandas DF with the features having considerable diff in train VS test data sets
-    """
-    cat_features = train_df.select_dtypes(include=['category']).columns
-    df_cat_feats_diff = {}
-    for feature in cat_features:
-        temp_1 = (train_df[feature].value_counts(normalize=True)*100.0).rename(columns={feature: 'VALUE'})
-        temp_2 = (test_df[feature].value_counts(normalize=True)*100.0).rename(columns={feature: 'VALUE'})
-        temp_3 = pd.concat([temp_1, temp_2], axis=1, keys=['TRAIN', 'TEST']).reset_index().rename(
-            columns={'index': 'CATEGORY'})
-        temp_3['FEATURE'] = feature
-        temp_3.set_index(['FEATURE', 'CATEGORY'], drop=True, inplace=True)
-        for key, value in temp_3.iterrows():
-            if any(map(lambda x: np.isnan(x), [value['TRAIN'], value['TEST']])):
-                df_cat_feats_diff[key] = value
-            if not np.isclose(value['TRAIN'], value['TEST'], rtol=rtol_thresh, atol=atol_thresh):
-                df_cat_feats_diff[key] = value
-    df_cat_feats_diff = pd.DataFrame(df_cat_feats_diff).T
-    print 'There are %d categorcial features having significant differences between ' \
-          'train and test' % len(df_cat_feats_diff.index.get_level_values(0).unique())
-    return df_cat_feats_diff
-
-# ======================================================================
 # Functions to plot numerical features
 # ======================================================================
 
-def plot_numerical_feature_vs_target(train_df, feature, target,
+def plot_numerical_feature_vs_target(df, feature, target,
                                      val_min=None, val_max=None, bin_size=None,
                                      figsize_x=14, figsize_y=4,
                                      label_rotation=90):  # type: (pd.DataFrame, str, str, Any, Any, Any, Any, Any, Any) -> None
     """
     This method plots binned numerical feature VS target
-    :param train_df: pandas DF containing train data set
+    :param df: pandas DF containing train (also possibly test) data set
     :param feature: name of feature to plot
     :param target: name of target column
     :param val_min: lower limit for the numerical range (feature distribution)
@@ -121,6 +95,7 @@ def plot_numerical_feature_vs_target(train_df, feature, target,
     :param label_rotation: rotation angle of labels (0-horizontal, 90-vertical)
     :return: None
     """
+    train_df = df[df[target].notnull()]
     val_min = val_min if val_min is not None else train_df[feature].min()
     val_max = val_max if val_max is not None else train_df[feature].max()
     assert val_min < val_max, "val_max should be larger than val_min."
@@ -140,13 +115,13 @@ def plot_numerical_feature_vs_target(train_df, feature, target,
     del list_df; gc.collect()
 
 
-def plot_numerical_feature_train_vs_test(train_df, test_df, feature, val_min=None, val_max=None, bin_size=None,
+def plot_numerical_feature_train_vs_test(df, target, feature, val_min=None, val_max=None, bin_size=None,
                                          grid=(2, 1), figsize_x=14, figsize_y=7,
-                                         label_rotation=90):  # type: (pd.DataFrame, pd.DataFrame, str, Any, Any, Any, tuple, Any, Any) -> None
+                                         label_rotation=90):  # type: (pd.DataFrame, str, str, Any, Any, Any, tuple, Any, Any) -> None
     """
     This method plots train vs test comparison of a binned numerical feature
-    :param train_df: pandas DF containing train data set
-    :param test_df: pandas DF containing test data set
+    :param df: pandas DF containing train and test data sets
+    :param target: target column (to be predicted)
     :param feature: name of feature to plot
     :param val_min: lower limit for the numerical range (feature distribution)
     :param val_max: upper limit for the numerical range (feature distribution)
@@ -157,9 +132,11 @@ def plot_numerical_feature_train_vs_test(train_df, test_df, feature, val_min=Non
     :param label_rotation: rotation angle of labels (0-horizontal, 90-vertical)
     :return: None
     """
-    temp_df = train_df.append(test_df).reset_index(drop=True)
-    val_min = val_min if val_min is not None else temp_df[feature].min()
-    val_max = val_max if val_max is not None else temp_df[feature].max()
+    train_df = df[df[target].notnull()]
+    test_df = df[df[target].isnull()]
+
+    val_min = val_min if val_min is not None else df[feature].min()
+    val_max = val_max if val_max is not None else df[feature].max()
     assert val_min < val_max, "val_max should be larger than val_min."
 
     shrink = get_binning_list(val_min, val_max, bin_size)
@@ -178,7 +155,7 @@ def plot_numerical_feature_train_vs_test(train_df, test_df, feature, val_min=Non
         plt.setp(ax[i].get_yticklabels(), size=12)
         plt.tight_layout()
 
-    del temp_df, train, test; gc.collect()
+    del train, test; gc.collect()
 
 
 # ======================================================================
@@ -210,13 +187,13 @@ def countplot_cat_feature_vs_target(df, feature, target, figsize_x=7, figsize_y=
             df[target].unique()[0])
 
 
-def countplot_cat_feature_train_vs_test(train_df, test_df, feature, normalize=False, grid=(1, 2),
+def countplot_cat_feature_train_vs_test(df, target, feature, normalize=False, grid=(1, 2),
                                         label_rotation=0, figsize_x=14, figsize_y=4, annot_size=8,
                                         annot_rotation=0):  # type: (pd.DataFrame, pd.DataFrame, str, bool, tuple, int, Any, Any, Any, int) -> None
     """
     This method plots a train vs test comparison for a given categorical feature (countplot-based)
-    :param train_df: pandas DF containing train data set
-    :param test_df: pandas DF containing test data set
+    :param df: pandas DF containing train and test data sets
+    :param target: name of target column
     :param feature: name of feature to plot
     :param normalize: if True -> plot relative number of records (barplot), if False -> plot abs number of occurrences
     :param grid: figure's grid (by default (2, 1))
@@ -227,11 +204,20 @@ def countplot_cat_feature_train_vs_test(train_df, test_df, feature, normalize=Fa
     :param annot_rotation: rotation angle of annotation text (0-horizontal, 90-vertical)
     :return: None
     """
-    df_temp_1 = train_df[feature].value_counts(normalize=True)*100.0
-    df_temp_1.index = df_temp_1.index.reorder_categories(list(df_temp_1.index.values))
+    train_df = df[df[target].notnull()]
+    test_df = df[df[target].isnull()]
 
+    df_temp_1 = train_df[feature].value_counts(normalize=True)*100.0
     df_temp_2 = test_df[feature].value_counts(normalize=True)*100.0
-    df_temp_2.index = df_temp_2.index.reorder_categories(list(df_temp_2.index.values))
+
+    if df[feature].dtype.name == 'category':
+        # Align order of categories with respect to count values
+        df_temp_1.index = df_temp_1.index.reorder_categories(list(df_temp_1.index.values))
+        df_temp_2.index = df_temp_2.index.reorder_categories(list(df_temp_2.index.values))
+    else:
+        # Align order of features by index
+        df_temp_1.sort_index(inplace=True)
+        df_temp_2.sort_index(inplace=True)
 
     fig, ax = plt.subplots(*grid, figsize=(figsize_x, figsize_y))
 
