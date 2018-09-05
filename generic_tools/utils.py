@@ -3,6 +3,19 @@ import numpy as np
 from time import time
 from typing import Any
 from functools import wraps
+from contextlib import contextmanager
+
+
+@contextmanager
+def timer(text):
+    """
+    This method wraps the given function and prints its time of execution accompanied by the provided text
+    :param text: text to be included in the printouts
+    :return: print execution time of the function along with the provided text
+    """
+    t0 = time()
+    yield
+    print("{} - done in {:.0f}s".format(text, time() - t0))
 
 
 def timing(func):
@@ -50,3 +63,22 @@ def get_binning_list(val_min, val_max, bin_size=None, n_bins=10):  # type: (Any,
         bin_size = bin_size if bin_size is not None else round((val_max - val_min) / n_bins, 1)
         shrink = np.arange(val_min, val_max, bin_size)
     return shrink
+
+def auto_selector_of_categorical_features(df, cols_exclude=[], int_threshold=10):
+    """
+    This method is used for selecting categorical features in a pandas DF. It uses features labeled as 'category'
+    and 'object', but also 'int8' data types with additional filter applied on max and min values (int_threshold).
+    This filter is needed to exclude high cardinality numerical features from being used as categorical feature.
+    :param cols_exclude: columns to be excluded from a DF (e.g. target column)
+    :param int_threshold: this threshold is used to limit number of int8-type numerical features to be interpreted
+                          as categorical
+    :return: sorted list of categorical features
+    """
+    df_temp = df.loc[:, ~df.columns.isin(cols_exclude)]
+    cat_object_cols = df_temp.select_dtypes(include=['category', 'object']).columns
+    int8_cols = df_temp.select_dtypes(include=['int8']).columns
+    int8_cat_cols = []
+    for int8_col in int8_cols:
+        if abs(df_temp[int8_col].min()) <= int_threshold and abs(df_temp[int8_col].max()) <= int_threshold:
+            int8_cat_cols.append(int8_col)
+    return sorted(set(cat_object_cols).union(set(int8_cat_cols)))
