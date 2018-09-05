@@ -18,6 +18,8 @@ class Predictor(object):
         """
         This class run CV and makes OOF and submission predictions. It also allows to run CV in bagging mode using
         different seeds for random generator.
+        :param train_df: pandas DF with train data set
+        :param test_df: pandas DF with test data set
         :param target_column: target column (to be predicted)
         :param index_column: unique index column
         :param eval_metric: 'rmse': root mean square error
@@ -255,10 +257,8 @@ class Predictor(object):
         :param cmap: color map
         :return: plots confusion matrix and print classification report
         """
-        target = self.target_column  # Target column
-
-        true_labels = self.train_df[target].values.tolist()
-        predicted_labels = map(labels_mapper, self.oof_preds[target + '_OOF'])
+        true_labels = self.train_df[self.target_column].values.tolist()
+        predicted_labels = map(labels_mapper, self.oof_preds[self.target_column + '_OOF'])
         cm = confusion_matrix(true_labels, predicted_labels)
 
         if normalize:
