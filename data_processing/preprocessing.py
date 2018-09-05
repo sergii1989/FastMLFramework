@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from scipy.stats import skew, kurtosis
-from generic_tools.utils import timing
+from generic_tools.utils import timing, auto_selector_of_categorical_features
 from sklearn.feature_selection import VarianceThreshold
 
 
@@ -168,20 +168,24 @@ def get_feats_that_can_be_converted_to_int(df, seed=27, n_samples=100):  # type:
     return cols_to_int
 
 
-def get_cat_feats_diff_between_train_and_test(df, target_column, cat_features=None, rtol_thresh=0.08, atol_thresh=0.1):
+def get_cat_feats_diff_between_train_and_test(df, target_column, cat_features=None,
+                                              rtol_thresh=0.08, atol_thresh=0.1,
+                                              int_threshold=10):
     """
     This method constructs DF with the categorical features having considerable diff in train VS test data sets
     :param df: pandas DF containing both train and test data sets
     :param target_column: target column (to be predicted)
     :param rtol_thresh: threshold for max acceptable relative diff between two values
     :param atol_thresh: threshold for max acceptable abs diff between two values
+    :param int_threshold: this threshold is used to limit number of int8-type numerical features to be interpreted
+                          as categorical
     :return: pandas DF with the features having considerable diff in train VS test data sets
     """
     train_df = df[df[target_column].notnull()]
     test_df = df[df[target_column].isnull()]
 
-    cat_features = sorted(df.loc[:, ~df.columns.isin([target_column])].select_dtypes(
-        include=['category', 'object', 'int8']).columns) if cat_features is None else cat_features
+    cat_features = auto_selector_of_categorical_features(df, cols_exclude=[target_column], int_threshold=int_threshold) \
+        if cat_features is None else cat_features
 
     df_cat_feats_diff = {}
     for feature in cat_features:
