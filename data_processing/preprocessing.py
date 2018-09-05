@@ -4,6 +4,7 @@ import pandas as pd
 
 from scipy.stats import skew, kurtosis
 from generic_tools.utils import timing
+from sklearn.feature_selection import VarianceThreshold
 
 
 # ======================================================================
@@ -75,7 +76,7 @@ def convert_object_to_category_type(df, categorical_cols):  # type: (pd.DataFram
     :return: output pandas DF
     """
     for col in categorical_cols:
-        df[col].fillna(-1, inplace=True)
+        df[col].fillna(-999999, inplace=True)
         df[col] = df[col].astype('category')
     return df
 
@@ -110,10 +111,10 @@ def impute_nan_values(train_df,
                       nan_cols_handler):  # type: (pd.DataFrame, pd.DataFrame, list(tuple)) -> list(pd.DataFrame)
     """
     Imputing NAN values with aggregation function
-    :param train_df: 
-    :param test_df: 
+    :param train_df: pandas DF containing train data set
+    :param test_df: pandas DF containing test data set
     :param nan_cols_handler: e.g. [(['feat_1', 'feat_2'], np.mean)]
-    :return: 
+    :return: list with train and test DF
     """
     df_temp = pd.concat([train_df, test_df], axis=0)
     data_sets = [train_df, test_df]
@@ -139,6 +140,104 @@ def one_hot_encoder(df, nan_as_category=True, uppercase=True):  # type: (pd.Data
     if uppercase: df.columns = df.columns.map(lambda x: x.upper())
     new_columns = [c for c in df.columns if c not in original_columns]
     return df, new_columns
+
+
+# ======================================================================
+# Functions to aggregate differences between train and test datasets
+# ======================================================================
+
+def get_feats_that_can_be_converted_to_int(df, seed=27, n_samples=100):  # type: (pd.DataFrame, int, int) -> list
+    """
+    This method returns features that can be potentially down-casted to int. It uses random subsample of data of size
+    n_samples and checks np.allclose(x, int(x), rtol=0, atol=0)) condition. If all samples are True -> feature can be
+    potentially down-casted to int data type.
+    :param df: pandas DF containing both train and test data sets
+    :param seed: used for random sampler of the dataframe
+    :param n_samples: number of samples to take from a DF when checking the possibility of downcast to int
+    :return: list of features (or empty list)
+    """
+    cols_to_int = []
+    for col in df.columns:
+        if df[col].dtype.name not in ['object', 'category', 'int8', 'int16', 'int32', 'int64']:
+            convert_to_int_possible = df.loc[df[col].notnull(), col].sample(n=n_samples, random_state=seed).map(
+                lambda x: np.allclose(x, int(x), rtol=0, atol=0)).all()
+            if convert_to_int_possible:
+                cols_to_int.append(col)
+    if len(cols_to_int):
+        print 'There are {0} numerical features that can be potentially converted to int'.format(len(cols_to_int))
+    return cols_to_int
+
+
+def get_cat_feats_diff_between_train_and_test(df, target_column, cat_features=None, rtol_thresh=0.08, atol_thresh=0.1):
+    """
+    This method constructs DF with the categorical features having considerable diff in train VS test data sets
+    :param df: pandas DF containing both train and test data sets
+    :param target_column: target column (to be predicted)
+    :param rtol_thresh: threshold for max acceptable relative diff between two values
+    :param atol_thresh: threshold for max acceptable abs diff between two values
+    :return: pandas DF with the features having considerable diff in train VS test data sets
+    """
+    train_df = df[df[target_column].notnull()]
+    test_df = df[df[target_column].isnull()]
+
+    cat_features = sorted(df.loc[:, ~df.columns.isin([target_column])].select_dtypes(
+        include=['category', 'object', 'int8']).columns) if cat_features is None else cat_features
+
+    df_cat_feats_diff = {}
+    for feature in cat_features:
+        temp_1 = (train_df[feature].value_counts(normalize=True)*100.0).rename(columns={feature: 'VALUE'})
+        temp_2 = (test_df[feature].value_counts(normalize=True)*100.0).rename(columns={feature: 'VALUE'})
+        temp_3 = pd.concat([temp_1, temp_2], axis=1, keys=['TRAIN', 'TEST']).reset_index().rename(
+            columns={'index': 'CATEGORY'})
+        temp_3['FEATURE'] = feature
+        temp_3.set_index(['FEATURE', 'CATEGORY'], drop=True, inplace=True)
+        for key, value in temp_3.iterrows():
+            if any(map(lambda x: np.isnan(x), [value['TRAIN'], value['TEST']])):
+                df_cat_feats_diff[key] = value
+            if not np.isclose(value['TRAIN'], value['TEST'], rtol=rtol_thresh, atol=atol_thresh):
+                df_cat_feats_diff[key] = value
+    df_cat_feats_diff = pd.DataFrame(df_cat_feats_diff).T
+    print 'There are %d categorcial features having significant differences between ' \
+          'train and test' % len(df_cat_feats_diff.index.get_level_values(0).unique())
+    return df_cat_feats_diff
+
+
+# ======================================================================
+# Functions to find binary features with the near zero variance
+# ======================================================================
+
+def get_near_zero_variance_binary_cat_feats(df, target_column, p_value=0.95):  # type: (pd.DataFrame, str, float) -> (list, list)
+    """
+    This method searches for features that are either one or zero (on or off) in more than p_value*100.% of the samples.
+    Boolean features are Bernoulli random variables, and the variance of such variables is given by
+    Var[X] = p_value*(1-p_value). E.g. if p_value=0.95 -> Var[X]=0.0475
+    :param df: pandas DF representing concatenated train and test data sets
+    :param target_column: target column (to be predicted)
+    :param p_value: p-value
+    :return: list of binary categorical features having variance below the threshold p_value*(1-p_value) and the
+    ones having variance above the threshold
+    """
+
+    assert target_column in df.columns, \
+        'Please add {target} column to the dataframe'.format(target=target_column)
+
+    # Selecting binary columns only
+    bin_cols = [col for col in df if df[col].dropna().value_counts().index.isin([0, 1, 0.0, 1.0, True, False]).all()
+              and col != target_column]
+
+    var_threshold = p_value * (1 - p_value)
+    sel = VarianceThreshold(threshold=var_threshold)
+    sel.fit_transform(df[bin_cols])
+
+    zero_var_bin_cols = list(df[bin_cols].loc[:, ~sel.get_support()].columns)
+    bin_cols_remain = list(set(bin_cols).difference(set(zero_var_bin_cols)))
+
+    print "There are {0} features that have variance less than {1}%:\n{2}\n".format(len(zero_var_bin_cols),
+        round(var_threshold*100., 3), zero_var_bin_cols)
+    print "There are {0} features that have variance above {1}%:\n{2}".format(len(bin_cols_remain),
+        round(var_threshold * 100., 3), bin_cols_remain)
+
+    return zero_var_bin_cols, bin_cols_remain
 
 
 # ======================================================================

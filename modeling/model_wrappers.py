@@ -14,11 +14,15 @@ class ModelWrapper(object):
             except Exception as e:
                 print 'Please provide name of the model. Error %s encountered when trying self.model.__name__' % e
 
-    def _add_seed_to_params(self, params, seed):
+    def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
-    def reset_models_seed(self, seed):
+    def reinit_model_with_new_params(self, new_params):  # type: (dict) -> None
+        # Abstract method, must be implemented by derived classes
+        raise NotImplemented()
+
+    def reset_models_seed(self, seed):  # type: (int) -> None
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
@@ -36,15 +40,30 @@ class ModelWrapper(object):
 
 class LightGBMWrapper(ModelWrapper):
     """Class that wraps LightGBM"""
+    HP_DATATYPES = {
+        'learning_rate': lambda x: round(x, 3),
+        'max_depth': lambda x: int(round(x, 0)),
+        'num_leaves': lambda x: int(round(x, 0)),
+        'reg_alpha': lambda x: round(max(x, 0), 2),
+        'reg_lambda': lambda x: round(max(x, 0), 2),
+        'min_split_gain': lambda x: round(max(x, 0), 3),
+        'subsample': lambda x: round(max(min(x, 1), 0), 2),
+        'colsample_bytree': lambda x: round(max(min(x, 1), 0), 2),
+        'min_child_weight': lambda x: int(round(x, 0))
+    }
 
     def __init__(self, model, params=None, seed=27, name='lgbm'):
         super(LightGBMWrapper, self).__init__(model, params, seed, name)
 
-    def _add_seed_to_params(self, params, seed):
+    def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
         params['seed'] = seed
         return params
 
-    def reset_models_seed(self, seed):
+    def reinit_model_with_new_params(self, new_params):  # type: (dict) -> None
+        self.params = new_params
+        self.estimator = self.model(**self.params)
+
+    def reset_models_seed(self, seed):  # type: (int) -> None
         self.params['seed'] = seed
         self.estimator = self.model(**self.params)
 
@@ -65,11 +84,15 @@ class XGBWrapper(ModelWrapper):
     def __init__(self, model, params=None, seed=27, name='xgb'):
         super(XGBWrapper, self).__init__(model, params, seed, name)
 
-    def _add_seed_to_params(self, params, seed):
+    def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
         params['seed'] = seed
         return params
 
-    def reset_models_seed(self, seed):
+    def reinit_model_with_new_params(self, new_params):  # type: (dict) -> None
+        self.params = new_params
+        self.estimator = self.model(**self.params)
+
+    def reset_models_seed(self, seed):  # type: (int) -> None
         self.params['seed'] = seed
         self.estimator = self.model(**self.params)
 
@@ -90,11 +113,15 @@ class SklearnWrapper(ModelWrapper):
     def __init__(self, model, params=None, seed=27, name=None):
         super(SklearnWrapper, self).__init__(model, params, seed, name)
 
-    def _add_seed_to_params(self, params, seed):
+    def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
         params['random_state'] = seed
         return params
 
-    def reset_models_seed(self, seed):
+    def reinit_model_with_new_params(self, new_params):  # type: (dict) -> None
+        self.params = new_params
+        self.estimator = self.model(**self.params)
+
+    def reset_models_seed(self, seed):  # type: (int) -> None
         self.params['random_state'] = seed
         self.estimator = self.model(**self.params)
 
@@ -112,11 +139,15 @@ class CBWrapper(ModelWrapper):
     def __init__(self, model, params=None, seed=27, name='cb'):
         super(CBWrapper, self).__init__(model, params, seed, name)
 
-    def _add_seed_to_params(self, params, seed):
+    def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
         params['random_state'] = seed
         return params
 
-    def reset_models_seed(self, seed):
+    def reinit_model_with_new_params(self, new_params):  # type: (dict) -> None
+        self.params = new_params
+        self.estimator = self.model(**self.params)
+
+    def reset_models_seed(self, seed):  # type: (int) -> None
         self.params['random_state'] = seed
         self.estimator = self.model(**self.params)
 
