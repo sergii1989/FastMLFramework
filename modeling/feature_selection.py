@@ -7,17 +7,20 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 from sklearn import metrics
+from collections import namedtuple
 from generic_tools.utils import timer, timing, auto_selector_of_categorical_features
 warnings.simplefilter('ignore', UserWarning)
 
 
 class FeatureSelector(object):
 
-    def __init__(self, train_df, target_column, index_column, cat_features, metrics_scorer, int_threshold, seed_value):
+    def __init__(self, train_df, target_column, index_column, cat_features, eval_metric, metrics_scorer,
+                 int_threshold, seed_value):
         self.train_df = train_df  # type: pd.DataFrame
         self.target_column = target_column  # type: str
         self.index_column = index_column  # type: dict
         self.cat_features = cat_features  # type: list
+        self.eval_metric = eval_metric # type: str
         self.metrics_scorer = metrics_scorer  # type: metrics
         self.int_threshold = int_threshold  # type: int
         self.seed_value = seed_value  # type: int
@@ -39,8 +42,8 @@ class FeatureSelector(object):
 
 class FeatureSelectorByTargetPermutation(FeatureSelector):
 
-    def __init__(self, train_df, target_column, index_column, cat_features, lgbm_params, metrics_scorer,
-                 int_threshold=9, seed_value=27):
+    def __init__(self, train_df, target_column, index_column, cat_features, lgbm_params_feats_exploration,
+                 lgbm_params_feats_selection, eval_metric, metrics_scorer, int_threshold=9, seed_value=27):
         """
         This class adopts logic for selection of features based on target permutation. This selection process tests
         the actual importance significance against the distribution of features importance when fitted to noise
@@ -52,7 +55,18 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         :param target_column: target column (to be predicted)
         :param index_column: unique index column
         :param cat_features: list of categorical features (is used in in lgbm.train)
-        :param lgbm_params: parameters for LightGBM model
+        :param lgbm_params_feats_exploration: parameters for LightGBM model to be used for feature exploration
+        :param lgbm_params_feats_selection: parameters for LightGBM model to be used for feature selection
+        :param eval_metric: 'rmse': root mean square error
+                            'mae': mean absolute error
+                            'logloss': negative log-likelihood
+                            'error': Binary classification error rate
+                            'error@t': a different than 0.5 binary classification threshold value could be specified
+                            'merror': Multiclass classification error rate
+                            'mlogloss': Multiclass logloss
+                            'auc': Area under the curve
+                            'map': Mean average precision
+                            ... others
         :param metrics_scorer: from sklearn.metrics http://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
         :param int_threshold: this threshold is used to limit number of int8-type numerical features to be interpreted
                           as categorical (see auto_selector_of_categorical_features() method in utils.py)
@@ -60,20 +74,24 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         """
 
         super(FeatureSelectorByTargetPermutation, self).__init__(train_df, target_column, index_column, cat_features,
-                                                                 metrics_scorer, int_threshold, seed_value)
-        self.lgbm_params = lgbm_params  # type: dict
+                                                                 eval_metric, metrics_scorer, int_threshold, seed_value)
+        self.lgbm_params_feats_exploration = lgbm_params_feats_exploration  # type: dict
+        self.lgbm_params_feats_selection = lgbm_params_feats_selection  # type: dict
         self.actual_imp_df = None  # type: pd.DataFrame # actual features importance
         self.null_imp_df = None  # type: pd.DataFrame # null-hypothesis features importance
-        self.feature_scores = None  # type: pd.DataFrame # features importance gain/split scores
+        self.feature_scores_df = None  # type: pd.DataFrame # features importance gain/split scores
+        self.cv_results_df = None  # type: pd.DataFrame # impact of feature selection on CV score (various thresholds)
 
-    def get_feature_importances(self, shuffle=False, num_boost_rounds=None):
+    def get_feature_importances(self, shuffle=False, num_boost_rounds=None, verbose=False):
         """
         This method trains LGBM model and constructs features importance DF. This method is used by both
         get_actual_importances_distribution() and get_null_importances_distribution().
         :param shuffle: whether to permute the target (true -> for Null Importance features distributions)
         :param num_boost_rounds: the number of iterations should be calculated from colsample_bytree and depth
                                  so that features are tested enough times for splits. In boruta.py, for example,
-                                 they use : 100*(n_features/(np.sqrt(n_features)*depth))
+                                 they use (RF algo): 100.*(n_features/(np.sqrt(n_features)*depth)).
+                                 For XGB/LGBM algorithms: 100. * colsample_bytree * n_features / depth
+        :param verbose: if True -> make printouts
         :return: pandas DF with features importance
         """
 
@@ -81,27 +99,25 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
 
         if num_boost_rounds is None:
             # Check https://www.kaggle.com/ogrellier/feature-selection-with-null-importances/notebook
-
-            # For XGB / LGBM algorithms
-            # num_boost_rounds = \
-            #     int(100. * self.lgbm_params['colsample_bytree'] * len(train_features) / self.lgbm_params['max_depth'])
-
-            # For RF algorithm
-            num_boost_rounds = \
-                int(100. * (np.sqrt(len(train_features)) * self.lgbm_params['max_depth']))
+            # For RF algorithm (or LGBM in RF mode)
+            num_boost_rounds = int(100.*(np.sqrt(len(train_features)) / self.lgbm_params_feats_exploration['max_depth']))
 
         # Shuffle target if required
         y = self.train_df[self.target_column].copy()
         if shuffle:
-            # Here you could as well use a binomial distribution
-            y = self.train_df[self.target_column].copy().sample(frac=1.0, random_state=self.seed_value)
+            # Here one could use e.g. a binomial distribution
+            y = self.train_df[self.target_column].copy().sample(frac=1.0)
 
         # Fit LightGBM in RF mode [it's way quicker than sklearn RandomForest]
-        dtrain = lgbm.Dataset(self.train_df[train_features], y, free_raw_data=False, silent=True)
+        dtrain = lgbm.Dataset(data=self.train_df[train_features], label=y, free_raw_data=False, silent=True,
+                              categorical_feature=self.cat_features)
+        if verbose:
+            print 'Train LGBM on {0} data set with {1} categorical features. LGBM parameters: {2}. Number of boosting ' \
+                  'rounds: {3}'.format(self.train_df[train_features].shape, self.cat_features,
+                                       self.lgbm_params_feats_exploration, num_boost_rounds)
 
         # Fit the model
-        clf = lgbm.train(params=self.lgbm_params, train_set=dtrain, num_boost_round=num_boost_rounds,
-                         categorical_feature=self.cat_features)
+        clf = lgbm.train(params=self.lgbm_params_feats_exploration, train_set=dtrain, num_boost_round=num_boost_rounds)
 
         # Get feature importances
         imp_df = pd.DataFrame()
@@ -112,54 +128,165 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         return imp_df
 
     @timing
-    def get_actual_importances_distribution(self):
+    def get_actual_importances_distribution(self, num_boost_rounds=None):
         """
         This method fits the model on the original target and gathers the features importance. This gives us a
         benchmark whose significance can be tested against the Null Importance Distribution.
+        :param num_boost_rounds: number of boosting iterations for lgbm train. If None -> will be eval using formula
         :return: None
         """
-        actual_imp_df = self.get_feature_importances(shuffle=False)
+        actual_imp_df = self.get_feature_importances(shuffle=False, num_boost_rounds=num_boost_rounds)
         self.actual_imp_df = actual_imp_df
 
     @timing
-    def get_null_importances_distribution(self, nb_runs=80):
+    def get_null_importances_distribution(self, nb_runs=80, num_boost_rounds=None):
         """
         This method creates distributions of features Null Importance. It is achieved by fitting the model over
         several runs on a shuffled version of the target. This shows how the model can make sense of a feature
         irrespective of the target.
         :param nb_runs: number of runs to be performed on shuffled target
+        :param num_boost_rounds: number of boosting iterations for lgbm train. If None -> will be eval using formula
         :return: None
         """
         null_imp_df = []
         for i in range(1, nb_runs+1):
-            with timer('%s: run %4d / %4d' % (self.get_null_importances_distribution.__name__, i, nb_runs+1)):
-                imp_df = self.get_feature_importances(shuffle=True)
+            with timer('%s: run %4d / %4d' % (self.get_null_importances_distribution.__name__, i, nb_runs)):
+                imp_df = self.get_feature_importances(shuffle=True, num_boost_rounds=num_boost_rounds)
                 imp_df['run'] = i
                 null_imp_df.append(imp_df)
         self.null_imp_df = pd.concat(null_imp_df, axis=0)
 
-    def score_features(self, percentile_null_dist=75):
+    def score_features(self, scoring_function=None):  # type: (callable) -> None
         """
-        This method makes scoring of the features by using log of mean actual feature importance divided by the 75
-        percentile of null distribution. It worth to mention that there are several ways to score features, as for
-        instance, the following:
+        This method makes scoring of the features by using provided scoring_function. It worth to mention that there
+        are several ways to score features, as for instance, the following:
             - Compute the number of samples in the actual importances that are away from the null importances
               recorded distribution.
             - Compute ratios like Actual / Null Max, Actual / Null Mean, Actual Mean / Null Max
         :param percentile_null_dist: percentile of null distribution features [must be between 0 and 100 inclusive]
         :return: None
         """
+
+        if scoring_function is not None:
+            # Verify is callable and has 2 arguments
+            assert callable(scoring_function), \
+                'Provided scoring_function is not callable. It has %s type' % type(scoring_function)
+            assert scoring_function.func_code.co_argcount == 2, \
+                'Provided scoring_function should have 2 arguments. Instead received %d: %s' % (
+                    scoring_function.func_code.co_argcount, str(scoring_function.func_code.co_varnames))
+        else:
+            # If scoring_function is not defined, make score of the features by using log of mean actual feature
+            # importance divided by the 75 percentile of null distribution. 1e-10 is used to avoid division by zero.
+            scoring_function = \
+                lambda f_act_imps, f_null_imps: np.log(1e-10 + f_act_imps / (1 + np.percentile(f_null_imps, 75)))
+
         feature_scores = {}
         for feat in self.actual_imp_df['feature'].unique():
             feature_scores[feat] = {}
             for importance in ['importance_split', 'importance_gain']:
                 f_null_imps = self.null_imp_df.loc[self.null_imp_df['feature'] == feat, importance].values
                 f_act_imps = self.actual_imp_df.loc[self.actual_imp_df['feature'] == feat, importance].mean()
-                score = np.log(1e-10 + f_act_imps / (1 + np.percentile(f_null_imps, percentile_null_dist))) # avoids division by zero
+                score = scoring_function(f_act_imps, f_null_imps)
                 feature_scores[feat][importance.split('_')[1] + '_score'] = score
         feature_scores = pd.DataFrame(index=feature_scores.keys(), data=feature_scores.values()).reset_index()\
             .rename(columns={'index': 'feature'}).sort_values(by=['gain_score', 'split_score', 'feature'])
-        self.feature_scores = feature_scores.reset_index(drop=True)
+        self.feature_scores_df = feature_scores.reset_index(drop=True)
+
+    def run_lgbm_cv(self, train_features, num_folds=5, stratified=False, kfolds_shuffle=True,
+                    verbose=0, early_stopping_rounds=50):
+        """
+
+        :param train_features:
+        :param num_folds:
+        :param stratified:
+        :param kfolds_shuffle:
+        :param verbose:
+        :param early_stopping_rounds:
+        :return:
+        """
+        train_features = [f for f in train_features if f not in [self.target_column, self.index_column]]
+        cat_features = list(set(train_features).intersection(set(self.cat_features)))
+        dtrain = lgbm.Dataset(data=self.train_df[train_features], label=self.train_df[self.target_column],
+                              free_raw_data=False, silent=True, categorical_feature=cat_features)
+
+        # Run in-built LightGBM cross-validation
+        cv_results = lgbm.cv(
+            params=self.lgbm_params_feats_selection,
+            train_set=dtrain,
+            nfold=num_folds,
+            stratified=stratified,
+            shuffle=kfolds_shuffle,
+            early_stopping_rounds=early_stopping_rounds,
+            verbose_eval=verbose,
+            seed=self.seed_value
+        )
+
+        # TODO: add this to function's argument or pass as self.decimals
+        decimals = 6
+
+        # Best CV round: mean and std over folds of CV score
+        cv_bst_round = np.argmax(cv_results['%s-mean' % self.eval_metric])
+        cv_bst_score = round(cv_results['%s-mean' % self.eval_metric][cv_bst_round], decimals)
+        cv_std_bst_score = round(cv_results['%s-stdv'% self.eval_metric][cv_bst_round], decimals)
+
+        # Last round: mean and std over folds of CV score
+        cv_last_score = round(cv_results['%s-mean' % self.eval_metric][-1], decimals)
+        cv_std_last_score = round(cv_results['%s-stdv'% self.eval_metric][-1], decimals)
+
+        return (cv_bst_round, cv_bst_score, cv_std_bst_score, cv_last_score, cv_std_last_score)
+
+    @timing
+    def eval_feats_removal_impact_on_cv_score(self, thresholds=[], n_thresholds=5, num_folds=5, stratified=False,
+                                              kfolds_shuffle=True, verbose=0, early_stopping_rounds=50):
+        """
+
+        :param thresholds:
+        :param n_thresholds:
+        :param num_folds:
+        :param stratified:
+        :param kfolds_shuffle:
+        :param verbose:
+        :param early_stopping_rounds:
+        :return:
+        """
+
+        if not len(thresholds):
+            min_score = int(round(self.feature_scores_df.describe().loc['min'].min(), 0))
+            max_score = int(round(self.feature_scores_df.describe().loc['max'].max(), 0))
+            assert min_score < max_score, 'min score in self.feature_scores_df DF [{0}] should be smaller than max score ' \
+                                          '[{1}]. Impossible to construct threshold list.'.format(min_score, max_score)
+            step = int((max_score - min_score) / n_thresholds)
+            thresholds = range(min_score, max_score, step)
+
+        eval_score = namedtuple('eval_score', ['cv_bst_round', 'cv_bst_score', 'cv_std_bst_score', 'cv_last_score',
+                                               'cv_std_last_score'])
+        cv_results = []
+        for importance in ['split_score', 'gain_score']:
+            importance_type = importance.split('_')[0].upper()
+            temp = []
+            for i, threshold in enumerate(thresholds):
+                with timer('\n%s: %s %4d / %4d. Threshold: %3d' % (importance_type, self.run_lgbm_cv.__name__,
+                                                                   i+1, len(thresholds), threshold)):
+                    train_features = list(self.feature_scores_df.loc[self.feature_scores_df[importance] >= threshold, 'feature'])
+                    print '  Number of features with score >= %d: %d' % (threshold, len(train_features))
+                    result = self.run_lgbm_cv(train_features=train_features, num_folds=num_folds, stratified=stratified,
+                                              kfolds_shuffle=kfolds_shuffle, verbose=verbose,
+                                              early_stopping_rounds=early_stopping_rounds)
+                    result = eval_score(*result)
+                    temp.append(result)
+                    print('  Optimum boost rounds: {}'.format(result.cv_bst_round))
+                    print('  Best iteration CV: {0}+/-{1}'.format(result.cv_bst_score, result.cv_std_bst_score))
+                    print('  Last iteration CV: {0}+/-{1}'.format(result.cv_last_score, result.cv_std_last_score))
+
+            temp = pd.DataFrame(temp, columns=eval_score._fields)
+            temp.insert(loc=0, column='importance', value=importance_type)
+            temp.insert(loc=1, column='threshold', value=thresholds)
+            cv_results.append(temp)
+
+        cv_results = pd.concat(cv_results, axis=0, ignore_index=True)
+        cv_results.sort_values(by='threshold', inplace=True)
+        cv_results.set_index(['threshold', 'importance'], drop=True, inplace=True)
+        self.cv_results = cv_results
 
     def display_distributions(self, feature, figsize_x=14, figsize_y=6):
         """
@@ -201,11 +328,32 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         gs = gridspec.GridSpec(1, 2)
         for i, importance in enumerate(['split_score', 'gain_score']):
             ax = plt.subplot(gs[0, i])
-            sns.barplot(x=importance, y='feature', data=self.feature_scores.sort_values(importance, ascending=False)
+            sns.barplot(x=importance, y='feature', data=self.feature_scores_df.sort_values(importance, ascending=False)
                         .iloc[0:ntop_feats], ax=ax)
             ax.set_title('Feature scores wrt {0} importances'.format(importance.split('_')[0]), fontsize=14)
         plt.tight_layout()
 
+    def plot_cv_results_vs_feature_threshold(self, figsize_x=14, figsize_y=4):
+        """
+
+        :param figsize_x:
+        :param figsize_y:
+        :return:
+        """
+        df = self.cv_results.copy()
+        df.reset_index(inplace=True)
+        fig, ax = plt.subplots(1, 2, figsize=(figsize_x, figsize_y))
+        i = 0
+        for importance, df_slice in df.groupby('importance'):
+            ax[i].errorbar(x=df_slice['threshold'], y=df_slice['cv_bst_score'],
+                           yerr=df_slice['cv_std_bst_score'], fmt='o')
+            ax[i].errorbar(x=df_slice['threshold'], y=df_slice['cv_last_score'],
+                           yerr=df_slice['cv_std_last_score'], fmt='--x')
+            ax[i].set_xlabel('Feature score threshold', size=12)
+            ax[i].set_ylabel('CV {0} score'.format(self.eval_metric), size=12)
+            ax[i].set_title('{0}: cv score vs feature score threshold'.format(importance), size=13)
+            if i == 1: ax[i].legend(bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0.1, prop={'size': 12})
+            i += 1
 
 class BorutaFeatureSelector(FeatureSelector):
     def __init__(self):
@@ -215,3 +363,95 @@ class BorutaFeatureSelector(FeatureSelector):
 class SequentialFeatureSelector(FeatureSelector):
     def __init__(self):
         super(SequentialFeatureSelector, self).__init__()
+
+
+def main_feat_selector_by_target_permutation():
+    from sklearn.metrics import roc_auc_score
+    from data_processing.preprocessing import downcast_datatypes
+
+    path_to_data = r'C:\Kaggle\kaggle_home_credit_default_risk\feature_selection'
+    full_path_to_file = '\\'.join([path_to_data, 'train_dataset_lgbm_10.csv'])
+    data = downcast_datatypes(pd.read_csv(full_path_to_file)).reset_index(drop=True)
+    print "df_train shape: ", data.shape
+
+    categorical_feats = [f for f in data.columns if data[f].dtype == 'object']
+    print "Number of categorical features: %d" % len(categorical_feats)
+
+    for f_ in categorical_feats:
+        data[f_], _ = pd.factorize(data[f_])
+        data[f_] = data[f_].astype('category')
+
+    target_column = 'TARGET'
+    index_column = 'SK_ID_CURR'
+    metrics_scorer = roc_auc_score
+    cat_features = categorical_feats # None (if None -> will be detected automatically)
+    eval_metric = 'auc'
+    int_threshold = 9
+
+    lgbm_params_feats_exploration = {
+        'objective': 'binary',
+        'boosting_type': 'rf',
+        'learning_rate': 0.1,
+        'num_leaves': 127,
+        'max_depth': 8,
+        'subsample': 0.623,
+        'colsample_bytree': 0.7,
+        'bagging_freq': 1,
+        'metric': eval_metric,
+        'n_jobs': -1,
+        'silent': True
+    }
+
+    lgbm_params_feats_selection = {
+        'objective': 'binary',
+        'boosting_type': 'gbdt',
+        'learning_rate': 0.1,
+        'n_estimators': 2000,
+        'num_leaves': 31,
+        'max_depth': -1,
+        'subsample': 0.8,
+        'colsample_bytree': 0.8,
+        'min_split_gain': 0.00001,
+        'reg_alpha': 0.00001,
+        'reg_lambda': 0.00001,
+        'metric': eval_metric,
+        'n_jobs': -1,
+        'silent': True
+    }
+
+    feat_select_targer_perm = \
+        FeatureSelectorByTargetPermutation(train_df=data,
+                                           target_column=target_column, index_column=index_column,
+                                           cat_features=cat_features, int_threshold=int_threshold,
+                                           lgbm_params_feats_exploration=lgbm_params_feats_exploration,
+                                           lgbm_params_feats_selection=lgbm_params_feats_selection,
+                                           eval_metric=eval_metric, metrics_scorer=metrics_scorer,
+                                           seed_value=123)
+
+    feat_select_targer_perm.get_actual_importances_distribution(num_boost_rounds=350)
+    print feat_select_targer_perm.actual_imp_df.head()
+
+    feat_select_targer_perm.get_null_importances_distribution(nb_runs=5, num_boost_rounds=350)
+    print feat_select_targer_perm.null_imp_df.head()
+
+    # This one is used for selection of features in CV manner (using threshold)
+    func = lambda f_act_imps, f_null_imps: 100. * (
+            f_null_imps < np.percentile(f_act_imps, 25)).sum() / f_null_imps.size
+
+    feat_select_targer_perm.score_features(func)
+    print feat_select_targer_perm.feature_scores_df.head()
+
+    num_folds = 5
+    stratified = True
+    kfolds_shuffle = True
+    verbose = False
+    thresholds = [0, 30, 60, 80]
+
+    feat_select_targer_perm.eval_feats_removal_impact_on_cv_score(
+        thresholds=thresholds, n_thresholds=5, num_folds=num_folds, stratified=stratified,
+        kfolds_shuffle=kfolds_shuffle, verbose=verbose, early_stopping_rounds=50
+    )
+    print feat_select_targer_perm.cv_results.head()
+
+if __name__ == '__main__':
+    main_feat_selector_by_target_permutation()
