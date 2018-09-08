@@ -8,6 +8,15 @@ from modeling.cross_validation import Predictor
 class HyperParamsOptimization(object):
 
     def __init__(self, predictor, seed_val=27, metrics_decimals=6, filename='optim_hp'):
+        """
+        This is a base class for optimization of model's hyperparameters. Methods of this class can be reused in
+        derived classes (as, for instance, in BayesHyperParamsOptimization). These methods allows adjusting of data
+        types of the hyperparameters, auto-complete missing parameters, save / read parameters from the disk.
+        :param predictor: instance of Predictor class.
+        :param seed_val: seed numpy random generator
+        :param metrics_decimals: rounding precision for evaluation metrics (e.g. for CV printouts)
+        :param filename: name of hyperparameter optimizer (is used when saving results of optimization)
+        """
         self.predictor = predictor  # type: Predictor
         self.seed_val = seed_val  # type: int
         self.metrics_decimals = metrics_decimals # type: int
@@ -41,7 +50,7 @@ class HyperParamsOptimization(object):
         raise NotImplemented()
 
     @timing
-    def run(self, hp_optimization_space, init_points, n_iter, path_to_save_data=None):
+    def run(self, **kwargs):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
@@ -80,6 +89,12 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
     FILENAME = 'bayes_opt_hp'
 
     def __init__(self, predictor, seed_val=27, metrics_decimals=6):
+        """
+        This class adopts Bayes Optimization to find set of model's hyperparameters that lead to best CV results.
+        :param predictor: instance of Predictor class.
+        :param seed_val: seed numpy random generator
+        :param metrics_decimals: rounding precision for evaluation metrics (e.g. for CV printouts)
+        """
         super(BayesHyperParamsOptimization, self).__init__(predictor, seed_val, metrics_decimals, self.FILENAME)
 
     def hp_optimizer(self, **hp_optimization_space):
@@ -104,8 +119,6 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         :param path_to_save_data: if provided, will save optimal hyperparameters to the disk
         :return: None
         """
-
-        # TODO: to refactor run() function so to make it general for all type of optimizers
 
         bo = BayesianOptimization(self.hp_optimizer, hp_optimization_space)
         bo.maximize(init_points=init_points, n_iter=n_iter)
