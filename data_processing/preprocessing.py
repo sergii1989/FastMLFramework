@@ -11,6 +11,7 @@ from sklearn.feature_selection import VarianceThreshold
 # Functions to optimize data types and gather stats on missing values
 # ======================================================================
 
+@timing
 def downcast_datatypes(df):  # type: (pd.DataFrame) -> pd.DataFrame
     """
     Optimizes data-types in a pandas DF to reduce memory allocation
