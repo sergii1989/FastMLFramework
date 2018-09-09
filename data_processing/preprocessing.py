@@ -58,15 +58,15 @@ def missing_data(df): # type: (pd.DataFrame) -> pd.DataFrame
     na_relative_values = na_relative_values.map(lambda x: round(x, 2))
     missing_data = pd.concat([na_absolute_values, na_relative_values], axis=1, keys=['Total', 'Percent'])
     missing_data = missing_data[missing_data['Total'] != 0].reset_index().rename(columns={"index": "Feature"})
-    print 'Number of features with missing values: {0}'.format(missing_data.loc[missing_data['Total'] > 0].shape[0])
+    print('Number of features with missing values: {0}'.format(missing_data.loc[missing_data['Total'] > 0].shape[0]))
     return missing_data
 
 
 def pct_missing_values_train_test(train_df, test_df, feature):  # type: (pd.DataFrame, pd.DataFrame, str) -> None
     pct_missing_train = train_df[feature].isnull().sum() / round(train_df.shape[0],2) * 100.0
     pct_missing_test = test_df[feature].isnull().sum() / round(test_df.shape[0],2) * 100.0
-    print 'Feature {0}. Missing values: {1:0.2f}% - Train, {2:0.2f}% - Test'.format(
-        feature, pct_missing_train, pct_missing_test)
+    print('Feature {0}. Missing values: {1:0.2f}% - Train, {2:0.2f}% - Test'.format(
+        feature, pct_missing_train, pct_missing_test))
 
 
 def convert_object_to_category_type(df, categorical_cols):  # type: (pd.DataFrame, list) -> pd.DataFrame
@@ -165,7 +165,7 @@ def get_feats_that_can_be_converted_to_int(df, seed=27, n_samples=100):  # type:
             if convert_to_int_possible:
                 cols_to_int.append(col)
     if len(cols_to_int):
-        print 'There are {0} numerical features that can be potentially converted to int'.format(len(cols_to_int))
+        print('There are {0} numerical features that can be potentially converted to int'.format(len(cols_to_int)))
     return cols_to_int
 
 
@@ -202,8 +202,8 @@ def get_cat_feats_diff_between_train_and_test(df, target_column, cat_features=No
             if not np.isclose(value['TRAIN'], value['TEST'], rtol=rtol_thresh, atol=atol_thresh):
                 df_cat_feats_diff[key] = value
     df_cat_feats_diff = pd.DataFrame(df_cat_feats_diff).T
-    print 'There are %d categorcial features having significant differences between ' \
-          'train and test' % len(df_cat_feats_diff.index.get_level_values(0).unique())
+    print('There are %d categorcial features having significant differences between '
+          'train and test' % len(df_cat_feats_diff.index.get_level_values(0).unique()))
     return df_cat_feats_diff
 
 
@@ -237,10 +237,10 @@ def get_near_zero_variance_binary_cat_feats(df, target_column, p_value=0.95):  #
     zero_var_bin_cols = list(df[bin_cols].loc[:, ~sel.get_support()].columns)
     bin_cols_remain = list(set(bin_cols).difference(set(zero_var_bin_cols)))
 
-    print "There are {0} features that have variance less than {1}%:\n{2}\n".format(len(zero_var_bin_cols),
-        round(var_threshold*100., 3), zero_var_bin_cols)
-    print "There are {0} features that have variance above {1}%:\n{2}".format(len(bin_cols_remain),
-        round(var_threshold * 100., 3), bin_cols_remain)
+    print('There are {0} features that have variance less than {1}%:\n{2}\n'.format(len(zero_var_bin_cols),
+        round(var_threshold*100., 3), zero_var_bin_cols))
+    print('There are {0} features that have variance above {1}%:\n{2}'.format(len(bin_cols_remain),
+        round(var_threshold * 100., 3), bin_cols_remain))
 
     return zero_var_bin_cols, bin_cols_remain
 
@@ -328,8 +328,8 @@ def transform_skewed_features(df, min_skew_improvement=0.15, verbose=False):  # 
     skew_df = get_skewness_each_num_feature(df)
     feats_to_transform = list(skew_df.index)
 
-    print '\nNumber of features to transform: %d' % len(feats_to_transform)
-    print 'Number of columns with NAN skew: %d\n' % skew_df.isnull().sum()
+    print('\nNumber of features to transform: %d' % len(feats_to_transform))
+    print('Number of columns with NAN skew: %d\n' % skew_df.isnull().sum())
 
     features_applied_abs = []  # list of features where abs() was applied
     features_transformed = {}  # dict containing original<->best transformed features
@@ -340,21 +340,21 @@ def transform_skewed_features(df, min_skew_improvement=0.15, verbose=False):  # 
 
         min_val, max_val = df_temp[feature].min(), df_temp[feature].max()
         skew_val, kurtosis_val = compute_skew_kurtosis(df_temp, feature)
-        if verbose: print '\nFeature {0}; \nmin: {1}; max: {2}; skew: {3}; kurtosis: {4}' \
-            .format(feature, min_val, max_val, skew_val, kurtosis_val)
+        if verbose: print('\nFeature {0}; \nmin: {1}; max: {2}; skew: {3}; kurtosis: {4}'
+            .format(feature, min_val, max_val, skew_val, kurtosis_val))
 
         if min_val < 0.0 and max_val <= 0.0:
-            if verbose: print 'All values <=0. Applying abs() to make distribution positive.'
+            if verbose: print('All values <=0. Applying abs() to make distribution positive.')
 
             df_temp[feature] = df_temp[feature].apply(abs)
             df[feature] = df_temp[feature]  # update original dataframe
             skew_val, kurtosis_val = compute_skew_kurtosis(df_temp, feature)
 
-            if verbose: print 'New values: skew: {0}; kurtosis: {1}'.format(skew_val, kurtosis_val)
+            if verbose: print('New values: skew: {0}; kurtosis: {1}'.format(skew_val, kurtosis_val))
             features_applied_abs.append(feature)
 
         if skew_val == 0.0:
-            if verbose: print 'No transformation is needed for feature {0}.'.format(feature)
+            if verbose: print('No transformation is needed for feature {0}.'.format(feature))
             continue
 
         if 0.0 in df_temp[feature]:
@@ -373,28 +373,28 @@ def transform_skewed_features(df, min_skew_improvement=0.15, verbose=False):  # 
             df_temp = _transform_left_skewed_distribution(df_temp, feature)
 
         results = {col: abs(float(skew(df_temp[col].values, nan_policy='omit'))) for col in df_temp.columns}
-        if verbose: print results
+        if verbose: print(results)
 
         column_min_skew = min(results, key=results.get)
         min_skew = results[column_min_skew]
 
         if column_min_skew != feature and _skew_improved(min_skew, skew_val, min_skew_improvement):
-            if verbose: print '{0} transformation: skew {1} vs original {2}'.format(column_min_skew,
-                                                                                    min_skew, skew_val)
+            if verbose: print('{0} transformation: skew {1} vs original {2}'.format(column_min_skew,
+                                                                                    min_skew, skew_val))
             features_transformed[feature] = column_min_skew
             df[column_min_skew] = df_temp[column_min_skew]
         else:
-            if verbose: print 'Transformations did not improve skewness of distribution as compared to the threshold'
+            if verbose: print('Transformations did not improve skewness of distribution as compared to the threshold')
             pass
 
     del skew_df; gc.collect()
 
     print
-    print '=' * 70
-    print 'Number of features transformed: %d' % len(features_transformed)
-    print 'Number of features where transformation did not improve skewness: %d' %\
-          (len(feats_to_transform) - len(features_transformed))
-    print 'Number of features applied abs(): %d' % len(features_applied_abs)
-    print '=' * 70
+    print('='* 70)
+    print('Number of features transformed: %d' % len(features_transformed))
+    print('Number of features where transformation did not improve skewness: %d' %
+         (len(feats_to_transform) - len(features_transformed)))
+    print('Number of features applied abs(): %d' % len(features_applied_abs))
+    print('=' * 70)
     print
     return df, features_transformed, features_applied_abs

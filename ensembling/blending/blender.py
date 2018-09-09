@@ -123,11 +123,11 @@ class BayesOptimizationBlender(Blender):
 
         # TODO: to refactor run() function so to make it general for all type of optimizers
 
-        print '\nRunning Bayes Optimization...'
+        print('\nRunning Bayes Optimization...')
         if path_to_save_data is None:
-            print 'Optimal weights will not be stored to the disk since path_to_save_data={}\n'.format(path_to_save_data)
+            print('Optimal weights will not be stored to the disk since path_to_save_data={}\n'.format(path_to_save_data))
         else:
-            print 'Optimal weights will be stored to {}\n'.format(path_to_save_data)
+            print('Optimal weights will be stored to {}\n'.format(path_to_save_data))
 
         params = OrderedDict((c, (0, 1)) for c in self.train_oof[self.cols_to_use])
         bo = BayesianOptimization(self.evaluate_results, params)
@@ -213,8 +213,8 @@ def main():
 
     target_columns_oof = filenames  # raw predicted target (oof)
     rank_cols_oof = [filename + '_rank' for filename in filenames]  # rank transformed predicted values of target
-    print 'Shape OOF for train: ', train_oof.shape
-    print 'Shape preds for test: ', test_subm.shape
+    print('Shape OOF for train: {0}'.format(train_oof.shape))
+    print('Shape preds for test: {0}'.format(test_subm.shape))
 
     cols_to_use = target_columns_oof
 

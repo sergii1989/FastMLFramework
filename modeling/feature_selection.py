@@ -46,8 +46,8 @@ class FeatureSelector(object):
         if self.cat_features is None:
             self.cat_features = auto_selector_of_categorical_features(
                 self.train_df, cols_exclude=[self.target_column], int_threshold=self.int_threshold)
-            print '{0} class was initialized with no cat_features. Auto-selector of categorical features is applied: ' \
-                  '{1} features found'.format(self.__class__.__name__, len(self.cat_features))
+            print('{0} class was initialized with no cat_features. Auto-selector of categorical features is applied: '
+                  '{1} features found'.format(self.__class__.__name__, len(self.cat_features)))
 
 
 class FeatureSelectorByTargetPermutation(FeatureSelector):
@@ -130,9 +130,9 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         dtrain = lgbm.Dataset(data=self.train_df[train_features], label=y, free_raw_data=False,
                               categorical_feature=self.cat_features)
         if verbose:
-            print 'Train LGBM on {0} data set with {1} categorical features. LGBM parameters: {2}. Number of boosting ' \
+            print('Train LGBM on {0} data set with {1} categorical features. LGBM parameters: {2}. Number of boosting '
                   'rounds: {3}'.format(self.train_df[train_features].shape, self.cat_features,
-                                       self.lgbm_params_feats_exploration, num_boost_rounds)
+                                       self.lgbm_params_feats_exploration, num_boost_rounds))
 
         # Fit the model
         clf = lgbm.train(params=self.lgbm_params_feats_exploration, train_set=dtrain, num_boost_round=num_boost_rounds)
@@ -388,10 +388,10 @@ def main_feat_selector_by_target_permutation():
     path_to_data = r'C:\Kaggle\kaggle_home_credit_default_risk\feature_selection'
     full_path_to_file = '\\'.join([path_to_data, 'train_dataset_lgbm_10.csv'])
     data = downcast_datatypes(pd.read_csv(full_path_to_file)).reset_index(drop=True)
-    print "df_train shape: ", data.shape
+    print('df_train shape: {0}'.format(data.shape))
 
     categorical_feats = [f for f in data.columns if data[f].dtype == 'object']
-    print "Number of categorical features: %d" % len(categorical_feats)
+    print('Number of categorical features: {0}'.format(len(categorical_feats)))
 
     for f_ in categorical_feats:
         data[f_], _ = pd.factorize(data[f_])
@@ -453,21 +453,21 @@ def main_feat_selector_by_target_permutation():
                                            seed_value=123)
 
     feat_select_targer_perm.get_actual_importances_distribution(num_boost_rounds=350)
-    print feat_select_targer_perm.actual_imp_df.head()
+    print(feat_select_targer_perm.actual_imp_df.head())
 
     feat_select_targer_perm.get_null_importances_distribution(nb_runs=5, num_boost_rounds=350)
-    print feat_select_targer_perm.null_imp_df.head()
+    print(feat_select_targer_perm.null_imp_df.head())
 
     # This one is used for selection of features in CV manner (using threshold)
     func = lambda f_act_imps, f_null_imps: 100. * (
             f_null_imps < np.percentile(f_act_imps, 25)).sum() / f_null_imps.size
 
     feat_select_targer_perm.score_features(func)
-    print feat_select_targer_perm.feature_scores_df.head()
+    print(feat_select_targer_perm.feature_scores_df.head())
 
     thresholds = [0, 30, 60, 80]
     feat_select_targer_perm.eval_feats_removal_impact_on_cv_score(thresholds=thresholds, n_thresholds=5)
-    print feat_select_targer_perm.cv_results_df.head()
+    print(feat_select_targer_perm.cv_results_df.head())
 
 if __name__ == '__main__':
     main_feat_selector_by_target_permutation()
