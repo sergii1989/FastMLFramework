@@ -12,7 +12,7 @@ class ModelWrapper(object):
             try:
                 self.model_name = self.model.__name__
             except Exception as e:
-                print 'Please provide name of the model. Error %s encountered when trying self.model.__name__' % e
+                print('Please provide name of the model. Error %s encountered when trying self.model.__name__' % e)
 
     def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
         # Abstract method, must be implemented by derived classes
@@ -69,7 +69,7 @@ class LightGBMWrapper(ModelWrapper):
 
     def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, verbose, early_stopping_rounds):
         self.estimator.fit(train_x, train_y, eval_set=[(train_x, train_y), (valid_x, valid_y)],
-            eval_metric=eval_metric, verbose=verbose, early_stopping_rounds=early_stopping_rounds)
+            eval_metric=eval_metric)#, verbose=verbose, early_stopping_rounds=early_stopping_rounds)
 
     def predict_probability(self, x, num_iteration=1000):
         return self.estimator.predict_proba(x, num_iteration=num_iteration)[:, 1]

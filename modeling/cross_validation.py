@@ -59,8 +59,8 @@ class Predictor(object):
         self.cols_to_exclude = cols_to_exclude
         self.stratified = stratified
         self.kfolds_shuffle = kfolds_shuffle
-        self.verbose = verbose
-        self.early_stopping_rounds = early_stopping_rounds
+        # self.verbose = verbose
+        # self.early_stopping_rounds = early_stopping_rounds
 
         # Results of CV
         self.oof_preds = None
@@ -110,7 +110,7 @@ class Predictor(object):
         feats = [f for f in self.train_df.columns if f not in self.cols_to_exclude]
         feature_importance_df = pd.DataFrame()
 
-        print("\nStarting CV with seed {}. Train shape: {}, test shape: {}\n".format(
+        print('\nStarting CV with seed {}. Train shape: {}, test shape: {}\n'.format(
             seed_val, self.train_df[feats].shape, self.test_df[feats].shape))
 
         np.random.seed(seed_val)  # for reproducibility
@@ -131,8 +131,8 @@ class Predictor(object):
             train_x, train_y = self.train_df[feats].iloc[train_idx], self.train_df[target].iloc[train_idx]
             valid_x, valid_y = self.train_df[feats].iloc[valid_idx], self.train_df[target].iloc[valid_idx]
 
-            self.classifier.fit_model(train_x, train_y, valid_x, valid_y, eval_metric=self.eval_metric,
-                                      verbose=self.verbose, early_stopping_rounds=self.early_stopping_rounds)
+            self.classifier.fit_model(train_x, train_y, valid_x, valid_y, eval_metric=self.eval_metric)#,
+                                      # verbose=self.verbose, early_stopping_rounds=self.early_stopping_rounds)
 
             best_iter_in_fold = self.classifier.get_best_iteration() if hasattr(
                 self.classifier, 'get_best_iteration') else 1
@@ -263,7 +263,7 @@ class Predictor(object):
 
         if normalize:
             cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-            print("\nNormalized confusion matrix")
+            print('\nNormalized confusion matrix')
         else:
             print('Confusion matrix, without normalization')
 
