@@ -1,8 +1,8 @@
 import json
 
-from generic_tools.utils import timing
 from bayes_opt import BayesianOptimization
 from modeling.cross_validation import Predictor
+from generic_tools.utils import timing, get_current_timestamp
 
 
 class HyperParamsOptimization(object):
@@ -60,7 +60,7 @@ class HyperParamsOptimization(object):
         :param path_to_save_data: path to be used when storing csv file with the weights
         :return: None
         """
-        filename = '_'.join([self.filename, self.predictor.model_name, str(self.best_score)]) + '.txt'
+        filename = '_'.join([self.filename, self.predictor.model_name, str(self.best_score), get_current_timestamp()]) + '.txt'
         output_figname = ('\\'.join([path_to_save_data, filename]))
         print('\nSaving optimized hyperparameters into %s' % output_figname)
         with open(output_figname, 'w') as file:
