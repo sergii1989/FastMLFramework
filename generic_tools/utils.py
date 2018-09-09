@@ -3,6 +3,7 @@ import numpy as np
 from time import time
 from typing import Any
 from functools import wraps
+from datetime import datetime
 from contextlib import contextmanager
 
 
@@ -34,6 +35,10 @@ def timing(func):
     return wrap
 
 
+def get_current_timestamp():
+    return datetime.now().strftime('%Y-%m-%d_%H-%M')
+
+
 def merge_two_dicts(x, y):  # type: (dict, dict) -> dict
     """
     Given two dicts, merge them into a new dict as a shallow copy.
@@ -63,6 +68,7 @@ def get_binning_list(val_min, val_max, bin_size=None, n_bins=10):  # type: (Any,
         bin_size = bin_size if bin_size is not None else round((val_max - val_min) / n_bins, 1)
         shrink = np.arange(val_min, val_max, bin_size)
     return shrink
+
 
 def auto_selector_of_categorical_features(df, cols_exclude=[], int_threshold=10):
     """
