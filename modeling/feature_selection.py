@@ -9,11 +9,12 @@ import matplotlib.gridspec as gridspec
 
 from sklearn import metrics
 from collections import namedtuple
-from generic_tools.utils import timer, timing, auto_selector_of_categorical_features
+from generic_tools.utils import timer, timing, auto_selector_of_categorical_features, get_current_timestamp
 warnings.simplefilter('ignore', UserWarning)
 
 
 class FeatureSelector(object):
+    FEATURE_SELECTION_DIR = 'feature_selection'
 
     def __init__(self, train_df, target_column, index_column, cat_features, eval_metric, metrics_scorer,
                  metrics_decimals, num_folds, stratified, kfolds_shuffle, int_threshold, seed_value):
@@ -35,12 +36,12 @@ class FeatureSelector(object):
         self.seed_value = seed_value  # type: int
 
         self._verify_input_data_is_correct()
-        np.random.seed(seed_value) # seed the numpy random generator
+        np.random.seed(seed_value)  # seed the numpy random generator
 
     def _verify_input_data_is_correct(self):
         assert callable(self.metrics_scorer), 'metrics_scorer should be callable function'
-        if not 'sklearn.metrics' in self.metrics_scorer.__module__:
-            raise TypeError("metrics_scorer should be function from sklearn.metrics module. " \
+        if 'sklearn.metrics' not in self.metrics_scorer.__module__:
+            raise TypeError("metrics_scorer should be function from sklearn.metrics module. "
                             "Instead received {0}.".format(self.metrics_scorer.__module__))
 
         if self.cat_features is None:
@@ -51,6 +52,8 @@ class FeatureSelector(object):
 
 
 class FeatureSelectorByTargetPermutation(FeatureSelector):
+    FEATURE_SELECTION_METHOD = 'target_permutation'
+    FIGNAME_CV_VERSUS_FEATURES_SCORE_THRESHOLD = 'cv_vs_feats_score_threshold'
 
     def __init__(self, train_df, target_column, index_column, cat_features, lgbm_params_feats_exploration,
                  lgbm_params_feats_selection, eval_metric, metrics_scorer, metrics_decimals=6, num_folds=5,
@@ -78,7 +81,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
                             'auc': Area under the curve
                             'map': Mean average precision
                             ... others
-        :param metrics_scorer: from sklearn.metrics http://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
+        :param metrics_scorer: http://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
         :param metrics_decimals: rounding precision for evaluation metrics (e.g. for CV printouts)
         :param num_folds: number of folds to be used in CV
         :param stratified: if set True -> preserves the percentage of samples for each class in a fold
@@ -97,8 +100,8 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         self.lgbm_params_feats_selection = lgbm_params_feats_selection  # type: dict
         self.actual_imp_df = None  # type: pd.DataFrame # actual features importance
         self.null_imp_df = None  # type: pd.DataFrame # null-hypothesis features importance
-        self.feature_scores_df = None  # type: pd.DataFrame # features importance gain/split scores
-        self.cv_results_df = None  # type: pd.DataFrame # impact of feature selection on CV score (various thresholds)
+        self.features_scores_df = None  # type: pd.DataFrame # features importance gain/split scores
+        self.cv_results_vs_thresh_df = None  # type: pd.DataFrame # impact of feature selection on CV score
 
     def get_feature_importances(self, shuffle=False, num_boost_rounds=None, verbose=False):
         """
@@ -118,8 +121,8 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         if num_boost_rounds is None:
             # Check https://www.kaggle.com/ogrellier/feature-selection-with-null-importances/notebook
             # For RF algorithm (or LGBM in RF mode)
-            num_boost_rounds = int(100.*(np.sqrt(len(train_features)) / self.lgbm_params_feats_exploration['max_depth']))
-
+            num_boost_rounds = int(100.*(np.sqrt(len(train_features)) /
+                                         self.lgbm_params_feats_exploration['max_depth']))
         # Shuffle target if required
         y = self.train_df[self.target_column].copy()
         if shuffle:
@@ -144,6 +147,17 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         imp_df["importance_split"] = clf.feature_importance(importance_type='split')
         imp_df['train_score'] = self.metrics_scorer(y, clf.predict(self.train_df[train_features]))
         return imp_df
+
+    def get_list_of_features(self, importance='gain_score', thresh=0):  # type: (str, (float, int)) -> list
+        """
+        This method returns list of features for given importance type ('gain_score' or 'split_score') with the
+        feature_score >= threshold
+        :param importance: LGBM feature importance type ('gain_score' or 'split_score')
+        :param thresh: limit value for min feature_score to be included into list of features
+        :return: list of features for given importance type with the feature_score >= threshold
+        """
+        list_of_features = list(self.features_scores_df.loc[self.features_scores_df[importance] >= thresh, 'feature'])
+        return list_of_features
 
     @timing
     def get_actual_importances_distribution(self, num_boost_rounds=None):
@@ -174,14 +188,13 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
                 null_imp_df.append(imp_df)
         self.null_imp_df = pd.concat(null_imp_df, axis=0)
 
-    def score_features(self, scoring_function=None):  # type: (callable) -> None
+    def score_features(self, scoring_function=None):
         """
         This method makes scoring of the features by using provided scoring_function. It worth to mention that there
         are several ways to score features, as for instance, the following:
             - Compute the number of samples in the actual importances that are away from the null importances
               recorded distribution.
             - Compute ratios like Actual / Null Max, Actual / Null Mean, Actual Mean / Null Max
-        :param percentile_null_dist: percentile of null distribution features [must be between 0 and 100 inclusive]
         :return: None
         """
 
@@ -208,7 +221,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
                 feature_scores[feat][importance.split('_')[1] + '_score'] = score
         feature_scores = pd.DataFrame(index=feature_scores.keys(), data=feature_scores.values()).reset_index()\
             .rename(columns={'index': 'feature'}).sort_values(by=['gain_score', 'split_score', 'feature'])
-        self.feature_scores_df = feature_scores.reset_index(drop=True)
+        self.features_scores_df = feature_scores.reset_index(drop=True)
 
     def run_lgbm_cv(self, train_features):  # type: (list(str)) -> tuple
         """
@@ -235,9 +248,9 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         # Best CV round: mean and std over folds of CV score
         cv_bst_round = np.argmax(cv_results['%s-mean' % self.eval_metric])
         cv_bst_score = round(cv_results['%s-mean' % self.eval_metric][cv_bst_round], self.metrics_decimals)
-        cv_std_bst_score = round(cv_results['%s-stdv'% self.eval_metric][cv_bst_round], self.metrics_decimals)
+        cv_std_bst_score = round(cv_results['%s-stdv' % self.eval_metric][cv_bst_round], self.metrics_decimals)
 
-        return (cv_bst_round, cv_bst_score, cv_std_bst_score)
+        return cv_bst_round, cv_bst_score, cv_std_bst_score
 
     @timing
     def eval_feats_removal_impact_on_cv_score(self, thresholds=[], n_thresholds=5):
@@ -252,40 +265,40 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         """
 
         if not len(thresholds):
-            min_score = int(round(self.feature_scores_df.describe().loc['min'].min(), 0))
-            max_score = int(round(self.feature_scores_df.describe().loc['max'].max(), 0))
-            assert min_score < max_score, 'min score in self.feature_scores_df DF [{0}] should be smaller than max score ' \
-                                          '[{1}]. Impossible to construct threshold list.'.format(min_score, max_score)
+            min_score = int(round(self.features_scores_df.describe().loc['min'].min(), 0))
+            max_score = int(round(self.features_scores_df.describe().loc['max'].max(), 0))
+            assert min_score < max_score, \
+                'min score in self.features_scores_df DF [{0}] should be smaller than max score [{1}]. Impossible to ' \
+                'construct threshold list.'.format(min_score, max_score)
             step = int((max_score - min_score) / n_thresholds)
             thresholds = range(min_score, max_score, step)
 
         eval_score = namedtuple('eval_score', ['cv_bst_round', 'cv_bst_score', 'cv_std_bst_score', 'n_features'])
         cv_results = []
-        train_features = []
         for importance in ['split_score', 'gain_score']:
             importance_type = importance.split('_')[0].upper()
             temp = []
             for i, threshold in enumerate(thresholds):
                 with timer('\n%s: %s %4d / %4d. Threshold: %3d' % (importance_type, self.run_lgbm_cv.__name__, i+1,
                                                                    len(thresholds), threshold)):
-                    train_features = list(self.feature_scores_df.loc[self.feature_scores_df[importance] >= threshold, 'feature'])
+                    train_features = self.get_list_of_features(importance=importance, thresh=threshold)
                     result = self.run_lgbm_cv(train_features)
                     result = eval_score(*(result + (len(train_features),)))
                     temp.append(result)
 
                 print('  Number of features with score >= %d: %d' % (threshold, len(train_features)))
                 print('  Optimum boost rounds: {}'.format(result.cv_bst_round))
-                print('  Best iteration CV: {0}+/-{1}'.format(result.cv_bst_score, result.cv_std_bst_score))
+                print('  Best iteration CV: {0} +/- {1}'.format(result.cv_bst_score, result.cv_std_bst_score))
 
             temp = pd.DataFrame(temp, columns=eval_score._fields)
-            temp.insert(loc=0, column='importance', value=importance_type) # SPLIT - GAIN
-            temp.insert(loc=1, column='threshold', value=thresholds) # threshold value
+            temp.insert(loc=0, column='importance', value=importance_type)  # SPLIT - GAIN
+            temp.insert(loc=1, column='threshold', value=thresholds)  # threshold value
             cv_results.append(temp)
 
-        cv_results_df = pd.concat(cv_results, axis=0, ignore_index=True)
-        cv_results_df.sort_values(by='threshold', inplace=True)
-        cv_results_df.set_index(['threshold', 'importance'], drop=True, inplace=True)
-        self.cv_results_df = cv_results_df
+        cv_results_vs_thresh_df = pd.concat(cv_results, axis=0, ignore_index=True)
+        cv_results_vs_thresh_df.sort_values(by='threshold', inplace=True)
+        cv_results_vs_thresh_df.set_index(['threshold', 'importance'], drop=True, inplace=True)
+        self.cv_results_vs_thresh_df = cv_results_vs_thresh_df
         del cv_results, temp; gc.collect()
 
     def display_distributions(self, feature, figsize_x=14, figsize_y=6):
@@ -328,16 +341,17 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         gs = gridspec.GridSpec(1, 2)
         for i, importance in enumerate(['split_score', 'gain_score']):
             ax = plt.subplot(gs[0, i])
-            sns.barplot(x=importance, y='feature', data=self.feature_scores_df.sort_values(importance, ascending=False)
+            sns.barplot(x=importance, y='feature', data=self.features_scores_df.sort_values(importance, ascending=False)
                         .iloc[0:ntop_feats], ax=ax)
             ax.set_title('Feature scores wrt {0} importances'.format(importance.split('_')[0]), fontsize=14)
         plt.tight_layout()
 
-    def plot_cv_results_vs_feature_threshold(self, figsize_x=14, figsize_y=4, annot_offset_x=3, annot_offset_y=5,
-                                             annot_rotation=90):
+    def plot_cv_results_vs_feature_threshold(self, path_to_results=None, figsize_x=14, figsize_y=4, annot_offset_x=3,
+                                             annot_offset_y=5, annot_rotation=90):
         """
         This method plots CV results against feature score threshold. It allows to find optimum threshold for feature
         score (i.e. number of features) that leads to best CV score.
+        :param path_to_results: absolute path to the directory where the figure is going to be saved
         :param figsize_x: size of figure in x-direction
         :param figsize_y: size of figure in y-direction
         :param annot_offset_x: offset (points) in x-direction for annotation text
@@ -345,7 +359,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         :param annot_rotation: rotation angle of annotation text (0-horizontal, 90-vertical)
         :return: None
         """
-        df = self.cv_results_df.copy()
+        df = self.cv_results_vs_thresh_df.copy()
         df.reset_index(inplace=True)
         fig, ax = plt.subplots(1, 2, figsize=(figsize_x, figsize_y))
         i = 0
@@ -353,29 +367,65 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
             x = df_slice['threshold']
             y = df_slice['cv_bst_score']
             yerr = df_slice['cv_std_bst_score']
-            descrip = list(df_slice['n_features'].astype(str).values)
+            annotation = list(df_slice['n_features'].astype(str).values)
 
             # Plot CV score with std error bars
             ax[i].errorbar(x=x, y=y, yerr=yerr, fmt='-o', label=importance)
-            ax[i].set_title('{0}: cv {1} score vs feature score threshold'.format(importance, self.eval_metric), size=13)
+            ax[i].set_title('{0}: cv {1} score vs feature score threshold'.format(importance,
+                                                                                  self.eval_metric), size=13)
             ax[i].set_xlabel('Feature score threshold', size=12)
             ax[i].set_ylabel('CV {0} score'.format(self.eval_metric), size=12)
 
             # Add annotations with the number of features used per each threshold
-            for xpos, ypos, name in zip(x, y, descrip):
+            for xpos, ypos, name in zip(x, y, annotation):
                 ax[i].annotate(name, (xpos, ypos), xytext=(annot_offset_x, annot_offset_y), va='bottom',
-                            textcoords='offset points', rotation=annot_rotation)
+                               textcoords='offset points', rotation=annot_rotation)
 
-            if i == 1: ax[i].legend(bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0.1, prop={'size': 12})
+            if i == 1:
+                ax[i].legend(bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0.1, prop={'size': 12})
             i += 1
+
+        if path_to_results is not None:
+            filename = '_'.join([self.FIGNAME_CV_VERSUS_FEATURES_SCORE_THRESHOLD, get_current_timestamp()]) + '.png'
+            full_path_to_file = '\\'.join([path_to_results, filename])
+            print('\nSaving CV results vs feature score threshold figure into %s' % full_path_to_file)
+            plt.savefig(full_path_to_file)
+
         del df; gc.collect()
 
+    def save_features_scores(self, path_to_results):
+        """
+        This method persists features scores DF to the disk
+        :param path_to_results: path to the project
+        :return: None
+        """
+        filename = '_'.join(['feature_scores', get_current_timestamp()]) + '.csv'
+        full_path_to_file = '\\'.join([path_to_results, filename])
+        print('\nSaving feature scores DF into %s' % full_path_to_file)
+        self.features_scores_df.to_csv(full_path_to_file, index=False)
+
+    def save_cv_results_vs_feats_score_thresh(self, path_to_results):
+        """
+        This method persists DF with CV results at various features scores thresholds to the disk
+        :param path_to_results: path to the project
+        :return: None
+        """
+        filename = '_'.join(['cv_results_vs_feats_score_thresh', get_current_timestamp()]) + '.csv'
+        full_path_to_file = '\\'.join([path_to_results, filename])
+        print('\nSaving DF with CV results at various features scores thresholds into %s' % full_path_to_file)
+        self.cv_results_vs_thresh_df.reset_index().to_csv(full_path_to_file, index=False)
+
+
 class BorutaFeatureSelector(FeatureSelector):
+    FEATURE_SELECTION_METHOD = 'boruta'
+
     def __init__(self):
         super(BorutaFeatureSelector, self).__init__()
 
 
 class SequentialFeatureSelector(FeatureSelector):
+    FEATURE_SELECTION_METHOD = 'sequential'
+
     def __init__(self):
         super(SequentialFeatureSelector, self).__init__()
 
@@ -400,7 +450,7 @@ def main_feat_selector_by_target_permutation():
     # Parameters
     target_column = 'TARGET'
     index_column = 'SK_ID_CURR'
-    cat_features = categorical_feats # None (if None -> will be detected automatically)
+    cat_features = categorical_feats  # None (if None -> will be detected automatically)
     eval_metric = 'auc'
     metrics_scorer = roc_auc_score
     metrics_decimals = 4
@@ -463,11 +513,12 @@ def main_feat_selector_by_target_permutation():
             f_null_imps < np.percentile(f_act_imps, 25)).sum() / f_null_imps.size
 
     feat_select_targer_perm.score_features(func)
-    print(feat_select_targer_perm.feature_scores_df.head())
+    print(feat_select_targer_perm.features_scores_df.head())
 
     thresholds = [0, 30, 60, 80]
     feat_select_targer_perm.eval_feats_removal_impact_on_cv_score(thresholds=thresholds, n_thresholds=5)
-    print(feat_select_targer_perm.cv_results_df.head())
+    print(feat_select_targer_perm.cv_results_vs_thresh_df.head())
+
 
 if __name__ == '__main__':
     main_feat_selector_by_target_permutation()
