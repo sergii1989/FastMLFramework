@@ -26,7 +26,7 @@ class ModelWrapper(object):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, verbose, early_stopping_rounds):
+    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
@@ -67,9 +67,8 @@ class LightGBMWrapper(ModelWrapper):
         self.params['seed'] = seed
         self.estimator = self.model(**self.params)
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, verbose, early_stopping_rounds):
-        self.estimator.fit(train_x, train_y, eval_set=[(train_x, train_y), (valid_x, valid_y)],
-            eval_metric=eval_metric)#, verbose=verbose, early_stopping_rounds=early_stopping_rounds)
+    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric):
+        self.estimator.fit(train_x, train_y, eval_set=[(train_x, train_y), (valid_x, valid_y)], eval_metric=eval_metric)
 
     def predict_probability(self, x, num_iteration=1000):
         return self.estimator.predict_proba(x, num_iteration=num_iteration)[:, 1]
@@ -96,9 +95,8 @@ class XGBWrapper(ModelWrapper):
         self.params['seed'] = seed
         self.estimator = self.model(**self.params)
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, verbose, early_stopping_rounds):
-        self.estimator.fit(train_x, train_y, eval_set=[(train_x, train_y), (valid_x, valid_y)],
-            eval_metric=eval_metric, verbose=verbose, early_stopping_rounds=early_stopping_rounds)
+    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric):
+        self.estimator.fit(train_x, train_y, eval_set=[(train_x, train_y), (valid_x, valid_y)], eval_metric=eval_metric)
 
     def predict_probability(self, x, num_iteration=1000):
         return self.estimator.predict_proba(x, ntree_limit=num_iteration)[:, 1]
@@ -125,7 +123,7 @@ class SklearnWrapper(ModelWrapper):
         self.params['random_state'] = seed
         self.estimator = self.model(**self.params)
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, verbose, early_stopping_rounds):
+    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric):
         self.estimator.fit(train_x, train_y)
 
     def predict_probability(self, x, num_iteration=1000):
@@ -151,9 +149,8 @@ class CBWrapper(ModelWrapper):
         self.params['random_state'] = seed
         self.estimator = self.model(**self.params)
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, verbose, early_stopping_rounds):
+    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric):
         self.estimator.fit(train_x, train_y)
 
     def predict_probability(self, x, num_iteration=1000):
         return self.estimator.predict_proba(x)[:, 1]
-
