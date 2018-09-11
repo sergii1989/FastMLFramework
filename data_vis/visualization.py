@@ -1,5 +1,4 @@
 import gc
-import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -12,8 +11,9 @@ from generic_tools.utils import get_binning_list
 # Function to plot correlation heatmap
 # ======================================================================
 
-def plot_features_corr_heatmap(df, vmin=-1, vmax=1, center=0, square=True,
-                               figsize_x=14, figsize_y=10):  # type: (pd.DataFrame, Any, Any, Any, bool, Any, Any) -> None
+
+def plot_features_corr_heatmap(df, vmin=-1, vmax=1, center=0, square=True, figsize_x=14,
+                               figsize_y=10):  # type: (pd.DataFrame, Any, Any, Any, bool, Any, Any) -> None
     """
     This method plots features correlation heatmap
     :param df: pandas DF containing data set
@@ -26,7 +26,7 @@ def plot_features_corr_heatmap(df, vmin=-1, vmax=1, center=0, square=True,
     :return: None
     """
     dtypes_to_include = ['float64', 'float32', 'int64', 'int32', 'int16', 'int8']
-    corr = df.select_dtypes(include = dtypes_to_include).iloc[:, 1:].corr()
+    corr = df.select_dtypes(include=dtypes_to_include).iloc[:, 1:].corr()
     fig, ax = plt.subplots(figsize=(figsize_x, figsize_y))
     sns.heatmap(corr, vmin=vmin, vmax=vmax, center=center, square=square)
     fig.tight_layout()
@@ -37,7 +37,8 @@ def plot_features_corr_heatmap(df, vmin=-1, vmax=1, center=0, square=True,
 # Functions to plot statistics on missing values
 # ======================================================================
 
-def plot_missing_values_stats(df, target_column, grid=(1, 1), figsize_x=7, figsize_y=9): # type: (pd.DataFrame, str, tuple, Any, Any) -> None
+def plot_missing_values_stats(df, target_column, grid=(1, 1), figsize_x=7,
+                              figsize_y=9):  # type: (pd.DataFrame, str, tuple, Any, Any) -> None
     """
     This method plots barplot with relative number of missing values in feature columns
     :param df: pandas DF containing train (and test) data set
@@ -78,10 +79,9 @@ def plot_missing_values_stats(df, target_column, grid=(1, 1), figsize_x=7, figsi
 # Functions to plot numerical features
 # ======================================================================
 
-def plot_numerical_feature_vs_target(df, feature, target,
-                                     val_min=None, val_max=None, bin_size=None,
-                                     figsize_x=14, figsize_y=4,
-                                     label_rotation=90):  # type: (pd.DataFrame, str, str, Any, Any, Any, Any, Any, Any) -> None
+def plot_numerical_feature_vs_target(
+        df, feature, target, val_min=None, val_max=None, bin_size=None, figsize_x=14, figsize_y=4,
+        label_rotation=90):  # type: (pd.DataFrame, str, str, Any, Any, Any, Any, Any, Any) -> None
     """
     This method plots binned numerical feature VS target
     :param df: pandas DF containing train (also possibly test) data set
@@ -115,9 +115,9 @@ def plot_numerical_feature_vs_target(df, feature, target,
     del list_df; gc.collect()
 
 
-def plot_numerical_feature_train_vs_test(df, target, feature, val_min=None, val_max=None, bin_size=None,
-                                         grid=(2, 1), figsize_x=14, figsize_y=7,
-                                         label_rotation=90):  # type: (pd.DataFrame, str, str, Any, Any, Any, tuple, Any, Any) -> None
+def plot_numerical_feature_train_vs_test(
+        df, target, feature, val_min=None, val_max=None, bin_size=None, grid=(2, 1), figsize_x=14, figsize_y=7,
+        label_rotation=90):  # type: (pd.DataFrame, str, str, Any, Any, Any, tuple, Any, Any) -> None
     """
     This method plots train vs test comparison of a binned numerical feature
     :param df: pandas DF containing train and test data sets
@@ -154,7 +154,6 @@ def plot_numerical_feature_train_vs_test(df, target, feature, val_min=None, val_
         plt.setp(ax[i].get_xticklabels(), rotation=label_rotation, size=11)
         plt.setp(ax[i].get_yticklabels(), size=12)
         plt.tight_layout()
-
     del train, test; gc.collect()
 
 
@@ -162,8 +161,9 @@ def plot_numerical_feature_train_vs_test(df, target, feature, val_min=None, val_
 # Functions to plot categorical features
 # ======================================================================
 
-def countplot_cat_feature_vs_target(df, feature, target, figsize_x=7, figsize_y=4, label_rotation=0,
-                                    print_cross_tab=True):  # type: (pd.DataFrame, str, str, Any, Any, int, bool) -> None
+def countplot_cat_feature_vs_target(
+        df, feature, target, figsize_x=7, figsize_y=4, label_rotation=0,
+        print_cross_tab=True):  # type: (pd.DataFrame, str, str, Any, Any, int, bool) -> None
     """
     This method shows how a given categorical feature is related to the target (using countplot)
     :param df: pandas DF containing train data set
@@ -187,9 +187,9 @@ def countplot_cat_feature_vs_target(df, feature, target, figsize_x=7, figsize_y=
             df[target].unique()[0])
 
 
-def countplot_cat_feature_train_vs_test(df, target, feature, normalize=False, grid=(1, 2),
-                                        label_rotation=0, figsize_x=14, figsize_y=4, annot_size=8,
-                                        annot_rotation=0):  # type: (pd.DataFrame, pd.DataFrame, str, bool, tuple, int, Any, Any, Any, int) -> None
+def countplot_cat_feature_train_vs_test(
+        df, target, feature, normalize=False, grid=(1, 2), label_rotation=0, figsize_x=14, figsize_y=4, annot_size=8,
+        annot_rotation=0):  # type: (pd.DataFrame, pd.DataFrame, str, bool, tuple, int, Any, Any, Any, int) -> None
     """
     This method plots a train vs test comparison for a given categorical feature (countplot-based)
     :param df: pandas DF containing train and test data sets
@@ -265,8 +265,9 @@ def countplot_cat_feature_train_vs_test(df, target, feature, normalize=False, gr
 # Functions to plot distribution (count, density) of numerical features
 # ======================================================================
 
-def distplot_numerical_feature_vs_target(df, feature, target, density=True, dropna=True, bins=50,
-                                         figsize_x=14, figsize_y=4): # type: (pd.DataFrame, str, str, bool, bool, int, Any, Any) -> None
+def distplot_numerical_feature_vs_target(
+        df, feature, target, density=True, dropna=True, bins=50,
+        figsize_x=14, figsize_y=4):  # type: (pd.DataFrame, str, str, bool, bool, int, Any, Any) -> None
     """
     This method plots density distribution of a numerical feature grouped by target
     :param df: pandas DF containing train data set
@@ -286,13 +287,13 @@ def distplot_numerical_feature_vs_target(df, feature, target, density=True, drop
     ax.set_xlabel('{0}'.format(feature), size=12)
     ax.set_ylabel('Density' if density else 'Number of entries', size=12)
     ax.set_title("{0} distribution by target".format(feature), size=13)
-    ax.legend(bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0.1, prop={'size':12})
+    ax.legend(bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0.1, prop={'size': 12})
     plt.tight_layout()
 
 
-def distplot_numerical_feature_before_and_after_transformation(df, feature_before, feature_after, target,
-                                                               density=True, dropna=True, bins=50, figsize_x=14,
-                                                               figsize_y=4):  # type: (pd.DataFrame, str, str, str, bool, bool, int, Any, Any) -> None
+def distplot_numerical_feature_before_and_after_transformation(
+        df, feature_before, feature_after, target, density=True, dropna=True, bins=50,
+        figsize_x=14, figsize_y=4):  # type: (pd.DataFrame, str, str, str, bool, bool, int, Any, Any) -> None
     """
     This method plots 2 density distributions of a numerical feature grouped by target: before and after
     applied transformation (such as log, sqrt, boxcox, etc.). This way one can see the effect of transformation.
@@ -309,7 +310,7 @@ def distplot_numerical_feature_before_and_after_transformation(df, feature_befor
     """
     fig, ax = plt.subplots(1, 2, figsize=(figsize_x, figsize_y))
     for i, feat in enumerate([feature_before, feature_after]):
-        axis=ax[i]
+        axis = ax[i]
         for target_val, temp_df in df.groupby(target)[feat]:
             temp_df = temp_df.dropna().to_frame(name=feat) if dropna else temp_df.to_frame(name=feat)
 
@@ -322,5 +323,5 @@ def distplot_numerical_feature_before_and_after_transformation(df, feature_befor
             axis.set_xlabel('{0}'.format(feat), size=12)
             axis.set_ylabel('Density' if density else 'Number of entries', size=12)
             axis.set_title(title, size=13)
-            axis.legend(bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0.1, prop={'size':12})
+            axis.legend(bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0.1, prop={'size': 12})
     plt.tight_layout()
