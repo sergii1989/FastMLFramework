@@ -75,6 +75,7 @@ def auto_selector_of_categorical_features(df, cols_exclude=[], int_threshold=10)
     This method is used for selecting categorical features in a pandas DF. It uses features labeled as 'category'
     and 'object', but also 'int8' data types with additional filter applied on max and min values (int_threshold).
     This filter is needed to exclude high cardinality numerical features from being used as categorical feature.
+    :param df: pandas DF with the dataset
     :param cols_exclude: columns to be excluded from a DF (e.g. target column)
     :param int_threshold: this threshold is used to limit number of int8-type numerical features to be interpreted
                           as categorical
