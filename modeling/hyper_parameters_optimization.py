@@ -99,15 +99,16 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
 
     def hp_optimizer(self, **hp_optimization_space):
         """
-        This method runs cross-validation with the set of hp provided by Bayes procedure and returns CV score
+        This method runs cross-validation with the set of hp provided by Bayes procedure and returns CV score.
+        Note: cv_verbosity in the case of hp optimization is set to 0 just to reduce amount of printouts.
         :param hp_optimization_space: dict with hyperparameters to be optimized within corresponding variation ranges
         :return: CV score according to provided evaluation metrics (this is defined in the instance of class Predictor)
         """
         hp_optimization_space = self._adjust_hyperparameters_datatypes(hp_optimization_space)
         hp_optimization_space = self._complete_missing_hyperparameters_from_init_params(hp_optimization_space)
         self.predictor.classifier.reinit_model_with_new_params(hp_optimization_space)
-        _, _, _, _, cv_score, cv_std = self.predictor._run_cv_one_seed(seed_val=self.seed_val, predict_test=False)
-
+        _, _, _, _, cv_score, cv_std = self.predictor._run_cv_one_seed(seed_val=self.seed_val, predict_test=False,
+                                                                       cv_verbosity=0)
         # Store all used hyperparameters with the corresponding CV results in a pandas DF
         hpo_space_df = pd.DataFrame(index=hp_optimization_space.keys(), data=hp_optimization_space.values()).T
         hpo_space_df.insert(loc=0, column='cv_score', value=cv_score)
