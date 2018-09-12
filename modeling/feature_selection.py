@@ -53,6 +53,7 @@ class FeatureSelector(object):
 
 class FeatureSelectorByTargetPermutation(FeatureSelector):
     FEATURE_SELECTION_METHOD = 'target_permutation'
+    FIGNAME_FEATS_SCORE_VS_IMPORTANCE = 'feature_score_vs_importance'
     FIGNAME_CV_VERSUS_FEATURES_SCORE_THRESHOLD = 'cv_vs_feats_score_threshold'
 
     def __init__(self, train_df, target_column, index_column, cat_features, lgbm_params_feats_exploration,
@@ -96,8 +97,10 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
             metrics_decimals, num_folds, stratified, kfolds_shuffle, int_threshold, seed_value
         )
 
+        # Dicts with LGB model parameters to be used in feature exploration and selection stages, correspondingly
         self.lgbm_params_feats_exploration = lgbm_params_feats_exploration  # type: dict
         self.lgbm_params_feats_selection = lgbm_params_feats_selection  # type: dict
+
         self.actual_imp_df = None  # type: pd.DataFrame # actual features importance
         self.null_imp_df = None  # type: pd.DataFrame # null-hypothesis features importance
         self.features_scores_df = None  # type: pd.DataFrame # features importance gain/split scores
@@ -301,7 +304,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         self.cv_results_vs_thresh_df = cv_results_vs_thresh_df
         del cv_results, temp; gc.collect()
 
-    def display_distributions(self, feature, figsize_x=14, figsize_y=6):
+    def display_distributions(self, feature, path_to_results=None, figsize_x=14, figsize_y=6):
         """
         This method plots the actual vs null-importance distributions for the given feature. Comparison of actual
         importance to the mean and max of the null importance can be considered as indicator of the features importance
@@ -311,6 +314,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
             - Correlated features have decaying importance once one of them is used by the model. The chosen feature
               will have strong importance and its correlated suite will have decaying importance
         :param feature: name of the feature to plot the actual vs null-importance distributions
+        :param path_to_results: absolute path to the directory where the figure is going to be saved
         :param figsize_x: size of figure in x-direction
         :param figsize_y: size of figure in y-direction
         :return: None
@@ -329,10 +333,18 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
                 importance.split('_')[1].upper(), feature.upper()))
         plt.tight_layout()
 
-    def feature_score_comparing_to_importance(self, ntop_feats=100, figsize_x=16, figsize_y=16):
+        if path_to_results is not None:
+            filename = '_'.join([self.FIGNAME_FEATS_SCORE_VS_IMPORTANCE, get_current_timestamp()]) + '.png'
+            full_path_to_file = '\\'.join([path_to_results, filename])
+            print('\nSaving {0} null importance distribution vs actual distribution figure '
+                  'into {1}'.format(feature, full_path_to_file))
+            plt.savefig(full_path_to_file)
+
+    def feature_score_comparing_to_importance(self, ntop_feats=100, path_to_results=None, figsize_x=16, figsize_y=16):
         """
         This method plots feature_score with respect to split/gain importance
         :param ntop_feats: number of features with highest feature_score (to be used in plot)
+        :param path_to_results: absolute path to the directory where the figure is going to be saved
         :param figsize_x: size of figure in x-direction
         :param figsize_y: size of figure in y-direction
         :return: None
@@ -345,6 +357,12 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
                         .iloc[0:ntop_feats], ax=ax)
             ax.set_title('Feature scores wrt {0} importances'.format(importance.split('_')[0]), fontsize=14)
         plt.tight_layout()
+
+        if path_to_results is not None:
+            filename = '_'.join([self.FIGNAME_FEATS_SCORE_VS_IMPORTANCE, get_current_timestamp()]) + '.png'
+            full_path_to_file = '\\'.join([path_to_results, filename])
+            print('\nSaving {0} top features score vs importance figure into {1}'.format(ntop_feats, full_path_to_file))
+            plt.savefig(full_path_to_file)
 
     def plot_cv_results_vs_feature_threshold(self, path_to_results=None, figsize_x=14, figsize_y=4, annot_offset_x=3,
                                              annot_offset_y=5, annot_rotation=90):
@@ -371,7 +389,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
 
             # Plot CV score with std error bars
             ax[i].errorbar(x=x, y=y, yerr=yerr, fmt='-o', label=importance)
-            ax[i].set_title('{0}: cv {1} score vs feature score threshold'.format(importance,
+            ax[i].set_title('{0}: CV {1} score vs feature score threshold'.format(importance,
                                                                                   self.eval_metric), size=13)
             ax[i].set_xlabel('Feature score threshold', size=12)
             ax[i].set_ylabel('CV {0} score'.format(self.eval_metric), size=12)
@@ -380,9 +398,6 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
             for xpos, ypos, name in zip(x, y, annotation):
                 ax[i].annotate(name, (xpos, ypos), xytext=(annot_offset_x, annot_offset_y), va='bottom',
                                textcoords='offset points', rotation=annot_rotation)
-
-            if i == 1:
-                ax[i].legend(bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0.1, prop={'size': 12})
             i += 1
 
         if path_to_results is not None:
@@ -491,7 +506,7 @@ def main_feat_selector_by_target_permutation():
     }
 
     # Initialization of FeatureSelectorByTargetPermutation
-    feat_select_targer_perm = \
+    feat_select_target_perm = \
         FeatureSelectorByTargetPermutation(train_df=data,
                                            target_column=target_column, index_column=index_column,
                                            cat_features=cat_features, int_threshold=int_threshold,
@@ -502,22 +517,22 @@ def main_feat_selector_by_target_permutation():
                                            stratified=stratified, kfolds_shuffle=kfolds_shuffle,
                                            seed_value=123)
 
-    feat_select_targer_perm.get_actual_importances_distribution(num_boost_rounds=350)
-    print(feat_select_targer_perm.actual_imp_df.head())
+    feat_select_target_perm.get_actual_importances_distribution(num_boost_rounds=350)
+    print(feat_select_target_perm.actual_imp_df.head())
 
-    feat_select_targer_perm.get_null_importances_distribution(nb_runs=5, num_boost_rounds=350)
-    print(feat_select_targer_perm.null_imp_df.head())
+    feat_select_target_perm.get_null_importances_distribution(nb_runs=5, num_boost_rounds=350)
+    print(feat_select_target_perm.null_imp_df.head())
 
     # This one is used for selection of features in CV manner (using threshold)
     func = lambda f_act_imps, f_null_imps: 100. * (
             f_null_imps < np.percentile(f_act_imps, 25)).sum() / f_null_imps.size
 
-    feat_select_targer_perm.score_features(func)
-    print(feat_select_targer_perm.features_scores_df.head())
+    feat_select_target_perm.score_features(func)
+    print(feat_select_target_perm.features_scores_df.head())
 
     thresholds = [0, 30, 60, 80]
-    feat_select_targer_perm.eval_feats_removal_impact_on_cv_score(thresholds=thresholds, n_thresholds=5)
-    print(feat_select_targer_perm.cv_results_vs_thresh_df.head())
+    feat_select_target_perm.eval_feats_removal_impact_on_cv_score(thresholds=thresholds, n_thresholds=5)
+    print(feat_select_target_perm.cv_results_vs_thresh_df.head())
 
 
 if __name__ == '__main__':
