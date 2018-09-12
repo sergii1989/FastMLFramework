@@ -1,8 +1,54 @@
 <component name="ProjectDictionaryState">
   <dictionary name="sergii">
     <words>
+      <w>algo</w>
+      <w>annot</w>
+      <w>barplot</w>
+      <w>boruta</w>
+      <w>bylevel</w>
+      <w>bytree</w>
+      <w>cmap</w>
+      <w>colsample</w>
+      <w>countplot</w>
+      <w>crosstab</w>
+      <w>dataframe</w>
+      <w>dataset</w>
+      <w>datatypes</w>
+      <w>dtrain</w>
+      <w>figname</w>
+      <w>figsize</w>
+      <w>gbdt</w>
+      <w>gbrt</w>
+      <w>gbtree</w>
+      <w>goss</w>
+      <w>gridspec</w>
+      <w>hyperparameter</w>
       <w>hyperparameters</w>
+      <w>importances</w>
+      <w>kaggle</w>
+      <w>kfolds</w>
       <w>kurtosis</w>
+      <w>lgbm</w>
+      <w>logloss</w>
+      <w>merror</w>
+      <w>mlogloss</w>
+      <w>multiclass</w>
+      <w>nthread</w>
+      <w>ntop</w>
+      <w>pred</w>
+      <w>preds</w>
+      <w>reinit</w>
+      <w>rmse</w>
+      <w>sklearn</w>
+      <w>sqrt</w>
+      <w>stds</w>
+      <w>stdv</w>
+      <w>subm</w>
+      <w>targer</w>
+      <w>xgboost</w>
+      <w>xpos</w>
+      <w>yerr</w>
+      <w>ypos</w>
     </words>
   </dictionary>
 </component>
