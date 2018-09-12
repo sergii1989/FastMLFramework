@@ -6,16 +6,18 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from sklearn import metrics
-from generic_tools.utils import timing
 from sklearn.model_selection import KFold, StratifiedKFold
+from generic_tools.utils import timing, get_current_timestamp
 from sklearn.metrics import confusion_matrix, classification_report
 
 
 class Predictor(object):
+    FIGNAME_CONFUSION_MATRIX = 'confusion_matrix'
+    FIGNAME_CV_RESULTS_VERSUS_SEEDS = 'cv_results_vs_seeds'
 
     def __init__(self, train_df, test_df, target_column, index_column, classifier, eval_metric, metrics_scorer,
                  metrics_decimals=6, target_decimals=6, cols_to_exclude=[], num_folds=5, stratified=False,
-                 kfolds_shuffle=True):
+                 kfolds_shuffle=True, cv_verbosity=1000):
         """
         This class run CV and makes OOF and submission predictions. It also allows to run CV in bagging mode using
         different seeds for random generator.
@@ -40,6 +42,7 @@ class Predictor(object):
         :param num_folds: number of folds to be used in CV
         :param stratified: if set True -> preserves the percentage of samples for each class in a fold
         :param kfolds_shuffle: if set True -> shuffle each stratification of the data before splitting into batches
+        :param cv_verbosity: print info about CV training and validation errors every x iterations (e.g. 1000)
         :return: out_of_fold predictions, submission predictions, oof_eval_results and feature_importance data frame
         """
 
@@ -62,53 +65,44 @@ class Predictor(object):
         self.cols_to_exclude = cols_to_exclude  # type: list
         self.stratified = stratified  # type: bool
         self.kfolds_shuffle = kfolds_shuffle  # type: bool
+        self.cv_verbosity = cv_verbosity  # type: int
 
         # Results of CV
         self.oof_preds = None  # type: pd.DataFrame
         self.sub_preds = None  # type: pd.DataFrame
-        self.oof_eval_results = None
-        self.feature_importance = None
+        self.oof_eval_results = None  # type: pd.DataFrame
         self.bagged_oof_preds = None  # type: pd.DataFrame
         self.bagged_sub_preds = None  # type: pd.DataFrame
+        self.feature_importance = None  # type: pd.DataFrame
 
-    # TODO: revise this method. See https://lightgbm.readthedocs.io/en/latest/_modules/lightgbm/plotting.html
-    def _get_feature_importances_in_fold(self, feats, n_fold):
+    def _get_feature_importances_in_fold(self, feats, n_fold):  # type: (list, int) -> pd.DataFrame
         """
         This method prepares DF with the features importance per fold
-        :param feats:
-        :param n_fold:
-        :return:
+        :param feats: list of features names
+        :param n_fold: fold index
+        :return: pandas DF with feature names and importances (in each considered fold)
         """
+        features_names, features_importances = self.classifier.get_features_importance()
+
         fold_importance_df = pd.DataFrame()
-
-        # XGBoost: The feature_importance_ being default to 'weight' in the python (not 'gain')
-        # 'weight': the number of times a feature is used to split the data across all trees.
-        # 'gain': the average gain across all splits the feature is used in.
-        # 'cover': the average coverage across all splits the feature is used in.
-        # 'total_gain': the total gain across all splits the feature is used in.
-        # 'total_cover': the total coverage across all splits the feature is used in.
-        # fold_importance_df["feature"] = self.classifier.estimator.Booster.feature_names()
-        # fold_importance_df["importance"] = self.classifier.estimator.Booster.get_score(importance_type='gain')
-
-        # LightGBM:
-        # 'split': result contains numbers of times the feature is used in a model.
-        # 'gain': result contains total gains of splits which use the feature.
-        # fold_importance_df["feature"] = self.classifier.estimator.booster_.feature_name()
-        # fold_importance_df["importance"] = self.classifier.estimator.booster_.feature_importance(importance_type='gain')
-
-        fold_importance_df["feature"] = feats
-        fold_importance_df["importance"] = self.classifier.estimator.feature_importances_
+        fold_importance_df["feature"] = features_names if features_names is not None else feats
+        fold_importance_df["importance"] = features_importances
         fold_importance_df["fold"] = n_fold + 1
         return fold_importance_df.sort_values('importance', ascending=False)
 
-    def _run_cv_one_seed(self, seed_val=27, predict_test=True):
+    def _run_cv_one_seed(self, seed_val=27, predict_test=True, cv_verbosity=None):
         """
         This method run CV with the single seed. It is called from more global method: run_cv_and_prediction().
         :param seed_val: seeds to be used in CV
         :param predict_test: IMPORTANT!! If False -> train model and predict OOF (i.e. validation only). Set True
                              if make a prediction for test data set
+        :param cv_verbosity: print info about CV training and validation errors every x iterations (e.g. 1000)
         :return: out_of_fold predictions, submission predictions, oof_eval_results and feature_importance data frame
         """
+
+        # This expression is needed to be able pass explicitly cv_verbosity=0 when running hyperparameters optimization
+        cv_verbosity = cv_verbosity if cv_verbosity is not None else self.cv_verbosity
+
         target = self.target_column
         feats = [f for f in self.train_df.columns if f not in self.cols_to_exclude]
         feature_importance_df = pd.DataFrame()
@@ -134,8 +128,8 @@ class Predictor(object):
             train_x, train_y = self.train_df[feats].iloc[train_idx], self.train_df[target].iloc[train_idx]
             valid_x, valid_y = self.train_df[feats].iloc[valid_idx], self.train_df[target].iloc[valid_idx]
 
-            self.classifier.fit_model(train_x, train_y, valid_x, valid_y, eval_metric=self.eval_metric)
-
+            self.classifier.fit_model(train_x, train_y, valid_x, valid_y, eval_metric=self.eval_metric,
+                                      cv_verbosity=cv_verbosity)
             best_iter_in_fold = self.classifier.get_best_iteration() if hasattr(
                 self.classifier, 'get_best_iteration') else 1
 
@@ -164,7 +158,6 @@ class Predictor(object):
         cv_std = round(float(np.std(oof_eval_results)), self.metrics_decimals)
         print('CV: list of OOF {0} scores: {1}'.format(self.eval_metric.upper(), oof_eval_results))
         print('CV {0} score: {1} +/- {2}'.format(self.eval_metric.upper(), cv_score, cv_std))
-
         return oof_preds, sub_preds, oof_eval_results, feature_importance_df, cv_score, cv_std
 
     @timing
@@ -223,19 +216,21 @@ class Predictor(object):
             # Averaging results over seeds to compute single set of OOF predictions
             oof_preds = pd.DataFrame()
             oof_preds[index] = self.train_df[index].values
-            oof_preds[target + '_OOF'] = bagged_oof_preds.mean(axis=1).round(self.target_decimals)
+            oof_preds[target + '_OOF'] = bagged_oof_preds.loc[:, bagged_oof_preds.columns != index].mean(axis=1)\
+                .round(self.target_decimals)
             self.oof_preds = oof_preds
 
             # Store predictions for test data (if flag is True). Use simple averaging over seeds (same as oof_preds)
             if predict_test:
                 sub_preds = pd.DataFrame()
                 sub_preds[index] = self.test_df[index].values
-                sub_preds[target] = bagged_sub_preds.mean(axis=1).round(self.target_decimals)
+                sub_preds[target] = bagged_sub_preds.loc[:, bagged_sub_preds.columns != index].mean(axis=1)\
+                    .round(self.target_decimals)
                 self.sub_preds = sub_preds
 
             # Final stats: CV score and STD of CV score computed over all seeds
             cv_score = round(self.metrics_scorer(self.train_df[target], oof_preds[target + '_OOF']),
-                             self.target_decimals)
+                             self.metrics_decimals)
             cv_std = round(float(np.std(cv_score_bagged)), self.metrics_decimals)
             print('\nCV: bagged {0} score {1} +/- {2}\n'.format(self.eval_metric.upper(), cv_score, cv_std))
 
@@ -245,7 +240,7 @@ class Predictor(object):
                 zip(seeds_list, cv_score_bagged, cv_std_bagged, oof_eval_results_bagged),
                 columns=['seed', 'cv_mean_score', 'cv_std', 'cv_score_per_each_fold']
             )
-            self.feature_importance = feature_importance_bagged
+            self.feature_importance = pd.concat(feature_importance_bagged).reset_index(drop=True)
             del oof_pred_bagged, sub_preds_bagged; gc.collect()
 
         else:
@@ -271,12 +266,14 @@ class Predictor(object):
             self.feature_importance = feature_importance_df
             del oof_preds, sub_preds; gc.collect()
 
-    def plot_confusion_matrix(self, class_names, labels_mapper=None, normalize=False, cmap=plt.cm.Blues):
+    def plot_confusion_matrix(self, class_names, labels_mapper=None, normalize=False, path_to_results=None,
+                              cmap=plt.cm.Blues):
         """
         This function prints and plots the confusion matrix. Normalization can be applied by setting normalize=True.
         :param class_names: list of strings defining unique classes names
         :param labels_mapper:
         :param normalize: if set True -> normalizes results in confusion matrix (shows units instead of counting values)
+        :param path_to_results: absolute path to the directory where the figure is going to be saved
         :param cmap: color map
         :return: plots confusion matrix and print classification report
         """
@@ -313,6 +310,12 @@ class Predictor(object):
         print ('Classification report:\n{0}'.format(
             classification_report(true_labels, predicted_labels, target_names=class_names)))
 
+        if path_to_results is not None:
+            filename = '_'.join([self.FIGNAME_CONFUSION_MATRIX, get_current_timestamp()]) + '.png'
+            full_path_to_file = '\\'.join([path_to_results, filename])
+            print('\nSaving confusion matrix graph into %s' % full_path_to_file)
+            plt.savefig(full_path_to_file)
+
     def show_features_importance(self, n_features=20, path_to_results=None, file_version=None,
                                  figsize_x=8, figsize_y=10):
         """
@@ -325,12 +328,7 @@ class Predictor(object):
         :param figsize_y: size of figure along Y-axis
         :return: plot of features importance
         """
-
-        if isinstance(self.feature_importance, list):
-            features_importance_df = pd.concat(self.feature_importance).reset_index(drop=True)
-        else:
-            features_importance_df = self.feature_importance
-
+        features_importance_df = self.feature_importance.copy()
         cols = features_importance_df[["feature", "importance"]].groupby("feature").mean().sort_values(
             by="importance", ascending=False)[:n_features].index
         best_features = features_importance_df.loc[features_importance_df.feature.isin(cols)].sort_values(
@@ -342,21 +340,25 @@ class Predictor(object):
         plt.tight_layout()
 
         if all(v is not None for v in [path_to_results, file_version]):
-            output_figname = '\\'.join([path_to_results, self.model_name + '_feat_import_' + file_version + '.png'])
-            print('\nSaving features importance graph into %s' % output_figname)
-            plt.savefig(output_figname)
+            filename = '_'.join([self.model_name, 'feat_import', file_version]) + '.png'
+            full_path_to_file = '\\'.join([path_to_results, filename])
+            print('\nSaving features importance graph into %s' % full_path_to_file)
+            plt.savefig(full_path_to_file)
 
-            features_csv = '\\'.join([path_to_results, self.model_name + '_feat_import_' + file_version + '.csv'])
-            print('\nSaving {0} features into {1}'.format(self.model_name.upper(), features_csv))
+            filename = '_'.join([self.model_name, 'feat_import', file_version]) + '.csv'
+            full_path_to_file = '\\'.join([path_to_results, filename])
+            print('\nSaving {0} features into {1}'.format(self.model_name.upper(), full_path_to_file))
             features_importance_df = features_importance_df[["feature", "importance"]].groupby(
                 "feature").mean().sort_values(by="importance", ascending=False).reset_index()
-            features_importance_df.to_csv(features_csv, index=False)
+            features_importance_df.to_csv(full_path_to_file, index=False)
+        del features_importance_df; gc.collect()
 
-    def plot_cv_results_vs_used_seeds(self, figsize_x=14, figsize_y=4, annot_offset_x=3, annot_offset_y=5,
-                                      annot_rotation=90):
+    def plot_cv_results_vs_used_seeds(self, path_to_results=None, figsize_x=14, figsize_y=4, annot_offset_x=3,
+                                      annot_offset_y=5, annot_rotation=90):
         """
         This method plots CV results and corresponding std's for all seeds considered in the bagging process.
-        The figure allows to see the effect of the seed number used in the model / k-fold split on the CV score.
+        The figure allows to see the effect of the seed number used in the model / k-fold split on the CV score
+        :param path_to_results: absolute path to the directory where the figure is going to be saved
         :param figsize_x: size of figure in x-direction
         :param figsize_y: size of figure in y-direction
         :param annot_offset_x: offset (points) in x-direction for annotation text
@@ -382,8 +384,13 @@ class Predictor(object):
         for xpos, ypos, name in zip(x, y, annotation):
             ax.annotate(name, (xpos, ypos), xytext=(annot_offset_x, annot_offset_y), va='bottom',
                         textcoords='offset points', rotation=annot_rotation)
-
         ax.legend(bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0.1, prop={'size': 12})
+
+        if path_to_results is not None:
+            filename = '_'.join([self.FIGNAME_CV_RESULTS_VERSUS_SEEDS, get_current_timestamp()]) + '.png'
+            full_path_to_file = '\\'.join([path_to_results, filename])
+            print('\nSaving CV results vs seeds graph into %s' % full_path_to_file)
+            plt.savefig(full_path_to_file)
 
     def save_oof_results(self, path_to_results, file_version):
         filename = '_'.join([self.model_name, file_version, 'OOF']) + '.csv'
@@ -416,3 +423,120 @@ class Predictor(object):
             filename = '\\'.join([path_to_results, filename])
             print('\nSaving submission predictions for each seed into %s' % filename)
             self.bagged_sub_preds.to_csv(filename, index=False)
+
+
+def prepare_lgbm():
+    from lightgbm import LGBMClassifier
+    from modeling.model_wrappers import LightGBMWrapper
+
+    # LightGBM parameters
+    lgbm_params = {}
+    lgbm_params['boosting_type'] = 'gbdt'  # gbdt, gbrt, rf, random_forest, dart, goss
+    lgbm_params['objective'] = 'binary'
+    lgbm_params['num_leaves'] = 32  # 32
+    lgbm_params['max_depth'] = 8  # 8
+    lgbm_params['learning_rate'] = 0.02  # 0.01
+    lgbm_params['n_estimators'] = 10000
+    lgbm_params['early_stopping_rounds'] = 200
+    lgbm_params['min_split_gain'] = 0.02  # 0.0222415
+    lgbm_params['min_child_weight'] = 40  # 40
+    lgbm_params['subsample'] = 0.87  # 0.8715623
+    lgbm_params['colsample_bytree'] = 0.94  # 0.9497036
+    lgbm_params['reg_alpha'] = 0.04  # 0.04
+    lgbm_params['reg_lambda'] = 0.07  # 0.073
+    lgbm_params['nthread'] = -1
+    lgbm_params['verbose'] = -1
+    lgbm_params['silent'] = True
+
+    lgbm_wrapped = LightGBMWrapper(model=LGBMClassifier, params=lgbm_params, seed=27)
+    return lgbm_wrapped
+
+
+def prepare_xgb():
+    from xgboost import XGBClassifier
+    from modeling.model_wrappers import XGBWrapper
+
+    # XGBoost parameters
+    xgb_params = {}
+    xgb_params['booster'] = 'gbtree'
+    xgb_params['objective'] = 'binary:logistic'
+    xgb_params['tree_method'] = 'hist'  # 'exact'
+    xgb_params['max_depth'] = 6
+    xgb_params['learning_rate'] = 0.02
+    xgb_params['n_estimators'] = 10000
+    xgb_params['early_stopping_rounds'] = 200
+    xgb_params['min_child_weight'] = 30
+    xgb_params['subsample'] = 0.8
+    xgb_params['colsample_bytree'] = 0.7
+    xgb_params['reg_alpha'] = 0.0
+    xgb_params['reg_lambda'] = 1.2
+    xgb_params['nthread'] = -1
+    xgb_params['verbose'] = -1
+    xgb_params['silent'] = True
+    # xgb_params['colsample_bylevel'] = 0.632
+    # xgb_params['scale_pos_weight']  = 2.5
+
+    xgb_wrapped = XGBWrapper(model=XGBClassifier, params=xgb_params, seed=27)
+    return xgb_wrapped
+
+
+def main_run_cv_and_prediction(classifier='lgbm', debug=False):
+    import warnings
+    from sklearn.metrics import roc_auc_score
+    from data_processing.preprocessing import downcast_datatypes
+    warnings.filterwarnings("ignore")
+
+    # Settings for debug
+    num_rows = 2000
+
+    # Input data
+    path_to_data = r'C:\Kaggle\kaggle_home_credit_default_risk\feature_selection'
+    full_path_to_file = '\\'.join([path_to_data, 'train_dataset_lgbm_10.csv'])
+    data = downcast_datatypes(pd.read_csv(full_path_to_file, nrows=num_rows if debug else None))\
+        .reset_index(drop=True)
+    full_path_to_file = '\\'.join([path_to_data, 'test_dataset_lgbm_10.csv'])
+    test_data = downcast_datatypes(pd.read_csv(full_path_to_file, nrows=num_rows if debug else None))\
+        .reset_index(drop=True)
+    print('df_train shape: {0}'.format(data.shape))
+    print('df_test shape: {0}'.format(test_data.shape))
+
+    # Parameters
+    target_column = 'TARGET'
+    index_column = 'SK_ID_CURR'
+    eval_metric = 'auc'
+    metrics_scorer = roc_auc_score
+    metrics_decimals = 4
+    target_decimals = 2
+    num_folds = 5
+    stratified = True
+    kfolds_shuffle = True
+    cv_verbosity = 1000
+
+    # Columns to exclude from input data
+    cols_to_exclude = ['TARGET', 'SK_ID_CURR', 'SK_ID_BUREAU', 'SK_ID_PREV']
+
+    if classifier is 'lgbm':
+        classifier_model = prepare_lgbm()
+    elif classifier is 'xgb':
+        classifier_model = prepare_xgb()
+    else:
+        classifier_model = prepare_lgbm()
+
+    predictor = Predictor(
+        train_df=data, test_df=test_data, target_column=target_column, index_column=index_column,
+        classifier=classifier_model, eval_metric=eval_metric, metrics_scorer=metrics_scorer,
+        metrics_decimals=metrics_decimals, target_decimals=target_decimals,
+        cols_to_exclude=cols_to_exclude, num_folds=num_folds, stratified=stratified,
+        kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity
+    )
+
+    bagging = True
+    predict_test = True
+    seeds_list = [27, 999999, 2018, 516, 986]
+
+    predictor.run_cv_and_prediction(bagging=bagging, seeds_list=seeds_list, predict_test=predict_test)
+
+
+if __name__ == '__main__':
+    # main_run_cv_and_prediction(classifier='lgbm', debug=True)
+    main_run_cv_and_prediction(classifier='xgb', debug=True)
