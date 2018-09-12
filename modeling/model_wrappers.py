@@ -12,7 +12,7 @@ class ModelWrapper(object):
             try:
                 self.model_name = self.model.__name__
             except Exception as e:
-                print 'Please provide name of the model. Error %s encountered when trying self.model.__name__' % e
+                print('Please provide name of the model. Error %s encountered when trying self.model.__name__' % e)
 
     def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
         # Abstract method, must be implemented by derived classes
@@ -26,11 +26,15 @@ class ModelWrapper(object):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, verbose, early_stopping_rounds):
+    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
     def predict_probability(self, x, num_iteration):
+        # Abstract method, must be implemented by derived classes
+        raise NotImplemented()
+
+    def get_features_importance(self):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
@@ -67,15 +71,40 @@ class LightGBMWrapper(ModelWrapper):
         self.params['seed'] = seed
         self.estimator = self.model(**self.params)
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, verbose, early_stopping_rounds):
-        self.estimator.fit(train_x, train_y, eval_set=[(train_x, train_y), (valid_x, valid_y)],
-            eval_metric=eval_metric, verbose=verbose, early_stopping_rounds=early_stopping_rounds)
+    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
+        """
+        This method is responsible for fitting of LGBM estimator.
+        :param train_x: train dataset with features (not including the target)
+        :param train_y: train dataset with target column
+        :param valid_x: validation dataset with features (not including the target)
+        :param valid_y: validation dataset with target column
+        :param eval_metric: 'rmse', 'mae', 'logloss', 'auc', etc.
+        :param cv_verbosity: print info about CV training and validation errors every x iterations (e.g. 1000)
+        :return: fitted LGBM estimator
+        """
+        self.estimator.fit(train_x, train_y,
+                           eval_set=[(train_x, train_y), (valid_x, valid_y)],
+                           eval_metric=eval_metric,
+                           verbose=cv_verbosity)
 
     def predict_probability(self, x, num_iteration=1000):
         return self.estimator.predict_proba(x, num_iteration=num_iteration)[:, 1]
 
     def get_best_iteration(self):
-        return self.estimator.best_iteration_
+        return self.estimator.booster_.best_iteration
+
+    def get_features_importance(self):
+        """
+        In LightGBM there are two types of features importance:
+            - 'split': result contains numbers of times the feature is used in a model.
+            - 'gain': result contains total gains of splits which use the feature.
+        'Gain' is slightly more informative than the 'split' (thus it is proposed to be used in here by default).
+        Note: self.estimator.feature_importances_ is not used here because it reflects 'split' importance by default.
+        :return: features_names, features_importances
+        """
+        features_names = self.estimator.booster_.feature_name()
+        features_importances = self.estimator.booster_.feature_importance(importance_type='gain')
+        return features_names, features_importances
 
 
 class XGBWrapper(ModelWrapper):
@@ -96,15 +125,47 @@ class XGBWrapper(ModelWrapper):
         self.params['seed'] = seed
         self.estimator = self.model(**self.params)
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, verbose, early_stopping_rounds):
-        self.estimator.fit(train_x, train_y, eval_set=[(train_x, train_y), (valid_x, valid_y)],
-            eval_metric=eval_metric, verbose=verbose, early_stopping_rounds=early_stopping_rounds)
+    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
+        """
+        This method is responsible for fitting of XGB estimator. It should be noted that in xgboost v0.72 (the latest
+        at the moment of creation of this code), there is no support of early_stopping_rounds directly from general dict
+        of parameters (unlike in the case of LightGBM). Therefore, an explicit extraction of this parameter is
+        implemented. If the early_stopping_rounds parameter is missing in the dict of parameters, None is used.
+        :param train_x: train dataset with features (not including the target)
+        :param train_y: train dataset with target column
+        :param valid_x: validation dataset with features (not including the target)
+        :param valid_y: validation dataset with target column
+        :param eval_metric: 'rmse', 'mae', 'logloss', 'auc', etc.
+        :param cv_verbosity: print info about CV training and validation errors every x iterations (e.g. 1000)
+        :return: fitted XGB estimator
+        """
+        self.estimator.fit(train_x, train_y,
+                           eval_set=[(train_x, train_y), (valid_x, valid_y)],
+                           eval_metric=eval_metric,
+                           early_stopping_rounds=self.params.get("early_stopping_rounds", None),
+                           verbose=cv_verbosity)
 
     def predict_probability(self, x, num_iteration=1000):
         return self.estimator.predict_proba(x, ntree_limit=num_iteration)[:, 1]
 
     def get_best_iteration(self):
         return self.estimator.best_iteration
+
+    def get_features_importance(self):
+        """
+        The default value of self.estimator.feature_importances_ in XGBoost is 'weight' (not 'gain').
+        The following options are available for XGBoost:
+            - 'weight': the number of times a feature is used to split the data across all trees.
+            - 'gain': the average gain across all splits the feature is used in.
+            - 'cover': the average coverage across all splits the feature is used in.
+            - 'total_gain': the total gain across all splits the feature is used in.
+            - 'total_cover': the total coverage across all splits the feature is used in.
+        'Gain' is slightly more informative than the 'split' (thus it is proposed to be used in here by default).
+        :return: features_names, features_importances
+        """
+        features_names = self.estimator.get_booster().get_score(importance_type='gain').keys()
+        features_importances = self.estimator.get_booster().get_score(importance_type='gain').values()
+        return features_names, features_importances
 
 
 class SklearnWrapper(ModelWrapper):
@@ -125,11 +186,32 @@ class SklearnWrapper(ModelWrapper):
         self.params['random_state'] = seed
         self.estimator = self.model(**self.params)
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, verbose, early_stopping_rounds):
+    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
+        """
+        This method is responsible for fitting of Sklearn estimator. It should be noted that fit method in Sklearn API
+        does not support valid_x, valid_y, eval_metric, cv_verbosity arguments (thus they are not used here).
+        :param train_x: train dataset with features (not including the target)
+        :param train_y: train dataset with target column
+        :param valid_x: validation dataset with features (not including the target)
+        :param valid_y: validation dataset with target column
+        :param eval_metric: 'rmse', 'mae', 'logloss', 'auc', etc.
+        :param cv_verbosity: print info about CV training and validation errors every x iterations (e.g. 1000)
+        :return: fitted Sklearn estimator
+        """
         self.estimator.fit(train_x, train_y)
 
     def predict_probability(self, x, num_iteration=1000):
         return self.estimator.predict_proba(x)[:, 1]
+
+    def get_features_importance(self):
+        """
+        In Sklearn algorithms, which do have feature_importances_ attribute in base_estimator (e.g. AdaBoostClassifier,
+        ExtraTreesClassifier, etc.), features_names are not available and are assigned explicitly from the column names.
+        :return: features_names, features_importances
+        """
+        features_names = None
+        features_importances = self.estimator.feature_importances_
+        return features_names, features_importances
 
 
 # TODO: Implement CatBoost wrapper
@@ -151,9 +233,11 @@ class CBWrapper(ModelWrapper):
         self.params['random_state'] = seed
         self.estimator = self.model(**self.params)
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, verbose, early_stopping_rounds):
+    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
         self.estimator.fit(train_x, train_y)
 
     def predict_probability(self, x, num_iteration=1000):
         return self.estimator.predict_proba(x)[:, 1]
 
+    def get_features_importance(self):
+        return

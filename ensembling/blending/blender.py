@@ -9,7 +9,7 @@ warnings.filterwarnings("ignore")
 
 class Blender(object):
     def __init__(self, train_oof, test_subm, target_column, index_column, cols_to_use,
-                 metrics_scorer, target_decimals=6, metrics_decimals=6):
+                 metrics_scorer, metrics_decimals=6, target_decimals=6):
         """
         This is a base class for blending models prediction. The blender is trained on out-of-fold predictions (OOF)
         of the 1st (or 2nd) level models and applied to test submissions. The blender is optimized in a way to maximize
@@ -19,9 +19,9 @@ class Blender(object):
         :param target_column: target column (to be predicted)
         :param index_column: unique index column
         :param cols_to_use: list of columns to be feed into blender
-        :param metrics_scorer: from sklearn.metrics http://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
-        :param target_decimals: round precision (decimals) of the target column
+        :param metrics_scorer: http://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
         :param metrics_decimals: round precision (decimals) of the metrics (e.g. used in printouts)
+        :param target_decimals: round precision (decimals) of the target column
         """
         self.train_oof = train_oof
         self.test_subm = test_subm
@@ -29,8 +29,8 @@ class Blender(object):
         self.index_column = index_column
         self.cols_to_use = cols_to_use
         self.metrics_scorer = metrics_scorer
-        self.target_decimals = target_decimals
         self.metrics_decimals = metrics_decimals
+        self.target_decimals = target_decimals
         self._verify_input_data_is_correct()
 
     def _verify_input_data_is_correct(self):
@@ -45,9 +45,9 @@ class Blender(object):
         assert ((self.index_column in self.test_subm.columns) | (self.index_column in self.test_subm.index)), \
             'Please add {index} column to the test_subm dataframe'.format(index=self.index_column)
         assert callable(self.metrics_scorer), 'metrics_scorer should be callable function'
-        if not 'sklearn.metrics' in self.metrics_scorer.__module__:
-            raise TypeError("metrics_scorer should be function from sklearn.metrics module. " \
-                   "Instead received {0}.".format(self.metrics_scorer.__module__))
+        if 'sklearn.metrics' not in self.metrics_scorer.__module__:
+            raise TypeError("metrics_scorer should be function from sklearn.metrics module. "
+                            "Instead received {0}.".format(self.metrics_scorer.__module__))
         return
 
     def evaluate_results(self, **params):
@@ -61,7 +61,7 @@ class Blender(object):
 
 class BayesOptimizationBlender(Blender):
     def __init__(self, train_oof, test_subm, target_column, index_column, cols_to_use,
-                 metrics_scorer, target_decimals=6, metrics_decimals=6):
+                 metrics_scorer, metrics_decimals=6, target_decimals=6):
         """
         This class implements blender based on Bayes Optimization procedure. It is trained on out-of-fold predictions
         of the 1st (or 2nd) level models and applied to test submissions. The blender is optimized in a way to maximize
@@ -71,16 +71,18 @@ class BayesOptimizationBlender(Blender):
         :param target_column: target column (to be predicted)
         :param index_column: unique index column
         :param cols_to_use: list of columns to be feed into blender
-        :param metrics_scorer: from sklearn.metrics http://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
-        :param target_decimals: round precision (decimals) of the target column
+        :param metrics_scorer: http://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
         :param metrics_decimals: round precision (decimals) of the metrics (e.g. used in printouts)
+        :param target_decimals: round precision (decimals) of the target column
         """
         super(BayesOptimizationBlender, self).__init__(train_oof, test_subm, target_column, index_column, cols_to_use,
-                                                       metrics_scorer, target_decimals, metrics_decimals)
+                                                       metrics_scorer, metrics_decimals, target_decimals)
         self.blended_train_score = None  # type: float
         self.optimal_weights_df = None  # type: pd.DataFrame
+        self.test_file_blended = None  # type: pd.DataFrame
 
-    def _normalize_weights(self, best_params, precision=3):  # type: (dict) -> dict
+    @staticmethod
+    def _normalize_weights(best_params, precision=3):  # type: (dict) -> dict
         """
         This method normalizes raw weights from the Bayes Optimization process. The sum of all weights should be 1.
         :param best_params: raw weights from Bayes Optimization process
@@ -123,11 +125,11 @@ class BayesOptimizationBlender(Blender):
 
         # TODO: to refactor run() function so to make it general for all type of optimizers
 
-        print '\nRunning Bayes Optimization...'
+        print('\nRunning Bayes Optimization...')
         if path_to_save_data is None:
-            print 'Optimal weights will not be stored to the disk since path_to_save_data={}\n'.format(path_to_save_data)
+            print('Optimal weights will not be stored to the disk: path_to_save_data={}\n'.format(path_to_save_data))
         else:
-            print 'Optimal weights will be stored to {}\n'.format(path_to_save_data)
+            print('Optimal weights will be stored to {}\n'.format(path_to_save_data))
 
         params = OrderedDict((c, (0, 1)) for c in self.train_oof[self.cols_to_use])
         bo = BayesianOptimization(self.evaluate_results, params)
@@ -145,12 +147,12 @@ class BayesOptimizationBlender(Blender):
         blended_train_score = round(self.metrics_scorer(self.train_oof[self.target_column], prediction_train),
                                     self.metrics_decimals)
         npt.assert_almost_equal(best_score, blended_train_score, self.metrics_decimals)
-        self.blended_train_score = blended_train_score # best metrics score of blended train OOF predictions
+        self.blended_train_score = blended_train_score  # best metrics score of blended train OOF predictions
 
         # Creating pandas DF with optimal weights
         optimal_weights_df = pd.DataFrame(index=optimal_weights.keys(), data=optimal_weights.values(),
-                                          columns=['weights']).sort_values(by='weights', ascending=False)\
-                                         .rename_axis("model")
+                                          columns=['weights']).sort_values(by='weights',
+                                                                           ascending=False).rename_axis("model")
         self.optimal_weights_df = optimal_weights_df
 
         if path_to_save_data is not None:
@@ -171,6 +173,7 @@ class BayesOptimizationBlender(Blender):
         output_figname = ('\\'.join([path_to_save_data, filename]))
         print('\nSaving optimal weights DF into %s' % output_figname)
         self.optimal_weights_df.to_csv(output_figname)
+
 
 def main():
     from sklearn.metrics import roc_auc_score
@@ -212,26 +215,30 @@ def main():
     test_subm = pd.concat(test_subm, axis=1).reset_index(drop=True)
 
     target_columns_oof = filenames  # raw predicted target (oof)
-    rank_cols_oof = [filename + '_rank' for filename in filenames]  # rank transformed predicted values of target
-    print 'Shape OOF for train: ', train_oof.shape
-    print 'Shape preds for test: ', test_subm.shape
+    # rank_cols_oof = [filename + '_rank' for filename in filenames]  # rank transformed predicted values of target
+    print('Shape OOF for train: {0}'.format(train_oof.shape))
+    print('Shape preds for test: {0}'.format(test_subm.shape))
 
     cols_to_use = target_columns_oof
 
     application_train = downcast_datatypes(pd.read_csv(''.join([raw_data_location, '/application_train.csv']),
                                                        usecols=[index_column, target_column, 'CODE_GENDER']))
     application_train = application_train.loc[application_train['CODE_GENDER'] != 'XNA',
-                                             [index_column, target_column]].reset_index(drop=True)
+                                              [index_column, target_column]].reset_index(drop=True)
     application_test = downcast_datatypes(pd.read_csv(''.join([raw_data_location, '/application_test.csv']),
                                                       usecols=[index_column])).reset_index(drop=True)
 
     train_oof = pd.concat([application_train, train_oof], axis=1)
     test_subm = pd.concat([application_test, test_subm], axis=1)
 
-    bayes_blender = BayesOptimizationBlender(train_oof, test_subm, target_column, index_column, cols_to_use,
-                                             metrics_scorer, target_decimals=target_decimals,
-                                             metrics_decimals=metrics_decimals)
+    bayes_blender = BayesOptimizationBlender(train_oof=train_oof, test_subm=test_subm,
+                                             target_column=target_column, index_column=index_column,
+                                             cols_to_use=cols_to_use, metrics_scorer=metrics_scorer,
+                                             metrics_decimals=metrics_decimals,
+                                             target_decimals=target_decimals,
+                                             )
     bayes_blender.run(init_points, n_iter, path_to_save_data=path_to_results)
+
 
 if __name__ == '__main__':
     main()
