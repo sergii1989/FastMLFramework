@@ -410,7 +410,7 @@ class Predictor(object):
         if self.sub_preds is None:
             raise ValueError('Submission file is empty. Please set flag predict_test = True in run_cv_and_prediction() '
                              'to generate submission file.')
-        full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name]) + '.csv')
+        full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'SUBM']) + '.csv')
         print('\nSaving submission predictions into %s' % full_path_to_file)
         self.sub_preds.to_csv(full_path_to_file, index=False)
 
