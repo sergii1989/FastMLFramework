@@ -1,3 +1,4 @@
+import os
 import numpy as np
 
 from time import time
@@ -89,3 +90,16 @@ def auto_selector_of_categorical_features(df, cols_exclude=[], int_threshold=10)
         if abs(df_temp[int8_col].min()) <= int_threshold and abs(df_temp[int8_col].max()) <= int_threshold:
             int8_cat_cols.append(int8_col)
     return sorted(set(cat_object_cols).union(set(int8_cat_cols)))
+
+
+def check_file_exists(filename, silent=True):
+    if not os.path.exists(filename):
+        if not silent: print('{} does not exist'.format(filename))
+        return False
+    return True
+
+
+def create_output_dir(path_output_dir):
+    if not os.path.exists(path_output_dir):
+        print('Output directory {} is created'.format(path_output_dir))
+        os.makedirs(path_output_dir)
