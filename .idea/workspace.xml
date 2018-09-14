@@ -4,10 +4,10 @@
     <list default="true" id="f445f148-be77-4f8b-81ff-ecf6f9ca60fc" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/dictionaries/sergii.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/sergii.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generic_tools/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/generic_tools/utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modeling/cross_validation.py" beforeDir="false" afterPath="$PROJECT_DIR$/modeling/cross_validation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modeling/feature_selection.py" beforeDir="false" afterPath="$PROJECT_DIR$/modeling/feature_selection.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modeling/hyper_parameters_optimization.py" beforeDir="false" afterPath="$PROJECT_DIR$/modeling/hyper_parameters_optimization.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modeling/model_wrappers.py" beforeDir="false" afterPath="$PROJECT_DIR$/modeling/model_wrappers.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -18,44 +18,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="feature_selection.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="feature_selection.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/modeling/feature_selection.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="136">
-              <caret line="486" column="10" selection-start-line="486" selection-start-column="9" selection-end-line="486" selection-end-column="10" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="cross_validation.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/modeling/cross_validation.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-595">
-              <caret line="489" column="19" lean-forward="true" selection-start-line="489" selection-start-column="19" selection-end-line="489" selection-end-column="19" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="model_wrappers.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="122">
-              <caret line="104" selection-start-line="104" selection-end-line="104" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="visualization.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/data_vis/visualization.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2839">
-              <caret line="174" column="53" selection-start-line="174" selection-start-column="53" selection-end-line="174" selection-end-column="53" />
+            <state relative-caret-position="419">
+              <caret line="387" column="21" selection-start-line="387" selection-start-column="21" selection-end-line="387" selection-end-column="61" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -66,8 +33,65 @@
       <file leaf-file-name="hyper_parameters_optimization.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="271">
-              <caret line="109" column="59" lean-forward="true" selection-start-line="109" selection-start-column="59" selection-end-line="109" selection-end-column="59" />
+            <state relative-caret-position="425">
+              <caret line="25" selection-start-line="25" selection-end-line="26" selection-end-column="47" />
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="cross_validation.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/modeling/cross_validation.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="215">
+              <caret line="212" column="56" selection-start-line="212" selection-start-column="56" selection-end-line="212" selection-end-column="56" />
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="model_wrappers.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="119">
+              <caret line="104" selection-start-line="104" selection-end-line="104" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="visualization.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/data_vis/visualization.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="136">
+              <caret line="175" column="51" selection-start-line="175" selection-start-column="51" selection-end-line="175" selection-end-column="51" />
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="utils.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="390">
+              <caret line="96" column="21" selection-start-line="96" selection-start-column="21" selection-end-line="96" selection-end-column="21" />
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="data_ingestion.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/data_provider/data_ingestion.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="153">
+              <caret line="9" selection-start-line="9" selection-end-line="9" />
             </state>
           </provider>
         </entry>
@@ -83,36 +107,36 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>feat</find>
-      <find>_get_feature_importances_in_fold</find>
-      <find>path_to_results</find>
-      <find>FIGNAME_CONFUSION_MATRIX</find>
-      <find>get_current_timestamp()</find>
-      <find>get_curr</find>
-      <find>self.s</find>
-      <find>get_cur</find>
-      <find>get_c</find>
-      <find>FEATURE_SELECTION_METHOD</find>
+      <find>CV_RESULTS_VS_FEATS_SCORE_THRESH_DF_NAME</find>
+      <find>&quot;.join</find>
+      <find>'.join</find>
+      <find>FIGNAME_</find>
+      <find>file_v</find>
+      <find>'.j</find>
+      <find>os.p</find>
+      <find>target_column</find>
+      <find>FEATURE_SELECTION_DIR</find>
+      <find>.j</find>
+      <find>input_dir</find>
+      <find>down</find>
+      <find>features_selection</find>
+      <find>metrics_scorer</find>
+      <find>if set True -&gt; shuffle each stratification of the data before splitting into batches</find>
+      <find>num_boost_rounds</find>
+      <find>feature_sel</find>
       <find>FIGNAME_FEATS_SCORE_VS_IMPORTANCE</find>
       <find>FIGNAME_CV_VERSUS_FEATURES_SCORE_THRESHOLD</find>
-      <find>get_null_importances_distribution</find>
-      <find>score_features</find>
+      <find>os.getcwd(), self.FEATURE_SELECTION_DIR, self.output_director</find>
+      <find>output_d</find>
       <find>eval_feats_removal_impact_on_cv_score</find>
-      <find>self.end_of_run</find>
-      <find>show_features_importance</find>
+      <find>outp</find>
+      <find>init_po</find>
       <find>run_cv_and_prediction</find>
-      <find>fit_model</find>
-      <find>BayesHyperParamsOptimization</find>
-      <find>sub_preds</find>
-      <find>predict_probability</find>
-      <find>CV AUC score</find>
-      <find>bagged {0} score</find>
-      <find>train_x</find>
-      <find>cv_verbosity</find>
-      <find>0.816</find>
-      <find>feature_</find>
-      <find>CV: Fold</find>
-      <find>n</find>
+      <find>self.path_output_dir</find>
+      <find>path_t</find>
+      <find>save</find>
+      <find>FIGNAME_CONFUSION_MATRIX</find>
+      <find>aut</find>
     </findStrings>
     <replaceStrings>
       <replace>oof_eval_result</replace>
@@ -139,6 +163,7 @@
       <replace>best_score</replace>
       <replace>annotation</replace>
       <replace>feat_select_target_perm</replace>
+      <replace>os.getcwd()</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -152,13 +177,14 @@
         <option value="$PROJECT_DIR$/ensembling/blending/blending.py" />
         <option value="$PROJECT_DIR$/data_provider/data_ingestion.py" />
         <option value="$PROJECT_DIR$/solution_pipeline/create_solution.py" />
-        <option value="$PROJECT_DIR$/generic_tools/utils.py" />
         <option value="$PROJECT_DIR$/data_processing/preprocessing.py" />
         <option value="$PROJECT_DIR$/ensembling/blending/blender.py" />
         <option value="$PROJECT_DIR$/data_vis/visualization.py" />
-        <option value="$PROJECT_DIR$/modeling/hyper_parameters_optimization.py" />
-        <option value="$PROJECT_DIR$/modeling/feature_selection.py" />
         <option value="$PROJECT_DIR$/modeling/model_wrappers.py" />
+        <option value="$PROJECT_DIR$/../LuigiPipeLine/luigi.py" />
+        <option value="$PROJECT_DIR$/generic_tools/utils.py" />
+        <option value="$PROJECT_DIR$/modeling/feature_selection.py" />
+        <option value="$PROJECT_DIR$/modeling/hyper_parameters_optimization.py" />
         <option value="$PROJECT_DIR$/modeling/cross_validation.py" />
       </list>
     </option>
@@ -241,7 +267,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/data_processing/preprocessing.py" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../neptune-ml/open-solution-home-credit" />
     <property name="settings.editor.selected.configurable" value="Errors" />
   </component>
   <component name="RunDashboard">
@@ -381,13 +407,13 @@
     <frame x="3832" y="-8" width="1616" height="835" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="1" sideWeight="0.50715744" visible="true" weight="0.219375" />
+      <window_info active="true" content_ui="combo" id="Project" order="1" sideWeight="0.5055096" visible="true" weight="0.219375" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.15" side_tool="true" visible="true" weight="0.3264463" />
+      <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.15" side_tool="true" weight="0.3264463" />
       <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Python Console" order="7" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.85" visible="true" weight="0.3264463" />
-      <window_info id="Structure" order="2" sideWeight="0.49284253" side_tool="true" visible="true" weight="0.219375" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.85" weight="0.3264463" />
+      <window_info id="Structure" order="2" sideWeight="0.49449036" side_tool="true" visible="true" weight="0.219375" />
       <window_info anchor="bottom" id="Terminal" order="7" />
       <window_info id="Favorites" order="0" side_tool="true" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.828125" weight="0.422865" />
@@ -408,12 +434,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/modeling/cross_validation.py</url>
-          <line>242</line>
-          <option name="timeStamp" value="12" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/modeling/cross_validation.py</url>
-          <line>231</line>
+          <line>240</line>
           <option name="timeStamp" value="19" />
         </line-breakpoint>
       </breakpoints>
@@ -421,16 +442,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1122">
-          <caret line="72" column="59" selection-start-line="72" selection-start-column="59" selection-end-line="72" selection-end-column="59" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/modeling/cross_validation.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="6409">
@@ -473,7 +484,7 @@
         <state relative-caret-position="68">
           <caret line="8" column="7" selection-start-line="8" selection-start-column="7" selection-end-line="8" selection-end-column="7" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -492,9 +503,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1581">
           <caret line="97" column="41" lean-forward="true" selection-start-line="97" selection-end-line="98" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -523,7 +531,7 @@
         <state relative-caret-position="68">
           <caret line="8" column="7" selection-start-line="8" selection-start-column="7" selection-end-line="8" selection-end-column="7" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -567,7 +575,7 @@
         <state relative-caret-position="68">
           <caret line="8" column="7" selection-start-line="8" selection-start-column="7" selection-end-line="8" selection-end-column="7" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -614,7 +622,7 @@
         <state relative-caret-position="68">
           <caret line="8" column="7" lean-forward="true" selection-start-line="8" selection-start-column="7" selection-end-line="8" selection-end-column="7" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -709,13 +717,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/data_provider/data_ingestion.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="9" lean-forward="true" selection-start-line="9" selection-end-line="9" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/solution_pipeline/create_solution.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="136">
@@ -744,19 +745,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3468">
           <caret line="208" column="18" selection-start-line="208" selection-start-column="18" selection-end-line="208" selection-end-column="18" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data_vis/visualization.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2839">
-          <caret line="174" column="53" selection-start-line="174" selection-start-column="53" selection-end-line="174" selection-end-column="53" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -795,34 +783,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="162">
-          <caret line="30" selection-start-line="30" selection-end-line="30" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/../LuigiPipeLine/luigi.py" />
     <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="271">
-          <caret line="109" column="59" lean-forward="true" selection-start-line="109" selection-start-column="59" selection-end-line="109" selection-end-column="59" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="122">
-          <caret line="104" selection-start-line="104" selection-end-line="104" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/feature_selection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="136">
-          <caret line="486" column="10" selection-start-line="486" selection-start-column="9" selection-end-line="486" selection-end-column="10" />
+        <state relative-caret-position="425">
+          <caret line="25" selection-start-line="25" selection-end-line="26" selection-end-column="47" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
@@ -831,8 +796,52 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/modeling/cross_validation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-595">
-          <caret line="489" column="19" lean-forward="true" selection-start-line="489" selection-start-column="19" selection-end-line="489" selection-end-column="19" />
+        <state relative-caret-position="215">
+          <caret line="212" column="56" selection-start-line="212" selection-start-column="56" selection-end-line="212" selection-end-column="56" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="119">
+          <caret line="104" selection-start-line="104" selection-end-line="104" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data_vis/visualization.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="136">
+          <caret line="175" column="51" selection-start-line="175" selection-start-column="51" selection-end-line="175" selection-end-column="51" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="390">
+          <caret line="96" column="21" selection-start-line="96" selection-start-column="21" selection-end-line="96" selection-end-column="21" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data_provider/data_ingestion.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="153">
+          <caret line="9" selection-start-line="9" selection-end-line="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modeling/feature_selection.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="419">
+          <caret line="387" column="21" selection-start-line="387" selection-start-column="21" selection-end-line="387" selection-end-column="61" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
