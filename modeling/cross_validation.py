@@ -77,10 +77,12 @@ class Predictor(object):
         self.bagging = bagging  # type: bool
         self.seeds_list = seeds_list  # type: list
         self.predict_test = predict_test  # type: bool
-        self.path_output_dir = os.path.join(os.getcwd(), self.SINGLE_MODEL_SOLUTION_DIR, output_dir)  # type: str
+        self.path_output_dir = os.path.join(os.getcwd(), self.SINGLE_MODEL_SOLUTION_DIR, self.model_name, output_dir)
         create_output_dir(self.path_output_dir)
 
         # Results of CV and test prediction
+        self.cv_score = None  # type: float
+        self.cv_std = None  # type: float
         self.oof_preds = None  # type: pd.DataFrame
         self.sub_preds = None  # type: pd.DataFrame
         self.oof_eval_results = None  # type: pd.DataFrame
@@ -275,6 +277,10 @@ class Predictor(object):
             self.feature_importance = feature_importance_df
             del oof_preds, sub_preds; gc.collect()
 
+        # Saving final cv score and std
+        self.cv_score = cv_score
+        self.cv_std = cv_std
+
     def plot_confusion_matrix(self, class_names, labels_mapper=None, normalize=False, cmap=plt.cm.Blues, save=False):
         """
         This function prints and plots the confusion matrix. Normalization can be applied by setting normalize=True.
@@ -376,7 +382,8 @@ class Predictor(object):
 
         # Plot CV score with std error bars
         ax.errorbar(x=x, y=y, yerr=yerr, fmt='-o', label=self.model_name)
-        ax.set_title('CV {0} scores and corresponding stds for considered seeds'.format(self.eval_metric), size=13)
+        ax.set_title('CV {0} scores and corresponding stds for considered seeds. '
+                     'Final score: {1} +/- {2}'.format(self.eval_metric, self.cv_score, self.cv_std), size=13)
         ax.set_xlabel('Index of CV run', size=12)
         ax.set_ylabel('CV {0} score'.format(self.eval_metric), size=12)
         ax.set_xticks(x)
