@@ -1,3 +1,4 @@
+import os
 import gc
 import itertools
 import numpy as np
@@ -7,17 +8,19 @@ import matplotlib.pyplot as plt
 
 from sklearn import metrics
 from sklearn.model_selection import KFold, StratifiedKFold
-from generic_tools.utils import timing, get_current_timestamp
+from generic_tools.utils import timing, create_output_dir
 from sklearn.metrics import confusion_matrix, classification_report
 
 
 class Predictor(object):
-    FIGNAME_CONFUSION_MATRIX = 'confusion_matrix'
-    FIGNAME_CV_RESULTS_VERSUS_SEEDS = 'cv_results_vs_seeds'
+    SINGLE_MODEL_SOLUTION_DIR = 'single_model_solution'
+    FIGNAME_CONFUSION_MATRIX = 'confusion_matrix.png'
+    FIGNAME_CV_RESULTS_VERSUS_SEEDS = 'cv_results_vs_seeds.png'
 
     def __init__(self, train_df, test_df, target_column, index_column, classifier, eval_metric, metrics_scorer,
                  metrics_decimals=6, target_decimals=6, cols_to_exclude=[], num_folds=5, stratified=False,
-                 kfolds_shuffle=True, cv_verbosity=1000):
+                 kfolds_shuffle=True, cv_verbosity=1000, bagging=False, seeds_list=[27], predict_test=True,
+                 output_dir=''):
         """
         This class run CV and makes OOF and submission predictions. It also allows to run CV in bagging mode using
         different seeds for random generator.
@@ -43,6 +46,11 @@ class Predictor(object):
         :param stratified: if set True -> preserves the percentage of samples for each class in a fold
         :param kfolds_shuffle: if set True -> shuffle each stratification of the data before splitting into batches
         :param cv_verbosity: print info about CV training and validation errors every x iterations (e.g. 1000)
+        :param bagging: if set True -> run CV with different seeds and then average the results
+        :param seeds_list: list of seeds to be used in CV (1 seed in list -> no bagging is possible)
+        :param predict_test: IMPORTANT!! If False -> train model and predict OOF (i.e. validation only). Set True
+                             if make a prediction for test data set
+        :param output_dir: name of directory to save results of CV and prediction
         :return: out_of_fold predictions, submission predictions, oof_eval_results and feature_importance data frame
         """
 
@@ -56,7 +64,7 @@ class Predictor(object):
         self.classifier = classifier
         self.model_name = classifier.get_model_name()  # type: str
 
-        # Settings for CV
+        # Settings for CV and test prediction
         self.num_folds = num_folds  # type: int
         self.eval_metric = eval_metric  # type: str
         self.metrics_scorer = metrics_scorer  # type: metrics
@@ -66,8 +74,13 @@ class Predictor(object):
         self.stratified = stratified  # type: bool
         self.kfolds_shuffle = kfolds_shuffle  # type: bool
         self.cv_verbosity = cv_verbosity  # type: int
+        self.bagging = bagging  # type: bool
+        self.seeds_list = seeds_list  # type: list
+        self.predict_test = predict_test  # type: bool
+        self.path_output_dir = os.path.join(os.getcwd(), self.SINGLE_MODEL_SOLUTION_DIR, output_dir)  # type: str
+        create_output_dir(self.path_output_dir)
 
-        # Results of CV
+        # Results of CV and test prediction
         self.oof_preds = None  # type: pd.DataFrame
         self.sub_preds = None  # type: pd.DataFrame
         self.oof_eval_results = None  # type: pd.DataFrame
@@ -161,14 +174,10 @@ class Predictor(object):
         return oof_preds, sub_preds, oof_eval_results, feature_importance_df, cv_score, cv_std
 
     @timing
-    def run_cv_and_prediction(self, bagging=False, seeds_list=[27], predict_test=True):
+    def run_cv_and_prediction(self):
         """
         This method run CV and makes OOF and submission predictions. It also allows to run CV in bagging mode using
         different seeds for random generator.
-        :param bagging: if set True -> run CV with different seeds and then average the results
-        :param seeds_list: list of seeds to be used in CV (1 seed in list -> no bagging is possible)
-        :param predict_test: IMPORTANT!! If False -> train model and predict OOF (i.e. validation only). Set True
-                             if make a prediction for test data set
         :return: out_of_fold predictions, submission predictions, oof_eval_results and feature_importance data frame
         """
         assert callable(self.metrics_scorer), 'metrics_scorer should be callable function'
@@ -179,20 +188,20 @@ class Predictor(object):
         index = self.index_column  # index column
         target = self.target_column  # target column (column to be predicted)
 
-        if bagging and len(seeds_list) == 1:
+        if self.bagging and len(self.seeds_list) == 1:
             raise ValueError('Number of seeds for bagging should be more than 1. Provided: {0}'
-                             .format(len(seeds_list)))
+                             .format(len(self.seeds_list)))
 
-        if bagging and len(seeds_list) > 1:
+        if self.bagging and len(self.seeds_list) > 1:
             oof_pred_bagged = []  # out-of-fold predictions for all seeds [dimension: n_rows_train x n_seeds]
             sub_preds_bagged = []  # test predictions for all seeds [dimension: n_rows_test x n_seeds]
             oof_eval_results_bagged = []  # CV scores in each fold for all seeds [dimension: n_seeds x n_folds]
             feature_importance_bagged = []  # features imp. (averaged over folds) for all seeds
             cv_score_bagged = []  # CV scores (averaged over folds) for all seeds [dimension: n_seeds]
             cv_std_bagged = []  # CV std's (computed over folds) for all seeds [dimension: n_seeds]
-            for i, seed_val in enumerate(seeds_list):
+            for i, seed_val in enumerate(self.seeds_list):
                 oof_preds, sub_preds, oof_eval_results, feature_importance_df, cv_score, cv_std = \
-                    self._run_cv_one_seed(seed_val, predict_test)
+                    self._run_cv_one_seed(seed_val, self.predict_test)
 
                 oof_pred_bagged.append(pd.Series(oof_preds, name='seed_%s' % str(i + 1)).round(self.target_decimals))
                 sub_preds_bagged.append(pd.Series(sub_preds, name='seed_%s' % str(i + 1)).round(self.target_decimals))
@@ -221,7 +230,7 @@ class Predictor(object):
             self.oof_preds = oof_preds
 
             # Store predictions for test data (if flag is True). Use simple averaging over seeds (same as oof_preds)
-            if predict_test:
+            if self.predict_test:
                 sub_preds = pd.DataFrame()
                 sub_preds[index] = self.test_df[index].values
                 sub_preds[target] = bagged_sub_preds.loc[:, bagged_sub_preds.columns != index].mean(axis=1)\
@@ -237,7 +246,7 @@ class Predictor(object):
             # The DF below contains seed number used in the CV run, cv_score averaged over all folds (see above),
             # std of CV score as well as list of CV values (in all folds).
             self.oof_eval_results = pd.DataFrame(
-                zip(seeds_list, cv_score_bagged, cv_std_bagged, oof_eval_results_bagged),
+                zip(self.seeds_list, cv_score_bagged, cv_std_bagged, oof_eval_results_bagged),
                 columns=['seed', 'cv_mean_score', 'cv_std', 'cv_score_per_each_fold']
             )
             self.feature_importance = pd.concat(feature_importance_bagged).reset_index(drop=True)
@@ -245,7 +254,7 @@ class Predictor(object):
 
         else:
             oof_preds, sub_preds, oof_eval_results, feature_importance_df, cv_score, cv_std = \
-                self._run_cv_one_seed(seeds_list[0], predict_test)
+                self._run_cv_one_seed(self.seeds_list[0], self.predict_test)
 
             oof_preds_df = pd.DataFrame()
             oof_preds_df[index] = self.train_df[index].values
@@ -253,7 +262,7 @@ class Predictor(object):
             self.oof_preds = oof_preds_df
 
             # Store predictions for test data (if flag is True)
-            if predict_test:
+            if self.predict_test:
                 sub_preds_df = pd.DataFrame()
                 sub_preds_df[index] = self.test_df[index].values
                 sub_preds_df[target] = np.round(sub_preds, self.target_decimals)
@@ -261,20 +270,19 @@ class Predictor(object):
 
             # The DF below contains seed number used in the CV run, cv_score averaged over all folds (see above),
             # std of CV score as well as list of CV values (in all folds).
-            self.oof_eval_results = pd.DataFrame([seeds_list[0], cv_score, cv_std, oof_eval_results],
+            self.oof_eval_results = pd.DataFrame([self.seeds_list[0], cv_score, cv_std, oof_eval_results],
                                                  index=['seed', 'cv_mean_score', 'cv_std', 'cv_score_per_each_fold']).T
             self.feature_importance = feature_importance_df
             del oof_preds, sub_preds; gc.collect()
 
-    def plot_confusion_matrix(self, class_names, labels_mapper=None, normalize=False, path_to_results=None,
-                              cmap=plt.cm.Blues):
+    def plot_confusion_matrix(self, class_names, labels_mapper=None, normalize=False, cmap=plt.cm.Blues, save=False):
         """
         This function prints and plots the confusion matrix. Normalization can be applied by setting normalize=True.
         :param class_names: list of strings defining unique classes names
         :param labels_mapper:
         :param normalize: if set True -> normalizes results in confusion matrix (shows units instead of counting values)
-        :param path_to_results: absolute path to the directory where the figure is going to be saved
         :param cmap: color map
+        :param save: if True -> results will be saved to disk
         :return: plots confusion matrix and print classification report
         """
         true_labels = self.train_df[self.target_column].values.tolist()
@@ -302,30 +310,25 @@ class Predictor(object):
             plt.text(j, i, format(cm[i, j], fmt),
                      horizontalalignment="center",
                      color="white" if cm[i, j] > thresh else "black")
-
-        plt.tight_layout()
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
+        plt.tight_layout()
 
         print ('Classification report:\n{0}'.format(
             classification_report(true_labels, predicted_labels, target_names=class_names)))
 
-        if path_to_results is not None:
-            filename = '_'.join([self.FIGNAME_CONFUSION_MATRIX, get_current_timestamp()]) + '.png'
-            full_path_to_file = '\\'.join([path_to_results, filename])
+        if save:
+            full_path_to_file = os.path.join(self.path_output_dir, self.FIGNAME_CONFUSION_MATRIX)
             print('\nSaving confusion matrix graph into %s' % full_path_to_file)
             plt.savefig(full_path_to_file)
 
-    def show_features_importance(self, n_features=20, path_to_results=None, file_version=None,
-                                 figsize_x=8, figsize_y=10):
+    def show_features_importance(self, n_features=20, figsize_x=8, figsize_y=10, save=False):
         """
-         This method plots features importance and saves the figure and the csv file to the disk if
-         both path_to_results and file_version are provided.
+         This method plots features importance and saves the figure and the csv file to the disk.
         :param n_features: number of top most important features to show
-        :param path_to_results: absolute path to the directory where the figure is going to be saved
-        :param file_version: index to be used for distinguishing different models (e.g. '1', '2', etc.)
         :param figsize_x: size of figure along X-axis
         :param figsize_y: size of figure along Y-axis
+        :param save: if True -> results will be saved to disk
         :return: plot of features importance
         """
         features_importance_df = self.feature_importance.copy()
@@ -339,31 +342,29 @@ class Predictor(object):
         plt.title('{0} features (avg over folds)'.format(self.model_name.upper()))
         plt.tight_layout()
 
-        if all(v is not None for v in [path_to_results, file_version]):
-            filename = '_'.join([self.model_name, 'feat_import', file_version]) + '.png'
-            full_path_to_file = '\\'.join([path_to_results, filename])
+        if save:
+            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'feat_import']) + '.png')
             print('\nSaving features importance graph into %s' % full_path_to_file)
             plt.savefig(full_path_to_file)
 
-            filename = '_'.join([self.model_name, 'feat_import', file_version]) + '.csv'
-            full_path_to_file = '\\'.join([path_to_results, filename])
+            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'feat_import']) + '.csv')
             print('\nSaving {0} features into {1}'.format(self.model_name.upper(), full_path_to_file))
             features_importance_df = features_importance_df[["feature", "importance"]].groupby(
                 "feature").mean().sort_values(by="importance", ascending=False).reset_index()
             features_importance_df.to_csv(full_path_to_file, index=False)
         del features_importance_df; gc.collect()
 
-    def plot_cv_results_vs_used_seeds(self, path_to_results=None, figsize_x=14, figsize_y=4, annot_offset_x=3,
-                                      annot_offset_y=5, annot_rotation=90):
+    def plot_cv_results_vs_used_seeds(self, figsize_x=14, figsize_y=4, annot_offset_x=3,
+                                      annot_offset_y=5, annot_rotation=90, save=False):
         """
         This method plots CV results and corresponding std's for all seeds considered in the bagging process.
         The figure allows to see the effect of the seed number used in the model / k-fold split on the CV score
-        :param path_to_results: absolute path to the directory where the figure is going to be saved
         :param figsize_x: size of figure in x-direction
         :param figsize_y: size of figure in y-direction
         :param annot_offset_x: offset (points) in x-direction for annotation text
         :param annot_offset_y: offset (points) in y-direction for annotation text
         :param annot_rotation: rotation angle of annotation text (0-horizontal, 90-vertical)
+        :param save: if True -> results will be saved to disk
         :return: None
         """
         fig, ax = plt.subplots(figsize=(figsize_x, figsize_y))
@@ -386,43 +387,37 @@ class Predictor(object):
                         textcoords='offset points', rotation=annot_rotation)
         ax.legend(bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0.1, prop={'size': 12})
 
-        if path_to_results is not None:
-            filename = '_'.join([self.FIGNAME_CV_RESULTS_VERSUS_SEEDS, get_current_timestamp()]) + '.png'
-            full_path_to_file = '\\'.join([path_to_results, filename])
+        if save:
+            full_path_to_file = os.path.join(self.path_output_dir, self.FIGNAME_CV_RESULTS_VERSUS_SEEDS)
             print('\nSaving CV results vs seeds graph into %s' % full_path_to_file)
             plt.savefig(full_path_to_file)
 
-    def save_oof_results(self, path_to_results, file_version):
-        filename = '_'.join([self.model_name, file_version, 'OOF']) + '.csv'
-        filename = '\\'.join([path_to_results, filename])
-        print('\nSaving elaborated OOF predictions into %s' % filename)
-        self.oof_preds.to_csv(filename, index=False)
+    def save_oof_results(self):
+        full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'OOF']) + '.csv')
+        print('\nSaving elaborated OOF predictions into %s' % full_path_to_file)
+        self.oof_preds.to_csv(full_path_to_file, index=False)
 
-        filename = '_'.join([self.model_name, file_version, 'CV']) + '.csv'
-        filename = '\\'.join([path_to_results, filename])
-        print('\nSaving CV results into %s' % filename)
-        self.oof_eval_results.to_csv(filename, index=False)
+        full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'CV']) + '.csv')
+        print('\nSaving CV results into %s' % full_path_to_file)
+        self.oof_eval_results.to_csv(full_path_to_file, index=False)
 
         if self.bagged_oof_preds is not None:
-            filename = '_'.join([self.model_name, file_version, 'bagged_OOF']) + '.csv'
-            filename = '\\'.join([path_to_results, filename])
-            print('\nSaving OOF predictions for each seed into %s' % filename)
-            self.bagged_oof_preds.to_csv(filename, index=False)
+            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'bagged_OOF']) + '.csv')
+            print('\nSaving OOF predictions for each seed into %s' % full_path_to_file)
+            self.bagged_oof_preds.to_csv(full_path_to_file, index=False)
 
-    def save_submission_results(self, path_to_results, file_version):
+    def save_submission_results(self):
         if self.sub_preds is None:
             raise ValueError('Submission file is empty. Please set flag predict_test = True in run_cv_and_prediction() '
                              'to generate submission file.')
-        filename = '_'.join([self.model_name, file_version]) + '.csv'
-        filename = '\\'.join([path_to_results, filename])
-        print('\nSaving submission predictions into %s' % filename)
-        self.sub_preds.to_csv(filename, index=False)
+        full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name]) + '.csv')
+        print('\nSaving submission predictions into %s' % full_path_to_file)
+        self.sub_preds.to_csv(full_path_to_file, index=False)
 
         if self.bagged_sub_preds is not None:
-            filename = '_'.join([self.model_name, file_version, 'bagged_SUBM']) + '.csv'
-            filename = '\\'.join([path_to_results, filename])
-            print('\nSaving submission predictions for each seed into %s' % filename)
-            self.bagged_sub_preds.to_csv(filename, index=False)
+            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'bagged_SUBM']) + '.csv')
+            print('\nSaving submission predictions for each seed into %s' % full_path_to_file)
+            self.bagged_sub_preds.to_csv(full_path_to_file, index=False)
 
 
 def prepare_lgbm():
@@ -491,16 +486,17 @@ def main_run_cv_and_prediction(classifier='lgbm', debug=False):
 
     # Input data
     path_to_data = r'C:\Kaggle\kaggle_home_credit_default_risk\feature_selection'
-    full_path_to_file = '\\'.join([path_to_data, 'train_dataset_lgbm_10.csv'])
+    full_path_to_file = os.path.join(path_to_data, 'train_dataset_lgbm_10.csv')
     data = downcast_datatypes(pd.read_csv(full_path_to_file, nrows=num_rows if debug else None))\
         .reset_index(drop=True)
-    full_path_to_file = '\\'.join([path_to_data, 'test_dataset_lgbm_10.csv'])
+    full_path_to_file = os.path.join(path_to_data, 'test_dataset_lgbm_10.csv')
     test_data = downcast_datatypes(pd.read_csv(full_path_to_file, nrows=num_rows if debug else None))\
         .reset_index(drop=True)
     print('df_train shape: {0}'.format(data.shape))
     print('df_test shape: {0}'.format(test_data.shape))
 
     # Parameters
+    solution_output_dir = ''
     target_column = 'TARGET'
     index_column = 'SK_ID_CURR'
     eval_metric = 'auc'
@@ -511,6 +507,9 @@ def main_run_cv_and_prediction(classifier='lgbm', debug=False):
     stratified = True
     kfolds_shuffle = True
     cv_verbosity = 1000
+    bagging = True
+    predict_test = True
+    seeds_list = [27, 999999, 2018, 516, 986]
 
     # Columns to exclude from input data
     cols_to_exclude = ['TARGET', 'SK_ID_CURR', 'SK_ID_BUREAU', 'SK_ID_PREV']
@@ -527,14 +526,10 @@ def main_run_cv_and_prediction(classifier='lgbm', debug=False):
         classifier=classifier_model, eval_metric=eval_metric, metrics_scorer=metrics_scorer,
         metrics_decimals=metrics_decimals, target_decimals=target_decimals,
         cols_to_exclude=cols_to_exclude, num_folds=num_folds, stratified=stratified,
-        kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity
+        kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity, bagging=bagging,
+        predict_test=predict_test, seeds_list=seeds_list, output_dir=solution_output_dir
     )
-
-    bagging = True
-    predict_test = True
-    seeds_list = [27, 999999, 2018, 516, 986]
-
-    predictor.run_cv_and_prediction(bagging=bagging, seeds_list=seeds_list, predict_test=predict_test)
+    predictor.run_cv_and_prediction()
 
 
 if __name__ == '__main__':
