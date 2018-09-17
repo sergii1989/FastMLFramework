@@ -109,6 +109,16 @@ class LightGBMWrapper(ModelWrapper):
 
 class XGBWrapper(ModelWrapper):
     """Class that wraps XGBoost"""
+    HP_DATATYPES = {
+        'learning_rate': lambda x: round(x, 3),
+        'max_depth': lambda x: int(round(x, 0)),
+        'reg_alpha': lambda x: round(max(x, 0), 2),
+        'reg_lambda': lambda x: round(max(x, 0), 2),
+        'subsample': lambda x: round(max(min(x, 1), 0), 2),
+        'colsample_bytree': lambda x: round(max(min(x, 1), 0), 2),
+        'min_child_weight': lambda x: int(round(x, 0)),
+        'gamma': lambda x: round(x, 3),
+    }
 
     def __init__(self, model, params=None, seed=27, name='xgb'):
         super(XGBWrapper, self).__init__(model, params, seed, name)
