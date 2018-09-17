@@ -77,7 +77,7 @@ class Predictor(object):
         self.bagging = bagging  # type: bool
         self.seeds_list = seeds_list  # type: list
         self.predict_test = predict_test  # type: bool
-        self.path_output_dir = os.path.join(os.getcwd(), self.SINGLE_MODEL_SOLUTION_DIR, self.model_name, output_dir)
+        self.path_output_dir = os.path.normpath(os.path.join(os.getcwd(), self.SINGLE_MODEL_SOLUTION_DIR, output_dir))
         create_output_dir(self.path_output_dir)
 
         # Results of CV and test prediction
@@ -119,7 +119,8 @@ class Predictor(object):
         cv_verbosity = cv_verbosity if cv_verbosity is not None else self.cv_verbosity
 
         target = self.target_column
-        feats = [f for f in self.train_df.columns if f not in self.cols_to_exclude]
+        feats = [f for f in self.train_df.columns if f not in set(self.cols_to_exclude).union(
+            {self.target_column, self.index_column})]
         feature_importance_df = pd.DataFrame()
 
         print('\nStarting CV with seed {}. Train shape: {}, test shape: {}\n'.format(
@@ -381,9 +382,10 @@ class Predictor(object):
         annotation = map(lambda n_seed: 'seed_%s' % n_seed, self.oof_eval_results['seed'].astype(str).values)
 
         # Plot CV score with std error bars
-        ax.errorbar(x=x, y=y, yerr=yerr, fmt='-o', label=self.model_name)
-        ax.set_title('CV {0} scores and corresponding stds for considered seeds. '
-                     'Final score: {1} +/- {2}'.format(self.eval_metric, self.cv_score, self.cv_std), size=13)
+        ax.errorbar(x=x, y=y, yerr=yerr, fmt='-o')
+        ax.set_title('{0}: CV {1} scores and corresponding stds for considered seeds. '
+                     'Final score: {2} +/- {3}'.format(self.model_name.upper(), self.eval_metric, self.cv_score,
+                                                       self.cv_std), size=13)
         ax.set_xlabel('Index of CV run', size=12)
         ax.set_ylabel('CV {0} score'.format(self.eval_metric), size=12)
         ax.set_xticks(x)
@@ -392,8 +394,6 @@ class Predictor(object):
         for xpos, ypos, name in zip(x, y, annotation):
             ax.annotate(name, (xpos, ypos), xytext=(annot_offset_x, annot_offset_y), va='bottom',
                         textcoords='offset points', rotation=annot_rotation)
-        ax.legend(bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0.1, prop={'size': 12})
-
         if save:
             full_path_to_file = os.path.join(self.path_output_dir, self.FIGNAME_CV_RESULTS_VERSUS_SEEDS)
             print('\nSaving CV results vs seeds graph into %s' % full_path_to_file)
