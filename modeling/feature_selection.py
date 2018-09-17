@@ -19,7 +19,7 @@ class FeatureSelector(object):
 
     def __init__(self, train_df, target_column, index_column, cat_features, eval_metric, metrics_scorer,
                  metrics_decimals, num_folds, stratified, kfolds_shuffle, int_threshold,
-                 seed_value, output_dir):
+                 seed_val, output_dir):
 
         # Input data
         self.train_df = train_df  # type: pd.DataFrame
@@ -35,12 +35,12 @@ class FeatureSelector(object):
         self.stratified = stratified  # type: bool
         self.kfolds_shuffle = kfolds_shuffle  # type: bool
         self.metrics_decimals = metrics_decimals  # type: int
-        self.seed_value = seed_value  # type: int
-        self.path_output_dir = os.path.join(os.getcwd(), self.FEATURE_SELECTION_DIR, output_dir)  # type: str
+        self.seed_val = seed_val  # type: int
+        self.path_output_dir = os.path.normpath(os.path.join(os.getcwd(), self.FEATURE_SELECTION_DIR, output_dir))
         create_output_dir(self.path_output_dir)
 
         self._verify_input_data_is_correct()
-        np.random.seed(seed_value)  # seed the numpy random generator
+        np.random.seed(seed_val)  # seed the numpy random generator
 
     def _verify_input_data_is_correct(self):
         assert callable(self.metrics_scorer), 'metrics_scorer should be callable function'
@@ -64,7 +64,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
 
     def __init__(self, train_df, target_column, index_column, cat_features, lgbm_params_feats_exploration,
                  lgbm_params_feats_selection, eval_metric, metrics_scorer, metrics_decimals=6, num_folds=5,
-                 stratified=False, kfolds_shuffle=True, int_threshold=9, seed_value=27, output_dir=''):
+                 stratified=False, kfolds_shuffle=True, int_threshold=9, seed_val=27, output_dir=''):
         """
         This class adopts logic for selection of features based on target permutation. This selection process tests
         the actual importance significance against the distribution of features importance when fitted to noise
@@ -95,13 +95,13 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         :param kfolds_shuffle: if set True -> shuffle each stratification of the data before splitting into batches
         :param int_threshold: this threshold is used to limit number of int8-type numerical features to be interpreted
                           as categorical (see auto_selector_of_categorical_features() method in utils.py)
-        :param seed_value: seed numpy random generator
+        :param seed_val: seed numpy random generator
         :param output_dir: name of directory to save results of feature selection process
         """
 
         super(FeatureSelectorByTargetPermutation, self).__init__(
             train_df, target_column, index_column, cat_features, eval_metric, metrics_scorer, metrics_decimals,
-            num_folds, stratified, kfolds_shuffle, int_threshold, seed_value, output_dir
+            num_folds, stratified, kfolds_shuffle, int_threshold, seed_val, output_dir
         )
 
         # Dicts with LGB model parameters to be used in feature exploration and selection stages, correspondingly
@@ -112,6 +112,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         self.null_imp_df = None  # type: pd.DataFrame # null-hypothesis features importance
         self.features_scores_df = None  # type: pd.DataFrame # features importance gain/split scores
         self.cv_results_vs_thresh_df = None  # type: pd.DataFrame # impact of feature selection on CV score
+        self.best_thresh_df = None  # type: pd.DataFrame # DF with ranks of CV scores and stds to select best threshold
 
     def get_feature_importances(self, shuffle=False, num_boost_rounds=None, verbose=False):
         """
@@ -159,18 +160,6 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         imp_df["importance_split"] = clf.feature_importance(importance_type='split')
         imp_df['train_score'] = self.metrics_scorer(y, clf.predict(self.train_df[train_features]))
         return imp_df
-
-    def get_list_of_features(self, importance='gain_score', thresh=0):  # type: (str, (float, int)) -> list
-        """
-        This method returns list of features for given importance type ('gain_score' or 'split_score') with the
-        feature_score >= threshold
-        :param importance: LGBM feature importance type ('gain_score' or 'split_score')
-        :param thresh: limit value for min feature_score to be included into list of features
-        :return: list of features for given importance type with the feature_score >= threshold
-        """
-        list_of_features = list(
-            self.features_scores_df.loc[self.features_scores_df[importance] >= thresh, 'feature'])
-        return list_of_features
 
     @timing
     def get_actual_importances_distribution(self, num_boost_rounds=None):
@@ -255,7 +244,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
             nfold=self.num_folds,
             stratified=self.stratified,
             shuffle=self.kfolds_shuffle,
-            seed=self.seed_value
+            seed=self.seed_val
         )
 
         # Best CV round: mean and std over folds of CV score
@@ -297,7 +286,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
                                                                 len(thresholds), threshold)):
                     train_features = self.get_list_of_features(importance=importance, thresh=threshold)
                     result = self.run_lgbm_cv(train_features)
-                    result = eval_score(*(result + (len(train_features),)))
+                    result = eval_score(*(result + (int(len(train_features)),)))
                     temp.append(result)
 
                 print('  Number of features with score >= %d: %d' % (threshold, len(train_features)))
@@ -314,6 +303,50 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         cv_results_vs_thresh_df.set_index(['threshold', 'importance'], drop=True, inplace=True)
         self.cv_results_vs_thresh_df = cv_results_vs_thresh_df
         del cv_results, temp; gc.collect()
+
+    def get_best_threshold(self, importance='gain_score', cv_asc_rank=True, cv_std_asc_rank=False):
+        """
+        This method finds threshold for features score that gives best CV score and std error. It is based on ranking.
+        :param importance: LGBM feature importance type ('gain_score' or 'split_score')
+        :param cv_asc_rank: if True -> higher CV gives higher rank
+        :param cv_std_asc_rank: if False > lower std error gives higher rank
+        :return: best threshold value
+        """
+        if importance not in ('gain_score', 'split_score'):
+            raise ValueError, "Importance type should be either 'gain_score' or 'split_score'. " \
+                              "Instead received {0}".format(importance)
+
+        best_thresh_df = self.cv_results_vs_thresh_df.loc[pd.IndexSlice[:, [importance.split('_')[0].upper()]], :].copy()
+        best_thresh_df['cv_bst_score_rank'] = best_thresh_df['cv_bst_score'].rank(method='min', ascending=cv_asc_rank)
+        best_thresh_df['cv_std_bst_score_rank'] = best_thresh_df['cv_std_bst_score'].rank(method='min',
+                                                                                          ascending=cv_std_asc_rank)
+        best_thresh_df['total_rank'] = best_thresh_df['cv_bst_score_rank'] + best_thresh_df['cv_std_bst_score_rank']
+        best_thresh_idx = best_thresh_df['total_rank'].argmax()
+        best_thresh_results = best_thresh_df.loc[best_thresh_idx, ['cv_bst_score', 'cv_std_bst_score',
+                                                                   'n_features']].to_dict()
+        print('Best threshold by {0} is {1}. {2} score: {3} +/- {4}. Total number of features: {5}'.format(
+            best_thresh_idx[1], best_thresh_idx[0], self.eval_metric.upper(), best_thresh_results['cv_bst_score'],
+            best_thresh_results['cv_std_bst_score'], best_thresh_results['n_features']))
+
+        self.best_thresh_df = best_thresh_df[['cv_bst_score', 'cv_std_bst_score', 'cv_bst_score_rank',
+                                              'cv_std_bst_score_rank', 'total_rank']]
+        return best_thresh_idx[0]
+
+    def get_list_of_features(self, importance='gain_score', thresh=0):  # type: (str, (float, int)) -> list
+        """
+        This method returns list of features for given importance type ('gain_score' or 'split_score') with the
+        feature_score >= threshold
+        :param importance: LGBM feature importance type ('gain_score' or 'split_score')
+        :param thresh: limit value for min feature_score to be included into list of features
+        :return: list of features for given importance type with the feature_score >= threshold
+        """
+        if importance not in ('gain_score', 'split_score'):
+            raise ValueError, "Importance type should be either 'gain_score' or 'split_score'. " \
+                              "Instead received {0}".format(importance)
+
+        list_of_features = list(self.features_scores_df.loc[self.features_scores_df[importance] >= thresh,
+                                                            'feature']) + [self.target_column, self.index_column]
+        return list_of_features
 
     def display_distributions(self, feature, figsize_x=14, figsize_y=6, save=False):
         """
@@ -481,7 +514,7 @@ def main_feat_selector_by_target_permutation():
     stratified = True
     kfolds_shuffle = True
     int_threshold = 9
-    seed_value = 27
+    seed_val = 27
 
     lgbm_params_feats_exploration = {
         'objective': 'binary',
@@ -524,7 +557,7 @@ def main_feat_selector_by_target_permutation():
                                            eval_metric=eval_metric, metrics_scorer=metrics_scorer,
                                            metrics_decimals=metrics_decimals, num_folds=num_folds,
                                            stratified=stratified, kfolds_shuffle=kfolds_shuffle,
-                                           seed_value=seed_value, output_dir=output_dir)
+                                           seed_val=seed_val, output_dir=output_dir)
 
     feat_select_target_perm.get_actual_importances_distribution(num_boost_rounds=350)
     print(feat_select_target_perm.actual_imp_df.head())
