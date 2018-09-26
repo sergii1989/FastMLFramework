@@ -1,10 +1,25 @@
+import os
+import re
+import json
+import requests
+import warnings
+import ipykernel
 import numpy as np
 
 from time import time
 from typing import Any
 from functools import wraps
 from datetime import datetime
+from requests.compat import urljoin
 from contextlib import contextmanager
+
+try:
+    from notebook.notebookapp import list_running_servers
+except ImportError:
+    from IPython.utils.shimmodule import ShimWarning
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ShimWarning)
+        from IPython.html.notebookapp import list_running_servers
 
 
 @contextmanager
@@ -89,3 +104,30 @@ def auto_selector_of_categorical_features(df, cols_exclude=[], int_threshold=10)
         if abs(df_temp[int8_col].min()) <= int_threshold and abs(df_temp[int8_col].max()) <= int_threshold:
             int8_cat_cols.append(int8_col)
     return sorted(set(cat_object_cols).union(set(int8_cat_cols)))
+
+
+def check_file_exists(filename, silent=True):
+    if not os.path.exists(filename):
+        if not silent: print('{} does not exist'.format(filename))
+        return False
+    return True
+
+
+def create_output_dir(path_output_dir):
+    if not os.path.exists(path_output_dir):
+        print('Output directory {} is created'.format(path_output_dir))
+        os.makedirs(path_output_dir)
+
+
+def get_notebook_name():
+    """
+    Return the name of jupyter notebook.
+    """
+    kernel_id = re.search('kernel-(.*).json', ipykernel.connect.get_connection_file()).group(1)
+    servers = list_running_servers()
+    for ss in servers:
+        response = requests.get(urljoin(ss['url'], 'api/sessions'), params={'token': ss.get('token', '')})
+        for nn in json.loads(response.text):
+            if nn['kernel']['id'] == kernel_id:
+                relative_path = nn['notebook']['path']
+                return relative_path

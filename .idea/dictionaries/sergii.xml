@@ -24,7 +24,9 @@
       <w>gridspec</w>
       <w>hyperparameter</w>
       <w>hyperparameters</w>
+      <w>hyperparams</w>
       <w>importances</w>
+      <w>jupyter</w>
       <w>kaggle</w>
       <w>kfolds</w>
       <w>kurtosis</w>
@@ -35,6 +37,7 @@
       <w>multiclass</w>
       <w>nthread</w>
       <w>ntop</w>
+      <w>optim</w>
       <w>pred</w>
       <w>preds</w>
       <w>reinit</w>

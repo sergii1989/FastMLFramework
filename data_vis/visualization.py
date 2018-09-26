@@ -284,11 +284,11 @@ def distplot_numerical_feature_vs_target(
     for target_val, temp_df in df.groupby(target)[feature]:
         sns.distplot(temp_df.dropna() if dropna else temp_df, kde=density, bins=bins,
                      label=str(target_val), norm_hist=density, ax=ax)
+    plt.tight_layout()
     ax.set_xlabel('{0}'.format(feature), size=12)
     ax.set_ylabel('Density' if density else 'Number of entries', size=12)
     ax.set_title("{0} distribution by target".format(feature), size=13)
     ax.legend(bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0.1, prop={'size': 12})
-    plt.tight_layout()
 
 
 def distplot_numerical_feature_before_and_after_transformation(

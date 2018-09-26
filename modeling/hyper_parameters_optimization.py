@@ -1,28 +1,37 @@
+import os
 import json
+import numpy as np
 import pandas as pd
 
 from bayes_opt import BayesianOptimization
 from modeling.cross_validation import Predictor
-from generic_tools.utils import timing, get_current_timestamp
+from generic_tools.utils import timing, create_output_dir
 
 
 class HyperParamsOptimization(object):
+    HYPERPARAMS_OPTIM_DIR = 'hyper_parameters_optimization'
 
-    def __init__(self, predictor, seed_val=27, filename='optim_hp'):
+    def __init__(self, predictor, seed_val, output_dir, filename='optim_hp'):
         """
         This is a base class for optimization of model's hyperparameters. Methods of this class can be reused in
         derived classes (as, for instance, in BayesHyperParamsOptimization). These methods allows adjusting of data
         types of the hyperparameters, auto-complete missing parameters, save / read parameters from the disk.
         :param predictor: instance of Predictor class.
         :param seed_val: seed numpy random generator
+        :param output_dir: name of directory to save results of hyper parameters optimization
         :param filename: name of hyperparameter optimizer (is used when saving results of optimization)
         """
         self.predictor = predictor  # type: Predictor
         self.seed_val = seed_val  # type: int
         self.filename = filename  # type: str
+        self.path_output_dir = os.path.normpath(os.path.join(os.getcwd(), self.HYPERPARAMS_OPTIM_DIR, output_dir))
+        create_output_dir(self.path_output_dir)
+
         self.best_params = None  # type: dict
         self.best_score = None  # type: float
         self.hpo_cv_df = None  # type: pd.DataFrame
+
+        np.random.seed(seed_val)  # seed the numpy random generator
 
     def _adjust_hyperparameters_datatypes(self, hp_optimization_space):  # type: (dict) -> dict
         """
@@ -54,20 +63,18 @@ class HyperParamsOptimization(object):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
-    def save_hyperparams(self, path_to_save_data):  # type: (str) -> None
+    def save_optimized_hp(self):
         """
         This method saves Bayes Optimized hyperparameters to the disc.
-        :param path_to_save_data: path to be used when storing csv file with the weights
         :return: None
         """
-        filename = '_'.join([self.filename, self.predictor.model_name, str(self.best_score),
-                             get_current_timestamp()]) + '.txt'
-        output_figname = ('\\'.join([path_to_save_data, filename]))
-        print('\nSaving optimized hyperparameters into %s' % output_figname)
-        with open(output_figname, 'w') as f:
+        filename = '_'.join([self.filename, self.predictor.model_name, str(self.best_score)]) + '.txt'
+        full_path_to_file = os.path.join(self.path_output_dir, filename)
+        print('\nSaving optimized hyperparameters into %s' % full_path_to_file)
+        with open(full_path_to_file, 'w') as f:
             f.write(json.dumps(self.best_params))
 
-    def read_hyperparams(self, path_to_save_data, filename):  # type: (str, str) -> None
+    def read_optimized_hp(self, path_to_save_data, filename):  # type: (str, str) -> None
         """
         This method reads optimized hyperparameters from the disc.
         :param path_to_save_data: path to the saved hyperparameters
@@ -79,7 +86,7 @@ class HyperParamsOptimization(object):
                                  "Current model is {0} but the name of the file with parameters is {1}."
                                  .format(self.predictor.model_name, filename))
 
-        output_figname = ('\\'.join([path_to_save_data, filename]))
+        output_figname = os.path.join(path_to_save_data, filename)
         print('\nReading optimized hyperparameters from %s...' % output_figname)
         with open(output_figname, 'r') as f:
             self.best_params = json.load(f)
@@ -88,14 +95,22 @@ class HyperParamsOptimization(object):
 
 class BayesHyperParamsOptimization(HyperParamsOptimization):
     FILENAME = 'bayes_opt_hp'
+    HPO_DF_NAME = 'bayes_hpo_all_runs_results.csv'
 
-    def __init__(self, predictor, seed_val=27):
+    def __init__(self, predictor, hp_optimization_space, init_points=10, n_iter=15, seed_val=27, output_dir=''):
         """
         This class adopts Bayes Optimization to find set of model's hyperparameters that lead to best CV results.
         :param predictor: instance of Predictor class.
+        :param hp_optimization_space: dict with hyperparameters to be optimized within corresponding variation ranges
+        :param init_points: number of initial points in Bayes Optimization procedure
+        :param n_iter: number of iteration in Bayes Optimization procedure
         :param seed_val: seed numpy random generator
+        :param output_dir: name of directory to save results of hyper parameters optimization
         """
-        super(BayesHyperParamsOptimization, self).__init__(predictor, seed_val, self.FILENAME)
+        super(BayesHyperParamsOptimization, self).__init__(predictor, seed_val, output_dir, self.FILENAME)
+        self.hp_optimization_space = hp_optimization_space
+        self.init_points = init_points
+        self.n_iter = n_iter
 
     def hp_optimizer(self, **hp_optimization_space):
         """
@@ -117,21 +132,31 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         return cv_score
 
     @timing
-    def run(self, hp_optimization_space, init_points, n_iter, path_to_save_data=None):
+    def run(self):
         """
         This method runs Bayes Search of optimal hyperparameters that gives max CV score
-        :param hp_optimization_space: dict with hyperparameters to be optimized within corresponding variation ranges
-        :param init_points: number of initial points in Bayes Optimization procedure
-        :param n_iter: number of iteration in Bayes Optimization procedure
-        :param path_to_save_data: if provided, will save optimal hyperparameters to the disk
         :return: None
         """
         self.hpo_cv_df = pd.DataFrame()  # initializing DF for storage of used hyperparameters in bayes optimization
-        bo = BayesianOptimization(self.hp_optimizer, hp_optimization_space)
-        bo.maximize(init_points=init_points, n_iter=n_iter)
+        bo = BayesianOptimization(self.hp_optimizer, self.hp_optimization_space)
+        bo.maximize(init_points=self.init_points, n_iter=self.n_iter)
 
         best_params = self._adjust_hyperparameters_datatypes(bo.res['max']['max_params'])
         self.best_params = self._complete_missing_hyperparameters_from_init_params(best_params)
         self.best_score = round(bo.res['max']['max_val'], self.predictor.metrics_decimals)
         print('\n'.join(['', '=' * 70, '\nMax CV score: {0}'.format(self.best_score)]))
         print('Optimal parameters:\n{0}'.format(self.best_params))
+
+        # Re-order columns in DF with the results of all hpo runs
+        score_cols = ['cv_score', 'cv_std']
+        cols = score_cols + [col for col in self.hpo_cv_df if col not in score_cols]
+        self.hpo_cv_df = self.hpo_cv_df[cols]
+
+    def save_all_hp_results(self):
+        """
+        This method persists hyperparameters optimization history to the disk
+        :return: None
+        """
+        full_path_to_file = os.path.join(self.path_output_dir, self.HPO_DF_NAME)
+        print('\nSaving all hp results into %s' % full_path_to_file)
+        self.hpo_cv_df.to_csv(full_path_to_file, index=False)
