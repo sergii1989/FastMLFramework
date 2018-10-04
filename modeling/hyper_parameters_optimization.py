@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from bayes_opt import BayesianOptimization
-from modeling.cross_validation import Predictor
+from modeling.prediction import Predictor
 from generic_tools.utils import timing, create_output_dir
 
 
