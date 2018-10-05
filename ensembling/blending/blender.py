@@ -3,7 +3,6 @@ import pandas as pd
 import numpy.testing as npt
 from collections import OrderedDict
 from bayes_opt import BayesianOptimization
-
 warnings.filterwarnings("ignore")
 
 
@@ -40,11 +39,14 @@ class Blender(object):
         """
         assert self.target_column in self.train_oof.columns, \
             'Please add {target} column to the train_oof dataframe'.format(target=self.target_column)
-        assert ((self.index_column in self.train_oof.columns) | (self.index_column in self.train_oof.index)), \
-            'Please add {index} column to the train_oof dataframe'.format(index=self.index_column)
-        assert ((self.index_column in self.test_subm.columns) | (self.index_column in self.test_subm.index)), \
-            'Please add {index} column to the test_subm dataframe'.format(index=self.index_column)
         assert callable(self.metrics_scorer), 'metrics_scorer should be callable function'
+
+        if self.index_column is not None and self.index_column != '':
+            assert ((self.index_column in self.train_oof.columns) | (self.index_column in self.train_oof.index)), \
+                'Please add {index} column to the train_oof dataframe'.format(index=self.index_column)
+            assert ((self.index_column in self.test_subm.columns) | (self.index_column in self.test_subm.index)), \
+                'Please add {index} column to the test_subm dataframe'.format(index=self.index_column)
+
         if 'sklearn.metrics' not in self.metrics_scorer.__module__:
             raise TypeError("metrics_scorer should be function from sklearn.metrics module. "
                             "Instead received {0}.".format(self.metrics_scorer.__module__))
@@ -158,7 +160,10 @@ class BayesOptimizationBlender(Blender):
         if path_to_save_data is not None:
             self.save_weigths(path_to_save_data)
 
-        test_file_blended = self.test_subm[[self.index_column]].copy()
+        test_file_blended = pd.DataFrame()
+        if self.index_column is not None and self.index_column != '':
+            test_file_blended[self.index_column] = self.test_subm[self.index_column].values
+
         test_file_blended[self.target_column] = self.test_subm[optimal_weights.keys()]\
             .mul(optimal_weights.values()).sum(axis=1).round(self.target_decimals).values
         self.test_file_blended = test_file_blended
@@ -183,7 +188,7 @@ def main():
     metrics_decimals = 4
 
     n_iter = 5
-    init_points = 60
+    init_points = 10
 
     target_column = 'TARGET'
     index_column = 'SK_ID_CURR'
