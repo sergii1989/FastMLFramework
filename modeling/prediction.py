@@ -31,7 +31,7 @@ class Predictor(object):
         :param target_column: target column (to be predicted)
         :param index_column: unique index column
         :param classifier: wrapped estimator (object of ModelWrapper class)
-        :param predict_probability: if set True -> use classifier.predict_proba(), else -> classifier.predict() method
+        :param predict_probability: if True -> use classifier.predict_proba(), else -> classifier.predict() method
         :param eval_metric: 'rmse': root mean square error
                             'mae': mean absolute error
                             'logloss': negative log-likelihood
@@ -47,10 +47,10 @@ class Predictor(object):
         :param target_decimals: rounding precision for target column
         :param cols_to_exclude: list of columns to exclude from modelling
         :param num_folds: number of folds to be used in CV
-        :param stratified: if set True -> preserves the percentage of samples for each class in a fold
-        :param kfolds_shuffle: if set True -> shuffle each stratification of the data before splitting into batches
+        :param stratified: if True -> preserves the percentage of samples for each class in a fold
+        :param kfolds_shuffle: if True -> shuffle each stratification of the data before splitting into batches
         :param cv_verbosity: print info about CV training and validation errors every x iterations (e.g. 1000)
-        :param bagging: if set True -> run CV with different seeds and then average the results
+        :param bagging: if True -> run CV with different seeds and then average the results
         :param seeds_list: list of seeds to be used in CV (1 seed in list -> no bagging is possible)
         :param predict_test: IMPORTANT!! If False -> train model and predict OOF (i.e. validation only). Set True
                              if make a prediction for test data set
@@ -95,6 +95,73 @@ class Predictor(object):
         self.bagged_sub_preds = None  # type: pd.DataFrame
         self.feature_importance = None  # type: pd.DataFrame
         self.shap_values = None  # type: pd.DataFrame
+
+    def _index_column_is_defined(self):  # type: (None) -> bool
+        """
+        This method returns True if index column is defined in the Predictor class and is not equal to ''.
+        Note that index column is frequently used when preparing out-of-fold and test predictions.
+        :return: True or False
+        """
+        return self.index_column is not None and self.index_column != ''
+
+    def _concat_bagged_results(self, df_bagged):  # type: (list) -> pd.DataFrame
+        """
+        This method concatenates pandas DFs which contain either out-of-fold or test prediction results.
+        :param df_bagged: list of pandas DFs
+        :return: single pandas DF
+        """
+        df = pd.concat(df_bagged, axis=1)
+        if self._index_column_is_defined():
+            index_values = self.train_df[self.index_column].values if self.train_df.shape[0] == df.shape[0] \
+                else self.test_df[self.index_column].values
+            df.insert(loc=0, column=self.index_column, value=index_values)
+        return df
+
+    def _average_bagged_results(self, bagged_df, oof_prediction):  # type: (pd.DataFrame, bool) -> pd.DataFrame
+        """
+        This method creates single pandas DF containing average of either out-of-fold or test prediction results that
+        were obtained using different seeds (via bagging process).
+        :param bagged_df: pandas DF with bagged predictions (either OOF or test), see self._concat_bagged_results()
+        :param oof_prediction: if True -> the provided bagged_df contains OOF results, otherwise -> test predictions
+        :return: pandas DF with averaged predictions over different seeds
+        """
+        df = pd.DataFrame()
+        target_col = self.target_column + '_OOF' if oof_prediction else self.target_column
+
+        if self._index_column_is_defined():
+            index_values = self.train_df[self.index_column].values if oof_prediction \
+                else self.test_df[self.index_column].values
+            df[self.index_column] = index_values
+            df[target_col] = bagged_df.loc[:, bagged_df.columns != self.index_column]\
+                .mean(axis=1).round(self.target_decimals)
+        else:
+            df[target_col] = bagged_df.mean(axis=1).round(self.target_decimals)
+
+        # Convert to int if target rounding precision is 0 decimals
+        if self.target_decimals == 0:
+            df[target_col] = df[target_col].astype(int)
+        return df
+
+    def _prepare_single_seed_results(self, preds, oof_prediction):  # type: (np.ndarray, bool) -> pd.DataFrame
+        """
+        This method creates pandas DF containing either OOF or test predictions (obtained with the single seed).
+        :param preds: array with a predictions (either oof or sub)
+        :param oof_prediction: if True -> the provided bagged_df contains OOF results, otherwise -> test predictions
+        :return: pandas DF with either OOF or test predictions (single seed)
+        """
+        df = pd.DataFrame()
+        target_col = self.target_column + '_OOF' if oof_prediction else self.target_column
+
+        if self._index_column_is_defined():
+            index_values = self.train_df[self.index_column].values if oof_prediction \
+                else self.test_df[self.index_column].values
+            df[self.index_column] = index_values
+        df[target_col] = np.round(preds, self.target_decimals)
+
+        # Convert to int if target rounding precision is 0 decimals
+        if self.target_decimals == 0:
+            df[target_col] = df[target_col].astype(int)
+        return df
 
     def _get_feature_importances_in_fold(self, feats, n_fold):  # type: (list, int) -> pd.DataFrame
         """
@@ -240,12 +307,6 @@ class Predictor(object):
             raise TypeError("metrics_scorer should be function from sklearn.metrics module. "
                             "Instead received {0}.".format(self.metrics_scorer.__module__))
 
-        index = self.index_column  # index column
-        target = self.target_column  # target column (column to be predicted)
-
-        # Flag is True when index is valid. Otherwise -> False
-        index_col_valid = True if index is not None and index != '' else False
-
         if self.bagging and len(self.seeds_list) == 1:
             raise ValueError('Number of seeds for bagging should be more than 1. Provided: {0}'
                              .format(len(self.seeds_list)))
@@ -258,6 +319,7 @@ class Predictor(object):
             shap_values_bagged = []  # features shap values (averaged over folds) for all seeds
             cv_score_bagged = []  # CV scores (averaged over folds) for all seeds [dimension: n_seeds]
             cv_std_bagged = []  # CV std's (computed over folds) for all seeds [dimension: n_seeds]
+
             for i, seed_val in enumerate(self.seeds_list):
                 oof_preds, sub_preds, oof_eval_results, feature_importance_df, shap_values_df, cv_score, cv_std = \
                     self._run_cv_one_seed(seed_val, self.predict_test)
@@ -273,49 +335,26 @@ class Predictor(object):
             del oof_preds, sub_preds, oof_eval_results, feature_importance_df, shap_values_df; gc.collect()
 
             # Preparing DF with OOF predictions for all seeds
-            bagged_oof_preds = pd.concat(oof_pred_bagged, axis=1)
-            if index_col_valid:
-                bagged_oof_preds.insert(loc=0, column=index, value=self.train_df[index].values)
+            bagged_oof_preds = self._concat_bagged_results(oof_pred_bagged)
             self.bagged_oof_preds = bagged_oof_preds
 
             # Preparing DF with submission predictions for all seeds
-            bagged_sub_preds = pd.concat(sub_preds_bagged, axis=1)
-            if index_col_valid:
-                bagged_sub_preds.insert(loc=0, column=index, value=self.test_df[index].values)
+            bagged_sub_preds = self._concat_bagged_results(sub_preds_bagged)
             self.bagged_sub_preds = bagged_sub_preds
 
             # Averaging results over seeds to compute single set of OOF predictions
-            oof_preds = pd.DataFrame()
-            if index_col_valid:
-                oof_preds[index] = self.train_df[index].values
-                oof_preds[target + '_OOF'] = bagged_oof_preds.loc[:, bagged_oof_preds.columns != index].mean(axis=1)\
-                    .round(self.target_decimals)
-            else:
-                oof_preds[target + '_OOF'] = bagged_oof_preds.mean(axis=1).round(self.target_decimals)
-
-            if self.target_decimals == 0:
-                # Convert to int if target rounding precision is 0 decimals
-                oof_preds[target + '_OOF'] = oof_preds[target + '_OOF'].astype(int)
+            oof_preds = self._average_bagged_results(bagged_oof_preds, oof_prediction=True)
             self.oof_preds = oof_preds
 
             # Store predictions for test data (if flag is True). Use simple averaging over seeds (same as oof_preds)
             if self.predict_test:
-                sub_preds = pd.DataFrame()
-                if index_col_valid:
-                    sub_preds[index] = self.test_df[index].values
-                    sub_preds[target] = bagged_sub_preds.loc[:, bagged_sub_preds.columns != index].mean(axis=1)\
-                        .round(self.target_decimals)
-                else:
-                    sub_preds[target] = bagged_sub_preds.mean(axis=1).round(self.target_decimals)
-
-                if self.target_decimals == 0:
-                    # Convert to int if target rounding precision is 0 decimals
-                    sub_preds[target] = sub_preds[target].astype(int)
+                sub_preds = self._average_bagged_results(bagged_sub_preds, oof_prediction=False)
                 self.sub_preds = sub_preds
 
             # Final stats: CV score and STD of CV score computed over all seeds
-            cv_score = round(self.metrics_scorer(self.train_df[target], oof_preds[target + '_OOF']),
-                             self.metrics_decimals)
+            cv_score = round(self.metrics_scorer(
+                self.train_df[self.target_column], oof_preds[self.target_column + '_OOF']), self.metrics_decimals
+            )
             cv_std = round(float(np.std(cv_score_bagged)), self.metrics_decimals)
             print('\nCV: bagged {0} score {1} +/- {2}\n'.format(self.metrics_scorer.func_name.upper(), cv_score, cv_std))
 
@@ -333,26 +372,12 @@ class Predictor(object):
             oof_preds, sub_preds, oof_eval_results, feature_importance_df, shap_values_df, cv_score, cv_std = \
                 self._run_cv_one_seed(self.seeds_list[0], self.predict_test)
 
-            oof_preds_df = pd.DataFrame()
-            if index_col_valid:
-                oof_preds_df[index] = self.train_df[index].values
-            oof_preds_df[target + '_OOF'] = np.round(oof_preds, self.target_decimals)
-
-            if self.target_decimals == 0:
-                # Convert to int if target rounding precision is 0 decimals
-                oof_preds_df[target + '_OOF'] = oof_preds_df[target + '_OOF'].astype(int)
+            oof_preds_df = self._prepare_single_seed_results(oof_preds, oof_prediction=True)
             self.oof_preds = oof_preds_df
 
             # Store predictions for test data (if flag is True)
             if self.predict_test:
-                sub_preds_df = pd.DataFrame()
-                if index_col_valid:
-                    sub_preds_df[index] = self.test_df[index].values
-                sub_preds_df[target] = np.round(sub_preds, self.target_decimals)
-
-                if self.target_decimals == 0:
-                    # Convert to int if target rounding precision is 0 decimals
-                    sub_preds_df[target] = sub_preds_df[target].astype(int)
+                sub_preds_df = self._prepare_single_seed_results(sub_preds, oof_prediction=False)
                 self.sub_preds = sub_preds_df
 
             # The DF below contains seed number used in the CV run, cv_score averaged over all folds (see above),
@@ -372,7 +397,7 @@ class Predictor(object):
         This function prints and plots the confusion matrix. Normalization can be applied by setting normalize=True.
         :param class_names: list of strings defining unique classes names
         :param labels_mapper:
-        :param normalize: if set True -> normalizes results in confusion matrix (shows units instead of counting values)
+        :param normalize: if True -> normalizes results in confusion matrix (shows units instead of counting values)
         :param cmap: color map
         :param save: if True -> results will be saved to disk
         :return: plots confusion matrix and print classification report
@@ -655,7 +680,7 @@ def main_run_cv_and_prediction(classifier='lgbm'):
 
     if classifier is 'lgbm':
         classifier_model = prepare_lgbm()
-        eval_metric = 'multi_error' # see https://lightgbm.readthedocs.io/en/latest/Parameters.html
+        eval_metric = 'multi_error'  # see https://lightgbm.readthedocs.io/en/latest/Parameters.html
     elif classifier is 'xgb':
         classifier_model = prepare_xgb()
         eval_metric = 'merror'  # see https://xgboost.readthedocs.io/en/latest/parameter.html
