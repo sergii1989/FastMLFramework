@@ -15,6 +15,7 @@
       <w>dataset</w>
       <w>datatypes</w>
       <w>dtrain</w>
+      <w>explainer</w>
       <w>figname</w>
       <w>figsize</w>
       <w>gbdt</w>
@@ -40,9 +41,12 @@
       <w>optim</w>
       <w>pred</w>
       <w>preds</w>
+      <w>proba</w>
       <w>reinit</w>
       <w>rmse</w>
+      <w>shap</w>
       <w>sklearn</w>
+      <w>softprob</w>
       <w>sqrt</w>
       <w>stds</w>
       <w>stdv</w>
