@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from bayes_opt import BayesianOptimization
-from modeling.cross_validation import Predictor
+from modeling.prediction import Predictor
 from generic_tools.utils import timing, create_output_dir
 
 
@@ -104,7 +104,7 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         :param hp_optimization_space: dict with hyperparameters to be optimized within corresponding variation ranges
         :param init_points: number of initial points in Bayes Optimization procedure
         :param n_iter: number of iteration in Bayes Optimization procedure
-        :param seed_val: seed numpy random generator
+        :param seed_val: seed for numpy random generator
         :param output_dir: name of directory to save results of hyper parameters optimization
         """
         super(BayesHyperParamsOptimization, self).__init__(predictor, seed_val, output_dir, self.FILENAME)
@@ -122,8 +122,8 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         hp_optimization_space = self._adjust_hyperparameters_datatypes(hp_optimization_space)
         hp_optimization_space = self._complete_missing_hyperparameters_from_init_params(hp_optimization_space)
         self.predictor.classifier.reinit_model_with_new_params(hp_optimization_space)
-        _, _, _, _, cv_score, cv_std = self.predictor._run_cv_one_seed(seed_val=self.seed_val, predict_test=False,
-                                                                       cv_verbosity=0)
+        _, _, _, _, _, cv_score, cv_std = self.predictor._run_cv_one_seed(seed_val=self.seed_val, predict_test=False,
+                                                                          cv_verbosity=0)
         # Store all used hyperparameters with the corresponding CV results in a pandas DF
         hpo_space_df = pd.DataFrame(index=hp_optimization_space.keys(), data=hp_optimization_space.values()).T
         hpo_space_df.insert(loc=0, column='cv_score', value=cv_score)
@@ -138,7 +138,7 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         :return: None
         """
         self.hpo_cv_df = pd.DataFrame()  # initializing DF for storage of used hyperparameters in bayes optimization
-        bo = BayesianOptimization(self.hp_optimizer, self.hp_optimization_space)
+        bo = BayesianOptimization(f=self.hp_optimizer, pbounds=self.hp_optimization_space, random_state=self.seed_val)
         bo.maximize(init_points=self.init_points, n_iter=self.n_iter)
 
         best_params = self._adjust_hyperparameters_datatypes(bo.res['max']['max_params'])

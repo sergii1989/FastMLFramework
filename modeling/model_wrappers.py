@@ -5,7 +5,7 @@ class ModelWrapper(object):
         self._verify_model_name_is_ok()
         self._add_seed_to_params(params, seed)
         self.params = params
-        self.estimator = model(**params)
+        self.estimator = self.model(**params)
 
     def _verify_model_name_is_ok(self):
         if self.model_name is None:
@@ -30,7 +30,7 @@ class ModelWrapper(object):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
-    def predict_probability(self, x, num_iteration):
+    def run_prediction(self, x, predict_probability, num_iteration):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
@@ -87,8 +87,10 @@ class LightGBMWrapper(ModelWrapper):
                            eval_metric=eval_metric,
                            verbose=cv_verbosity)
 
-    def predict_probability(self, x, num_iteration=1000):
-        return self.estimator.predict_proba(x, num_iteration=num_iteration)[:, 1]
+    def run_prediction(self, x, predict_probability, num_iteration=1000):
+        if predict_probability:
+            return self.estimator.predict_proba(x, num_iteration=num_iteration)[:, 1]
+        return self.estimator.predict(x, num_iteration=num_iteration)
 
     def get_best_iteration(self):
         return self.estimator.booster_.best_iteration
@@ -124,7 +126,7 @@ class XGBWrapper(ModelWrapper):
         super(XGBWrapper, self).__init__(model, params, seed, name)
 
     def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
-        params['seed'] = seed
+        params['random_state'] = seed
         return params
 
     def reinit_model_with_new_params(self, new_params):  # type: (dict) -> None
@@ -132,7 +134,7 @@ class XGBWrapper(ModelWrapper):
         self.estimator = self.model(**self.params)
 
     def reset_models_seed(self, seed):  # type: (int) -> None
-        self.params['seed'] = seed
+        self.params['random_state'] = seed
         self.estimator = self.model(**self.params)
 
     def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
@@ -155,11 +157,13 @@ class XGBWrapper(ModelWrapper):
                            early_stopping_rounds=self.params.get("early_stopping_rounds", None),
                            verbose=cv_verbosity)
 
-    def predict_probability(self, x, num_iteration=1000):
-        return self.estimator.predict_proba(x, ntree_limit=num_iteration)[:, 1]
+    def run_prediction(self, x, predict_probability, num_iteration=1000):
+        if predict_probability:
+            return self.estimator.predict_proba(x, ntree_limit=num_iteration)[:, 1]
+        return self.estimator.predict(x, ntree_limit=num_iteration)
 
     def get_best_iteration(self):
-        return self.estimator.best_iteration
+        return self.estimator.get_booster().best_iteration
 
     def get_features_importance(self):
         """
@@ -210,8 +214,10 @@ class SklearnWrapper(ModelWrapper):
         """
         self.estimator.fit(train_x, train_y)
 
-    def predict_probability(self, x, num_iteration=1000):
-        return self.estimator.predict_proba(x)[:, 1]
+    def run_prediction(self, x, predict_probability, num_iteration=1000):
+        if predict_probability:
+            return self.estimator.predict_proba(x)[:, 1]
+        return self.estimator.predict(x)
 
     def get_features_importance(self):
         """
@@ -246,8 +252,10 @@ class CBWrapper(ModelWrapper):
     def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
         self.estimator.fit(train_x, train_y)
 
-    def predict_probability(self, x, num_iteration=1000):
-        return self.estimator.predict_proba(x)[:, 1]
+    def run_prediction(self, x, predict_probability, num_iteration=1000):
+        if predict_probability:
+            return self.estimator.predict_proba(x)[:, 1]
+        return self.estimator.predict(x)
 
     def get_features_importance(self):
         return
