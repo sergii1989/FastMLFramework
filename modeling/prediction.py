@@ -496,6 +496,9 @@ class Predictor(object):
         :param save: if True -> results will be saved to disk
         :return: plot of shap values (mean absolute computed over all folds/seeds) for each feature
         """
+
+        # TODO: think how to visualize shap values in case of multi-class classification task
+        # Possible example is here: https://github.com/slundberg/shap (see multi-class SVM example)
         shap_values = self.shap_values.copy()
         self.verify_number_of_features_is_ok(shap_values, n_features)
 

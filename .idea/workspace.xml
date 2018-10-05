@@ -2,8 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f445f148-be77-4f8b-81ff-ecf6f9ca60fc" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/sergii.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/sergii.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modeling/prediction.py" beforeDir="false" afterPath="$PROJECT_DIR$/modeling/prediction.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -42,8 +40,8 @@
       <file leaf-file-name="prediction.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="125">
-              <caret line="334" column="38" selection-start-line="334" selection-start-column="38" selection-end-line="334" selection-end-column="38" />
+            <state relative-caret-position="242">
+              <caret line="496" column="54" lean-forward="true" selection-start-line="496" selection-start-column="54" selection-end-line="496" selection-end-column="54" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -107,7 +105,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>n_fea</find>
       <find>early_stopping_round</find>
       <find>self.model_name.upper(</find>
       <find>self.model_name</find>
@@ -137,6 +134,7 @@
       <find>type_results</find>
       <find>oof_prediction</find>
       <find>if set</find>
+      <find>self.in</find>
     </findStrings>
     <replaceStrings>
       <replace>oof_eval_result</replace>
@@ -822,8 +820,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="125">
-          <caret line="334" column="38" selection-start-line="334" selection-start-column="38" selection-end-line="334" selection-end-column="38" />
+        <state relative-caret-position="242">
+          <caret line="496" column="54" lean-forward="true" selection-start-line="496" selection-start-column="54" selection-end-line="496" selection-end-column="54" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
