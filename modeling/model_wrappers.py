@@ -3,6 +3,7 @@ class ModelWrapper(object):
         self.model = model
         self.model_name = model_name
         self._verify_model_name_is_ok()
+        self.model_seed_flag = self._verify_model_has_seed_param()
         self._add_seed_to_params(params, seed)
         self.params = params
         self.estimator = self.model(**params)
@@ -13,6 +14,10 @@ class ModelWrapper(object):
                 self.model_name = self.model.__name__
             except Exception as e:
                 print('Please provide name of the model. Error %s encountered when trying self.model.__name__' % e)
+
+    def _verify_model_has_seed_param(self):
+        # Abstract method, must be implemented by derived classes
+        raise NotImplemented()
 
     def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
         # Abstract method, must be implemented by derived classes
@@ -59,8 +64,13 @@ class LightGBMWrapper(ModelWrapper):
     def __init__(self, model, params=None, seed=27, name='lgbm'):
         super(LightGBMWrapper, self).__init__(model, params, seed, name)
 
+    def _verify_model_has_seed_param(self):
+        # This method checks
+        return 'random_state' in self.model().get_params()
+
     def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
-        params['seed'] = seed
+        if self.model_seed_flag:
+            params['random_state'] = seed
         return params
 
     def reinit_model_with_new_params(self, new_params):  # type: (dict) -> None
@@ -68,7 +78,7 @@ class LightGBMWrapper(ModelWrapper):
         self.estimator = self.model(**self.params)
 
     def reset_models_seed(self, seed):  # type: (int) -> None
-        self.params['seed'] = seed
+        self.params['random_state'] = seed
         self.estimator = self.model(**self.params)
 
     def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
@@ -125,8 +135,12 @@ class XGBWrapper(ModelWrapper):
     def __init__(self, model, params=None, seed=27, name='xgb'):
         super(XGBWrapper, self).__init__(model, params, seed, name)
 
+    def _verify_model_has_seed_param(self):
+        return 'random_state' in self.model().get_params()
+
     def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
-        params['random_state'] = seed
+        if self.model_seed_flag:
+            params['random_state'] = seed
         return params
 
     def reinit_model_with_new_params(self, new_params):  # type: (dict) -> None
@@ -184,12 +198,25 @@ class XGBWrapper(ModelWrapper):
 
 class SklearnWrapper(ModelWrapper):
     """Class that wraps Sklearn ML algorithms (ET, LinerRegression, LogisticRegression, etc."""
+    HP_DATATYPES = {
+        # Logistic regression
+        'C': lambda x: round(x, 3) if x < 1.0 else round(x, 1),
+        'tol': lambda x: round(x, 5),
+        'max_iter': lambda x: int(round(x, 0)),
+
+        # ExtraTreesClassifier
+        'max_depth': lambda x: int(round(x, 0)),
+    }
 
     def __init__(self, model, params=None, seed=27, name=None):
         super(SklearnWrapper, self).__init__(model, params, seed, name)
 
+    def _verify_model_has_seed_param(self):
+        return 'random_state' in self.model().get_params()
+
     def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
-        params['random_state'] = seed
+        if self.model_seed_flag:
+            params['random_state'] = seed
         return params
 
     def reinit_model_with_new_params(self, new_params):  # type: (dict) -> None
@@ -237,8 +264,12 @@ class CBWrapper(ModelWrapper):
     def __init__(self, model, params=None, seed=27, name='cb'):
         super(CBWrapper, self).__init__(model, params, seed, name)
 
+    def _verify_model_has_seed_param(self):
+        return 'random_state' in self.model().get_params()
+
     def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
-        params['random_state'] = seed
+        if self.model_seed_flag:
+            params['random_state'] = seed
         return params
 
     def reinit_model_with_new_params(self, new_params):  # type: (dict) -> None
