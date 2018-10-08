@@ -7,6 +7,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+from scipy import stats
 from sklearn import metrics
 from model_wrappers import ModelWrapper
 from sklearn.model_selection import KFold, StratifiedKFold
@@ -15,14 +16,14 @@ from sklearn.metrics import confusion_matrix, classification_report
 
 
 class Predictor(object):
-    SINGLE_MODEL_SOLUTION_DIR = 'single_model_solution'
+    SOLUTION_DIR = 'single_model_solution'
     FIGNAME_CONFUSION_MATRIX = 'confusion_matrix.png'
     FIGNAME_CV_RESULTS_VERSUS_SEEDS = 'cv_results_vs_seeds.png'
 
-    def __init__(self, train_df, test_df, target_column, index_column, classifier, predict_probability,
+    def __init__(self, train_df, test_df, target_column, index_column, classifier, predict_probability, class_index,
                  eval_metric, metrics_scorer, metrics_decimals=6, target_decimals=6, cols_to_exclude=[],
                  num_folds=5, stratified=False, kfolds_shuffle=True, cv_verbosity=1000, bagging=False,
-                 seeds_list=[27], predict_test=True, output_dir=''):
+                 data_split_seed=789987, model_seeds_list=[27], predict_test=True, output_dir=''):
         """
         This class run CV and makes OOF and submission predictions. It also allows to run CV in bagging mode using
         different seeds for random generator.
@@ -32,6 +33,12 @@ class Predictor(object):
         :param index_column: unique index column
         :param classifier: wrapped estimator (object of ModelWrapper class)
         :param predict_probability: if True -> use classifier.predict_proba(), else -> classifier.predict() method
+        :param class_index: index of the class label for which to predict the probability. Note: it is used only for
+                            classification tasks and when the predict_probability=True. It also important to notice that
+                            the target should always be label encoded.
+                            - if class_index is None -> return probability of all classes in the target
+                            - if class_index is int -> return probability of selected class
+                            - if class_index is list of int -> return probability of selected classes
         :param eval_metric: 'rmse': root mean square error
                             'mae': mean absolute error
                             'logloss': negative log-likelihood
@@ -51,7 +58,8 @@ class Predictor(object):
         :param kfolds_shuffle: if True -> shuffle each stratification of the data before splitting into batches
         :param cv_verbosity: print info about CV training and validation errors every x iterations (e.g. 1000)
         :param bagging: if True -> run CV with different seeds and then average the results
-        :param seeds_list: list of seeds to be used in CV (1 seed in list -> no bagging is possible)
+        :param data_split_seed: seed used in splitting train/test data set
+        :param model_seeds_list: list of seeds to be used for CV and results prediction (including bagging)
         :param predict_test: IMPORTANT!! If False -> train model and predict OOF (i.e. validation only). Set True
                              if make a prediction for test data set
         :param output_dir: name of directory to save results of CV and prediction
@@ -68,6 +76,7 @@ class Predictor(object):
         self.classifier = classifier  # type: ModelWrapper
         self.model_name = classifier.get_model_name()  # type: str
         self.predict_probability = predict_probability  # type: bool
+        self.class_index = class_index
 
         # Settings for CV and test prediction
         self.num_folds = num_folds  # type: int
@@ -80,9 +89,10 @@ class Predictor(object):
         self.kfolds_shuffle = kfolds_shuffle  # type: bool
         self.cv_verbosity = cv_verbosity  # type: int
         self.bagging = bagging  # type: bool
-        self.seeds_list = seeds_list  # type: list
         self.predict_test = predict_test  # type: bool
-        self.path_output_dir = os.path.normpath(os.path.join(os.getcwd(), self.SINGLE_MODEL_SOLUTION_DIR, output_dir))
+        self.data_split_seed = data_split_seed  # type: int
+        self.model_seeds_list = model_seeds_list  # type: list
+        self.path_output_dir = os.path.normpath(os.path.join(os.getcwd(), self.SOLUTION_DIR, output_dir))
         create_output_dir(self.path_output_dir)
 
         # Results of CV and test prediction
@@ -104,32 +114,33 @@ class Predictor(object):
         """
         return self.index_column is not None and self.index_column != ''
 
-    def _concat_bagged_results(self, df_bagged):  # type: (list) -> pd.DataFrame
+    def _concat_bagged_results(self, list_bagged_df, is_oof_prediction):  # type: (list) -> pd.DataFrame
         """
         This method concatenates pandas DFs which contain either out-of-fold or test prediction results.
-        :param df_bagged: list of pandas DFs
+        :param list_bagged_df: list of pandas DFs containing either OOF or test results for various seeds
+        :param is_oof_prediction: if True -> provided list_bagged_df contains OOF results, otherwise -> test predictions
         :return: single pandas DF
         """
-        df = pd.concat(df_bagged, axis=1)
+        df = pd.concat(list_bagged_df, axis=1)
         if self._index_column_is_defined():
-            index_values = self.train_df[self.index_column].values if self.train_df.shape[0] == df.shape[0] \
+            index_values = self.train_df[self.index_column].values if is_oof_prediction \
                 else self.test_df[self.index_column].values
             df.insert(loc=0, column=self.index_column, value=index_values)
         return df
 
-    def _average_bagged_results(self, bagged_df, oof_prediction):  # type: (pd.DataFrame, bool) -> pd.DataFrame
+    def _average_bagged_results(self, bagged_df, is_oof_prediction):  # type: (pd.DataFrame, bool) -> pd.DataFrame
         """
         This method creates single pandas DF containing average of either out-of-fold or test prediction results that
         were obtained using different seeds (via bagging process).
         :param bagged_df: pandas DF with bagged predictions (either OOF or test), see self._concat_bagged_results()
-        :param oof_prediction: if True -> the provided bagged_df contains OOF results, otherwise -> test predictions
+        :param is_oof_prediction: if True -> provided bagged_df contains OOF results, otherwise -> test predictions
         :return: pandas DF with averaged predictions over different seeds
         """
         df = pd.DataFrame()
-        target_col = self.target_column + '_OOF' if oof_prediction else self.target_column
+        target_col = self.target_column + '_OOF' if is_oof_prediction else self.target_column
 
         if self._index_column_is_defined():
-            index_values = self.train_df[self.index_column].values if oof_prediction \
+            index_values = self.train_df[self.index_column].values if is_oof_prediction \
                 else self.test_df[self.index_column].values
             df[self.index_column] = index_values
             df[target_col] = bagged_df.loc[:, bagged_df.columns != self.index_column]\
@@ -142,18 +153,18 @@ class Predictor(object):
             df[target_col] = df[target_col].astype(int)
         return df
 
-    def _prepare_single_seed_results(self, preds, oof_prediction):  # type: (np.ndarray, bool) -> pd.DataFrame
+    def _prepare_single_seed_results(self, preds, is_oof_prediction):  # type: (np.ndarray, bool) -> pd.DataFrame
         """
         This method creates pandas DF containing either OOF or test predictions (obtained with the single seed).
         :param preds: array with a predictions (either oof or sub)
-        :param oof_prediction: if True -> the provided bagged_df contains OOF results, otherwise -> test predictions
+        :param is_oof_prediction: if True -> the provided bagged_df contains OOF results, otherwise -> test predictions
         :return: pandas DF with either OOF or test predictions (single seed)
         """
         df = pd.DataFrame()
-        target_col = self.target_column + '_OOF' if oof_prediction else self.target_column
+        target_col = self.target_column + '_OOF' if is_oof_prediction else self.target_column
 
         if self._index_column_is_defined():
-            index_values = self.train_df[self.index_column].values if oof_prediction \
+            index_values = self.train_df[self.index_column].values if is_oof_prediction \
                 else self.test_df[self.index_column].values
             df[self.index_column] = index_values
         df[target_col] = np.round(preds, self.target_decimals)
@@ -234,17 +245,22 @@ class Predictor(object):
             seed_val, self.train_df[feats].shape, self.test_df[feats].shape))
 
         np.random.seed(seed_val)  # for reproducibility
-        self.classifier.reset_models_seed(seed_val)
+        if self.classifier.model_seed_flag:
+            self.classifier.reset_models_seed(seed_val)
 
         if self.stratified:
-            folds = StratifiedKFold(n_splits=self.num_folds, shuffle=self.kfolds_shuffle, random_state=seed_val)
+            folds = StratifiedKFold(n_splits=self.num_folds,
+                                    shuffle=self.kfolds_shuffle,
+                                    random_state=self.data_split_seed)
         else:
-            folds = KFold(n_splits=self.num_folds, shuffle=self.kfolds_shuffle, random_state=seed_val)
+            folds = KFold(n_splits=self.num_folds,
+                          shuffle=self.kfolds_shuffle,
+                          random_state=self.data_split_seed)
 
         # Create arrays and data frames to store results
         # Note: if predict_test is False -> sub_preds = None
         oof_preds = np.zeros(self.train_df.shape[0])
-        sub_preds = np.zeros(self.test_df.shape[0]) if predict_test else None
+        sub_preds = [] if predict_test else None
 
         oof_eval_results = []
         for n_fold, (train_idx, valid_idx) in enumerate(folds.split(self.train_df[feats], self.train_df[target])):
@@ -259,17 +275,19 @@ class Predictor(object):
             # Out-of-fold prediction
             oof_preds[valid_idx] = self.classifier.run_prediction(
                 x=valid_x,
+                num_iteration=best_iter_in_fold,
                 predict_probability=self.predict_probability,
-                num_iteration=best_iter_in_fold
+                class_index=self.class_index
             )
 
-            # Make a prediction for test data (if flag is True)
+            # Make a prediction for test data (if predict_test is True)
             if predict_test:
-                sub_preds += self.classifier.run_prediction(
+                sub_preds.append(self.classifier.run_prediction(
                     x=self.test_df[feats],
+                    num_iteration=int(round(best_iter_in_fold * 1.1, 0)),
                     predict_probability=self.predict_probability,
-                    num_iteration=int(round(best_iter_in_fold * 1.1, 0))
-                ) / folds.n_splits
+                    class_index=self.class_index
+                ))
 
             if hasattr(self.classifier.estimator, 'feature_importances_'):
                 # Get feature importances per fold and store corresponding dataframe to list
@@ -293,6 +311,13 @@ class Predictor(object):
         cv_std = round(float(np.std(oof_eval_results)), self.metrics_decimals)
         print('CV: list of OOF {0}: {1}'.format(self.metrics_scorer.func_name.upper(), oof_eval_results))
         print('CV {0}: {1} +/- {2}'.format(self.metrics_scorer.func_name.upper(), cv_score, cv_std))
+
+        if predict_test:
+            # If the task is to predict a probability of the classes, use np.mean() on top of the results predicted with
+            # the best num_iteration in each fold. Contrarily, if the task is to predict class label -> use mode value
+            # of the results (kind of 'hard' majority vote - based on frequency).
+            sub_preds = np.mean(sub_preds, axis=0) if self.predict_probability else stats.mode(sub_preds).mode.ravel()
+
         return oof_preds, sub_preds, oof_eval_results, feature_importance_df, shap_values_df, cv_score, cv_std
 
     @timing
@@ -307,11 +332,11 @@ class Predictor(object):
             raise TypeError("metrics_scorer should be function from sklearn.metrics module. "
                             "Instead received {0}.".format(self.metrics_scorer.__module__))
 
-        if self.bagging and len(self.seeds_list) == 1:
+        if self.bagging and len(self.model_seeds_list) == 1:
             raise ValueError('Number of seeds for bagging should be more than 1. Provided: {0}'
-                             .format(len(self.seeds_list)))
+                             .format(len(self.model_seeds_list)))
 
-        if self.bagging and len(self.seeds_list) > 1:
+        if self.bagging and len(self.model_seeds_list) > 1:
             oof_pred_bagged = []  # out-of-fold predictions for all seeds [dimension: n_rows_train x n_seeds]
             sub_preds_bagged = []  # test predictions for all seeds [dimension: n_rows_test x n_seeds]
             oof_eval_results_bagged = []  # CV scores in each fold for all seeds [dimension: n_seeds x n_folds]
@@ -320,12 +345,21 @@ class Predictor(object):
             cv_score_bagged = []  # CV scores (averaged over folds) for all seeds [dimension: n_seeds]
             cv_std_bagged = []  # CV std's (computed over folds) for all seeds [dimension: n_seeds]
 
-            for i, seed_val in enumerate(self.seeds_list):
+            for i, seed_val in enumerate(self.model_seeds_list):
                 oof_preds, sub_preds, oof_eval_results, feature_importance_df, shap_values_df, cv_score, cv_std = \
                     self._run_cv_one_seed(seed_val, self.predict_test)
 
-                oof_pred_bagged.append(pd.Series(oof_preds, name='seed_%s' % str(i + 1)).round(self.target_decimals))
-                sub_preds_bagged.append(pd.Series(sub_preds, name='seed_%s' % str(i + 1)).round(self.target_decimals))
+                # Convert to int if target rounding precision is 0 decimals
+
+                oof_preds = pd.Series(oof_preds, name='seed_%s' % str(i + 1)).round(self.target_decimals)
+                sub_preds = pd.Series(sub_preds, name='seed_%s' % str(i + 1)).round(self.target_decimals)
+
+                if self.target_decimals == 0:
+                    oof_preds = oof_preds.astype(int)
+                    sub_preds = sub_preds.astype(int)
+
+                oof_pred_bagged.append(oof_preds)
+                sub_preds_bagged.append(sub_preds)
                 oof_eval_results_bagged.append(oof_eval_results)
                 feature_importance_bagged.append(feature_importance_df)
                 shap_values_bagged.append(shap_values_df)
@@ -335,20 +369,20 @@ class Predictor(object):
             del oof_preds, sub_preds, oof_eval_results, feature_importance_df, shap_values_df; gc.collect()
 
             # Preparing DF with OOF predictions for all seeds
-            bagged_oof_preds = self._concat_bagged_results(oof_pred_bagged)
+            bagged_oof_preds = self._concat_bagged_results(oof_pred_bagged, is_oof_prediction=True)
             self.bagged_oof_preds = bagged_oof_preds
 
             # Preparing DF with submission predictions for all seeds
-            bagged_sub_preds = self._concat_bagged_results(sub_preds_bagged)
+            bagged_sub_preds = self._concat_bagged_results(sub_preds_bagged, is_oof_prediction=False)
             self.bagged_sub_preds = bagged_sub_preds
 
             # Averaging results over seeds to compute single set of OOF predictions
-            oof_preds = self._average_bagged_results(bagged_oof_preds, oof_prediction=True)
+            oof_preds = self._average_bagged_results(bagged_oof_preds, is_oof_prediction=True)
             self.oof_preds = oof_preds
 
             # Store predictions for test data (if flag is True). Use simple averaging over seeds (same as oof_preds)
             if self.predict_test:
-                sub_preds = self._average_bagged_results(bagged_sub_preds, oof_prediction=False)
+                sub_preds = self._average_bagged_results(bagged_sub_preds, is_oof_prediction=False)
                 self.sub_preds = sub_preds
 
             # Final stats: CV score and STD of CV score computed over all seeds
@@ -361,7 +395,7 @@ class Predictor(object):
             # The DF below contains seed number used in the CV run, cv_score averaged over all folds (see above),
             # std of CV score as well as list of CV values (in all folds).
             self.oof_eval_results = pd.DataFrame(
-                zip(self.seeds_list, cv_score_bagged, cv_std_bagged, oof_eval_results_bagged),
+                zip(self.model_seeds_list, cv_score_bagged, cv_std_bagged, oof_eval_results_bagged),
                 columns=['seed', 'cv_mean_score', 'cv_std', 'cv_score_per_each_fold']
             )
             self.feature_importance = pd.concat(feature_importance_bagged).reset_index(drop=True)
@@ -370,19 +404,19 @@ class Predictor(object):
 
         else:
             oof_preds, sub_preds, oof_eval_results, feature_importance_df, shap_values_df, cv_score, cv_std = \
-                self._run_cv_one_seed(self.seeds_list[0], self.predict_test)
+                self._run_cv_one_seed(self.model_seeds_list[0], self.predict_test)
 
-            oof_preds_df = self._prepare_single_seed_results(oof_preds, oof_prediction=True)
+            oof_preds_df = self._prepare_single_seed_results(oof_preds, is_oof_prediction=True)
             self.oof_preds = oof_preds_df
 
             # Store predictions for test data (if flag is True)
             if self.predict_test:
-                sub_preds_df = self._prepare_single_seed_results(sub_preds, oof_prediction=False)
+                sub_preds_df = self._prepare_single_seed_results(sub_preds, is_oof_prediction=False)
                 self.sub_preds = sub_preds_df
 
             # The DF below contains seed number used in the CV run, cv_score averaged over all folds (see above),
             # std of CV score as well as list of CV values (in all folds).
-            self.oof_eval_results = pd.DataFrame([self.seeds_list[0], cv_score, cv_std, oof_eval_results],
+            self.oof_eval_results = pd.DataFrame([self.model_seeds_list[0], cv_score, cv_std, oof_eval_results],
                                                  index=['seed', 'cv_mean_score', 'cv_std', 'cv_score_per_each_fold']).T
             self.feature_importance = feature_importance_df
             self.shap_values = shap_values_df
@@ -563,85 +597,52 @@ class Predictor(object):
             plt.savefig(full_path_to_file)
 
     def save_oof_results(self):
+        float_format = '%.{0}f'.format(str(self.target_decimals)) if self.target_decimals > 0 else None
+
         full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'OOF']) + '.csv')
         print('\nSaving elaborated OOF predictions into %s' % full_path_to_file)
-        self.oof_preds.to_csv(full_path_to_file, index=False)
+        self.oof_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
         full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'CV']) + '.csv')
         print('\nSaving CV results into %s' % full_path_to_file)
-        self.oof_eval_results.to_csv(full_path_to_file, index=False)
+        self.oof_eval_results.to_csv(full_path_to_file, index=False, float_format=float_format)
 
         if self.bagged_oof_preds is not None:
             full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'bagged_OOF']) + '.csv')
             print('\nSaving OOF predictions for each seed into %s' % full_path_to_file)
-            self.bagged_oof_preds.to_csv(full_path_to_file, index=False)
+            self.bagged_oof_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
     def save_submission_results(self):
+        float_format = '%.{0}f'.format(str(self.target_decimals)) if self.target_decimals > 0 else None
+
         if self.sub_preds is None:
             raise ValueError('Submission file is empty. Please set flag predict_test = True in run_cv_and_prediction() '
                              'to generate submission file.')
         full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'SUBM']) + '.csv')
         print('\nSaving submission predictions into %s' % full_path_to_file)
-        self.sub_preds.to_csv(full_path_to_file, index=False)
+        self.sub_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
         if self.bagged_sub_preds is not None:
             full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'bagged_SUBM']) + '.csv')
             print('\nSaving submission predictions for each seed into %s' % full_path_to_file)
-            self.bagged_sub_preds.to_csv(full_path_to_file, index=False)
+            self.bagged_sub_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
 
-def prepare_lgbm():
+def prepare_lgbm(params):
     from lightgbm import LGBMClassifier
     from modeling.model_wrappers import LightGBMWrapper
-
-    # LightGBM parameters
-    lgbm_params = {}
-    lgbm_params['boosting_type'] = 'gbdt'  # gbdt, gbrt, rf, random_forest, dart, goss
-    lgbm_params['objective'] = 'multiclass'
-    lgbm_params['num_leaves'] = 16
-    lgbm_params['max_depth'] = 4
-    lgbm_params['learning_rate'] = 0.02
-    lgbm_params['n_estimators'] = 1000
-    lgbm_params['early_stopping_rounds'] = 50
-    lgbm_params['min_split_gain'] = 0.01
-    lgbm_params['min_child_weight'] = 1
-    lgbm_params['subsample'] = 1.0
-    lgbm_params['colsample_bytree'] = 1.0
-    lgbm_params['reg_alpha'] = 0.0
-    lgbm_params['reg_lambda'] = 0.0
-    lgbm_params['n_jobs'] = -1
-    lgbm_params['verbose'] = -1
-
-    lgbm_wrapped = LightGBMWrapper(model=LGBMClassifier, params=lgbm_params, seed=27)
+    lgbm_wrapped = LightGBMWrapper(model=LGBMClassifier, params=params, seed=27)
     return lgbm_wrapped
 
 
-def prepare_xgb():
+def prepare_xgb(params):
     from xgboost import XGBClassifier
     from modeling.model_wrappers import XGBWrapper
-
-    # XGBoost parameters
-    xgb_params = {}
-    xgb_params['booster'] = 'gbtree'
-    xgb_params['objective'] = 'multi:softprob'  # 'binary:logistic'
-    xgb_params['tree_method'] = 'exact'  # 'exact'
-    xgb_params['max_depth'] = 3
-    xgb_params['learning_rate'] = 0.05
-    xgb_params['n_estimators'] = 500
-    xgb_params['early_stopping_rounds'] = 100
-    xgb_params['min_child_weight'] = 1
-    xgb_params['subsample'] = 1.0
-    xgb_params['colsample_bytree'] = 1.0
-    xgb_params['reg_alpha'] = 0.0
-    xgb_params['reg_lambda'] = 1.0
-    xgb_params['n_jobs'] = -1
-    xgb_params['verbose'] = -1
-
-    xgb_wrapped = XGBWrapper(model=XGBClassifier, params=xgb_params, seed=27)
+    xgb_wrapped = XGBWrapper(model=XGBClassifier, params=params, seed=27)
     return xgb_wrapped
 
 
-def main_run_cv_and_prediction(classifier='lgbm'):
+def run_cv_and_prediction_iris(classifier='lgbm'):
     import warnings
     from sklearn import datasets
     from sklearn.metrics import accuracy_score
@@ -664,47 +665,219 @@ def main_run_cv_and_prediction(classifier='lgbm'):
 
     # Parameters
     predict_probability = False  # if True -> use estimator.predict_proba(), otherwise -> estimator.predict()
-    solution_output_dir = ''
+    class_index = 1  # in Target
+    solution_output_dir = 'C:\Kaggle'
     target_column = 'TARGET'
     index_column = ''
     metrics_scorer = accuracy_score
     metrics_decimals = 3
     target_decimals = 0
-    num_folds = 2
+    num_folds = 3
     stratified = True
     kfolds_shuffle = True
     cv_verbosity = 50
-    bagging = False
+    bagging = True
     predict_test = True
-    seeds_list = [27, 55, 999999]
+    data_split_seed = 789987
+    model_seeds_list = [27, 55, 999999, 123345, 8988, 45789, 65479, 321654]
 
     # Columns to exclude from input data
     cols_to_exclude = ['TARGET']
 
     if classifier is 'lgbm':
-        classifier_model = prepare_lgbm()
+        params = {
+            'boosting_type': 'gbdt',  # gbdt, gbrt, rf, random_forest, dart, goss
+            'objective': 'multiclass',
+            'num_leaves': 16,
+            'max_depth': 4,
+            'learning_rate': 0.02,
+            'n_estimators': 1000,
+            'early_stopping_rounds': 50,
+            'min_split_gain': 0.01,
+            'min_child_weight': 1,
+            'subsample': 0.8,
+            'colsample_bytree': 0.7,
+            'reg_alpha': 0.0,
+            'reg_lambda': 0.0,
+            'n_jobs': -1,
+            'verbose': -1
+        }
+        classifier_model = prepare_lgbm(params)
         eval_metric = 'multi_error'  # see https://lightgbm.readthedocs.io/en/latest/Parameters.html
     elif classifier is 'xgb':
-        classifier_model = prepare_xgb()
+        params = {
+            'booster': 'gbtree',
+            'objective': 'multi:softprob',  # 'binary:logistic'
+            'tree_method': 'exact',  # 'exact'
+            'max_depth': 3,
+            'learning_rate': 0.05,
+            'n_estimators': 500,
+            'early_stopping_rounds': 100,
+            'min_child_weight': 1,
+            'subsample': 0.8,
+            'colsample_bytree': 0.7,
+            'reg_alpha': 0.0,
+            'reg_lambda': 1.0,
+            'n_jobs': -1,
+            'verbose': -1
+        }
+        classifier_model = prepare_xgb(params)
         eval_metric = 'merror'  # see https://xgboost.readthedocs.io/en/latest/parameter.html
     else:
-        classifier_model = prepare_lgbm()
+        params = {
+            'boosting_type': 'gbdt',  # gbdt, gbrt, rf, random_forest, dart, goss
+            'objective': 'multiclass',
+            'num_leaves': 16,
+            'max_depth': 4,
+            'learning_rate': 0.02,
+            'n_estimators': 1000,
+            'early_stopping_rounds': 50,
+            'min_split_gain': 0.01,
+            'min_child_weight': 1,
+            'subsample': 0.8,
+            'colsample_bytree': 0.7,
+            'reg_alpha': 0.0,
+            'reg_lambda': 0.0,
+            'n_jobs': -1,
+            'verbose': -1
+        }
+        classifier_model = prepare_lgbm(params)
         eval_metric = 'multi_error'
 
     predictor = Predictor(
         train_df=train_data, test_df=test_data, target_column=target_column, index_column=index_column,
-        classifier=classifier_model, predict_probability=predict_probability, eval_metric=eval_metric,
-        metrics_scorer=metrics_scorer, metrics_decimals=metrics_decimals, target_decimals=target_decimals,
-        cols_to_exclude=cols_to_exclude, num_folds=num_folds, stratified=stratified, kfolds_shuffle=kfolds_shuffle,
-        cv_verbosity=cv_verbosity, bagging=bagging, predict_test=predict_test, seeds_list=seeds_list,
+        classifier=classifier_model, predict_probability=predict_probability, class_index=class_index,
+        eval_metric=eval_metric, metrics_scorer=metrics_scorer, metrics_decimals=metrics_decimals,
+        target_decimals=target_decimals, cols_to_exclude=cols_to_exclude, num_folds=num_folds,
+        stratified=stratified, kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity, bagging=bagging,
+        predict_test=predict_test, data_split_seed=data_split_seed, model_seeds_list=model_seeds_list,
         output_dir=solution_output_dir
     )
     predictor.run_cv_and_prediction()
+    predictor.save_oof_results()
+    predictor.save_submission_results()
+
     test_accuracy = round(metrics_scorer(predictor.test_df[target_column], predictor.sub_preds[target_column]),
                           metrics_decimals)
     print ('\nTest: {0}={1}\n'.format(metrics_scorer.func_name.upper(), test_accuracy))
 
 
+def run_cv_and_prediction_kaggle(classifier='lgbm', debug=False):
+    import warnings
+    from sklearn.metrics import roc_auc_score
+    from data_processing.preprocessing import downcast_datatypes
+
+    warnings.filterwarnings("ignore")
+
+    # Settings for debug
+    num_rows = 2000
+
+    # Input data
+    path_to_data = r'C:\Kaggle\kaggle_home_credit_default_risk\feature_selection'
+    full_path_to_file = os.path.join(path_to_data, 'train_dataset_lgbm_10.csv')
+    train_data = downcast_datatypes(pd.read_csv(full_path_to_file, nrows=num_rows if debug else None))\
+        .reset_index(drop=True)
+    full_path_to_file = os.path.join(path_to_data, 'test_dataset_lgbm_10.csv')
+    test_data = downcast_datatypes(pd.read_csv(full_path_to_file, nrows=num_rows if debug else None))\
+        .reset_index(drop=True)
+    print('df_train shape: {0}'.format(train_data.shape))
+    print('df_test shape: {0}'.format(test_data.shape))
+
+    # Parameters
+    predict_probability = True  # if True -> use estimator.predict_proba(), otherwise -> estimator.predict()
+    class_index = 1  # in Target
+    solution_output_dir = 'C:\Kaggle'
+    target_column = 'TARGET'
+    index_column = 'SK_ID_CURR'
+    eval_metric = 'auc'
+    metrics_scorer = roc_auc_score
+    metrics_decimals = 4
+    target_decimals = 2
+    num_folds = 5
+    stratified = True
+    kfolds_shuffle = True
+    cv_verbosity = 1000
+    bagging = True
+    predict_test = True
+    data_split_seed = 789987
+    model_seeds_list = [27, 55]
+    cols_to_exclude = ['TARGET', 'SK_ID_CURR', 'SK_ID_BUREAU', 'SK_ID_PREV']
+
+    if classifier is 'lgbm':
+        params = {
+            'boosting_type': 'gbdt',  # gbdt, gbrt, rf, random_forest, dart, goss
+            'objective': 'binary',
+            'num_leaves': 32,  # 32
+            'max_depth': 8,  # 8
+            'learning_rate': 0.02,  # 0.01
+            'n_estimators': 10000,
+            'early_stopping_rounds': 200,
+            'min_split_gain': 0.02,  # 0.02
+            'min_child_weight': 40,  # 40
+            'subsample': 0.8,  # 0.87
+            'colsample_bytree': 0.8,  # 0.94
+            'reg_alpha': 0.04,  # 0.04
+            'reg_lambda': 0.07,  # 0.073
+            'nthread': -1,
+            'verbose': -1
+        }
+        classifier_model = prepare_lgbm(params)
+    elif classifier is 'xgb':
+        params = {
+            'booster': 'gbtree',
+            'objective': 'binary:logistic',
+            'tree_method': 'hist',  # 'exact'
+            'max_depth': 6,
+            'learning_rate': 0.02,
+            'n_estimators': 10000,
+            'early_stopping_rounds': 200,
+            'min_child_weight': 30,
+            'subsample': 0.8,
+            'colsample_bytree': 0.7,
+            'reg_alpha': 0.0,
+            'reg_lambda': 1.2,
+            'n_jobs': -1,
+            'verbose': -1,
+            'colsample_bylevel': 0.632,
+            'scale_pos_weight': 2.5
+        }
+        classifier_model = prepare_xgb(params)
+    else:
+        params = {
+            'boosting_type': 'gbdt',  # gbdt, gbrt, rf, random_forest, dart, goss
+            'objective': 'binary',
+            'num_leaves': 32,  # 32
+            'max_depth': 8,  # 8
+            'learning_rate': 0.02,  # 0.01
+            'n_estimators': 10000,
+            'early_stopping_rounds': 200,
+            'min_split_gain': 0.02,  # 0.02
+            'min_child_weight': 40,  # 40
+            'subsample': 0.8,  # 0.87
+            'colsample_bytree': 0.8,  # 0.94
+            'reg_alpha': 0.04,  # 0.04
+            'reg_lambda': 0.07,  # 0.073
+            'nthread': -1,
+            'verbose': -1
+        }
+        classifier_model = prepare_lgbm(params)
+
+    predictor = Predictor(
+        train_df=train_data, test_df=test_data, target_column=target_column, index_column=index_column,
+        classifier=classifier_model, predict_probability=predict_probability, class_index=class_index,
+        eval_metric=eval_metric, metrics_scorer=metrics_scorer, metrics_decimals=metrics_decimals,
+        target_decimals=target_decimals, cols_to_exclude=cols_to_exclude, num_folds=num_folds,
+        stratified=stratified, kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity, bagging=bagging,
+        predict_test=predict_test, data_split_seed=data_split_seed, model_seeds_list=model_seeds_list,
+        output_dir=solution_output_dir
+    )
+    predictor.run_cv_and_prediction()
+    predictor.save_oof_results()
+    predictor.save_submission_results()
+
+
 if __name__ == '__main__':
-    main_run_cv_and_prediction(classifier='lgbm')
-    # main_run_cv_and_prediction(classifier='xgb')
+    run_cv_and_prediction_iris(classifier='lgbm')
+    # run_cv_and_prediction_iris(classifier='xgb')
+    # run_cv_and_prediction_kaggle(classifier='lgbm', debug=True)
+    # run_cv_and_prediction_kaggle(classifier='xgb', debug=True)
