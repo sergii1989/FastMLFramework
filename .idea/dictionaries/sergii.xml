@@ -36,6 +36,7 @@
       <w>merror</w>
       <w>mlogloss</w>
       <w>multiclass</w>
+      <w>ndarray</w>
       <w>nthread</w>
       <w>ntop</w>
       <w>optim</w>

@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f445f148-be77-4f8b-81ff-ecf6f9ca60fc" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/sergii.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/sergii.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ensembling/blending/blender.py" beforeDir="false" afterPath="$PROJECT_DIR$/ensembling/blending/blender.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeling/model_wrappers.py" beforeDir="false" afterPath="$PROJECT_DIR$/modeling/model_wrappers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modeling/prediction.py" beforeDir="false" afterPath="$PROJECT_DIR$/modeling/prediction.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -17,8 +20,8 @@
       <file leaf-file-name="feature_selection.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/modeling/feature_selection.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-901">
-              <caret line="164" column="73" selection-start-line="164" selection-start-column="73" selection-end-line="164" selection-end-column="73" />
+            <state>
+              <caret line="246" column="16" selection-start-line="246" selection-start-column="12" selection-end-line="246" selection-end-column="16" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -29,8 +32,8 @@
       <file leaf-file-name="hyper_parameters_optimization.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-10">
-              <caret line="114" column="52" lean-forward="true" selection-start-line="114" selection-start-column="52" selection-end-line="114" selection-end-column="52" />
+            <state relative-caret-position="1647">
+              <caret line="146" column="55" selection-start-line="146" selection-start-column="42" selection-end-line="146" selection-end-column="55" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -38,11 +41,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="prediction.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="prediction.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-95">
-              <caret line="236" column="23" selection-start-line="236" selection-start-column="13" selection-end-line="236" selection-end-column="23" />
+            <state relative-caret-position="110">
+              <caret line="271" column="48" selection-start-line="271" selection-start-column="48" selection-end-line="271" selection-end-column="48" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -50,14 +53,32 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="stacker.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/../copy/FastMLFramework/ensembling/stacking/stacker.py">
+      <file leaf-file-name="bagging.py" pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/sklearn/ensemble/bagging.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="255">
-              <caret line="78" column="8" selection-start-line="78" selection-start-column="8" selection-end-line="78" selection-end-column="8" />
+            <state relative-caret-position="161">
+              <caret line="491" column="16" selection-start-line="491" selection-start-column="4" selection-end-line="491" selection-end-column="16" />
               <folding>
-                <element signature="e#0#15#0" expanded="true" />
+                <element signature="e#101#132#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="base.py" pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/sklearn/ensemble/base.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="214">
+              <caret line="93" column="13" selection-start-line="93" selection-start-column="13" selection-end-line="93" selection-end-column="13" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="validation.py" pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/sklearn/utils/validation.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="45">
+              <caret line="586" column="45" selection-start-line="586" selection-start-column="24" selection-end-line="586" selection-end-column="45" />
             </state>
           </provider>
         </entry>
@@ -65,19 +86,22 @@
       <file leaf-file-name="model_wrappers.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="306">
-              <caret line="257" column="30" selection-start-line="257" selection-start-column="30" selection-end-line="257" selection-end-column="30" />
+            <state relative-caret-position="275">
+              <caret line="122" selection-start-line="122" selection-end-line="122" />
+              <folding>
+                <element signature="e#0#18#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="preprocessing.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/data_processing/preprocessing.py">
+      <file leaf-file-name="blender.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="42">
-              <caret line="6" column="55" selection-start-line="6" selection-start-column="55" selection-end-line="6" selection-end-column="55" />
+            <state relative-caret-position="136">
+              <caret line="12" column="70" selection-start-line="12" selection-start-column="70" selection-end-line="12" selection-end-column="70" />
               <folding>
-                <element signature="e#0#9#0" expanded="true" />
+                <element signature="e#0#15#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -86,7 +110,7 @@
       <file leaf-file-name="visualization.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/data_vis/visualization.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="36">
+            <state relative-caret-position="4913">
               <caret line="296" column="7" selection-start-line="296" selection-start-column="7" selection-end-line="296" selection-end-column="7" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
@@ -98,7 +122,7 @@
       <file leaf-file-name="utils.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1222">
+            <state relative-caret-position="-1026">
               <caret line="45" selection-start-line="45" selection-end-line="45" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
@@ -118,43 +142,38 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>n_features</find>
-      <find>aut</find>
-      <find>self.path_output_di</find>
-      <find>self.path_output_dir</find>
-      <find>not</find>
-      <find>plot_cv_results_vs_used_seeds</find>
-      <find>predict</find>
-      <find>cross</find>
-      <find>target</find>
-      <find>index</find>
-      <find>index_col_valid</find>
-      <find>cross_v</find>
-      <find>_run_cv_one_seed</find>
-      <find>seed</find>
-      <find>BayesianOptimization</find>
-      <find>type_results</find>
+      <find>model_seed_flag</find>
+      <find>eval_metric</find>
+      <find>sub_preds</find>
+      <find>num_iteration</find>
+      <find>self.predictor.classifier.HP_DATATYPES</find>
+      <find>kfold</find>
+      <find>seeds_list</find>
+      <find>0.946 +/- 0.035</find>
+      <find>0.955 +/- 0.004</find>
+      <find>0.955</find>
+      <find>] = '</find>
+      <find>] =</find>
+      <find>'] =</find>
+      <find>data_split_seed</find>
+      <find>self.sub_preds</find>
+      <find>df_bagged</find>
+      <find>_concat_bagged_results</find>
       <find>oof_prediction</find>
-      <find>self.in</find>
-      <find>_index_column_is_defined</find>
-      <find>@st</find>
-      <find>blend</find>
-      <find>index_column</find>
-      <find>index_column_is_defined</find>
-      <find>cols_to_exclude</find>
-      <find>solution_output_dir</find>
-      <find>output_dir</find>
-      <find>self.SINGLE_MODEL_SOLUTION_DIR</find>
-      <find>bayes_stacker</find>
-      <find>n_job</find>
-      <find>if set</find>
+      <find>round</find>
+      <find>bagged_oof</find>
+      <find>Max CV score:</find>
+      <find>MAX_INT</find>
+      <find>n_class</find>
+      <find>BaggingC</find>
+      <find>p.</find>
+      <find>random_state</find>
+      <find>class_index</find>
+      <find>bagging_c</find>
+      <find>p</find>
+      <find>classifier</find>
     </findStrings>
     <replaceStrings>
-      <replace>oof_eval_result</replace>
-      <replace>test_df</replace>
-      <replace>class_names</replace>
-      <replace>best_weights</replace>
-      <replace>opt_weights</replace>
       <replace>optimal_weights</replace>
       <replace>index_column</replace>
       <replace>:</replace>
@@ -179,6 +198,12 @@
       <replace>os.getcwd()</replace>
       <replace>stack</replace>
       <replace>general_stacker</replace>
+      <replace>: '</replace>
+      <replace>:</replace>
+      <replace>': '</replace>
+      <replace>':</replace>
+      <replace>:</replace>
+      <replace>run_cv_and_prediction_iris</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -198,19 +223,19 @@
         <option value="$PROJECT_DIR$/modeling/feature_selection.py" />
         <option value="$PROJECT_DIR$/generic_tools/utils.py" />
         <option value="$PROJECT_DIR$/modeling/cross_validation.py" />
-        <option value="$PROJECT_DIR$/modeling/model_wrappers.py" />
         <option value="$PROJECT_DIR$/modeling/hyper_parameters_optimization.py" />
-        <option value="$PROJECT_DIR$/modeling/prediction.py" />
         <option value="$PROJECT_DIR$/ensembling/blending/blender.py" />
         <option value="$PROJECT_DIR$/../copy/FastMLFramework/ensembling/stacking/stacker.py" />
+        <option value="$PROJECT_DIR$/modeling/model_wrappers.py" />
+        <option value="$PROJECT_DIR$/modeling/prediction.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
-    <option name="x" value="-15" />
-    <option name="y" value="-15" />
-    <option name="width" value="3873" />
-    <option name="height" value="2093" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="3832" />
+    <option name="y" value="-8" />
+    <option name="width" value="1616" />
+    <option name="height" value="835" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -299,7 +324,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.blender">
+  <component name="RunManager" selected="Python.prediction">
     <configuration name="blender" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="FastMLFramework" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -399,8 +424,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.blender" />
         <item itemvalue="Python.prediction" />
+        <item itemvalue="Python.blender" />
         <item itemvalue="Python.cross_validation" />
         <item itemvalue="Python.feature_selection" />
         <item itemvalue="Python.blending" />
@@ -421,16 +446,16 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-6" y="-6" width="1549" height="837" extended-state="7" />
+    <frame x="3832" y="-8" width="1616" height="835" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="1" sideWeight="0.5035587" visible="true" weight="0.20949903" />
+      <window_info content_ui="combo" id="Project" order="1" sideWeight="0.50121653" visible="true" weight="0.20125" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.15" side_tool="true" weight="0.3264463" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.85" visible="true" weight="0.23224044" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.85" visible="true" weight="0.4338843" />
       <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Python Console" order="7" />
-      <window_info id="Structure" order="2" sideWeight="0.49644127" side_tool="true" visible="true" weight="0.20949903" />
+      <window_info id="Structure" order="2" sideWeight="0.49878347" side_tool="true" visible="true" weight="0.20125" />
       <window_info anchor="bottom" id="Terminal" order="7" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.828125" weight="0.422865" />
       <window_info id="Favorites" order="0" side_tool="true" />
@@ -451,48 +476,64 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/modeling/prediction.py</url>
-          <line>384</line>
+          <line>418</line>
           <option name="timeStamp" value="20" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/modeling/prediction.py</url>
+          <line>601</line>
+          <option name="timeStamp" value="32" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/modeling/prediction.py</url>
+          <line>617</line>
+          <option name="timeStamp" value="34" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/modeling/prediction.py</url>
+          <line>165</line>
+          <option name="timeStamp" value="35" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/modeling/prediction.py</url>
+          <line>141</line>
+          <option name="timeStamp" value="36" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/modeling/prediction.py</url>
+          <line>123</line>
+          <option name="timeStamp" value="37" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/modeling/prediction.py</url>
+          <line>174</line>
+          <option name="timeStamp" value="38" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/modeling/prediction.py</url>
+          <line>153</line>
+          <option name="timeStamp" value="39" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/modeling/prediction.py</url>
+          <line>128</line>
+          <option name="timeStamp" value="40" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/modeling/prediction.py</url>
+          <line>304</line>
+          <option name="timeStamp" value="41" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/modeling/model_wrappers.py</url>
+          <line>119</line>
+          <option name="timeStamp" value="42" />
+        </line-breakpoint>
       </breakpoints>
-      <option name="time" value="21" />
+      <option name="time" value="43" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="561">
-          <caret line="33" column="35" selection-start-line="33" selection-start-column="35" selection-end-line="33" selection-end-column="35" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4505">
-          <caret line="275" column="70" lean-forward="true" selection-start-line="275" selection-start-column="8" selection-end-line="275" selection-end-column="70" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="68">
-          <caret line="8" column="7" selection-start-line="8" selection-start-column="7" selection-end-line="8" selection-end-column="7" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data_vis/visualization.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3026">
-          <caret line="185" column="24" lean-forward="true" selection-start-line="185" selection-start-column="24" selection-end-line="185" selection-end-column="24" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1581">
@@ -760,19 +801,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/feature_selection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-901">
-          <caret line="164" column="73" selection-start-line="164" selection-start-column="73" selection-end-line="164" selection-end-column="73" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/data_processing/preprocessing.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="42">
+        <state relative-caret-position="102">
           <caret line="6" column="55" selection-start-line="6" selection-start-column="55" selection-end-line="6" selection-end-column="55" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
@@ -780,9 +811,10 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/../copy/FastMLFramework/ensembling/stacking/stacker.py" />
     <entry file="file://$PROJECT_DIR$/data_vis/visualization.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="36">
+        <state relative-caret-position="4913">
           <caret line="296" column="7" selection-start-line="296" selection-start-column="7" selection-end-line="296" selection-end-column="7" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
@@ -790,37 +822,37 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
+    <entry file="file://$PROJECT_DIR$/modeling/feature_selection.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1222">
-          <caret line="45" selection-start-line="45" selection-end-line="45" />
+        <state>
+          <caret line="246" column="16" selection-start-line="246" selection-start-column="12" selection-end-line="246" selection-end-column="16" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="306">
-          <caret line="257" column="30" selection-start-line="257" selection-start-column="30" selection-end-line="257" selection-end-column="30" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="716">
-          <caret line="165" lean-forward="true" selection-start-line="165" selection-end-line="165" />
+        <state relative-caret-position="136">
+          <caret line="12" column="70" selection-start-line="12" selection-start-column="70" selection-end-line="12" selection-end-column="70" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
+    <entry file="file://$USER_HOME$/xgboost/python-package/xgboost/core.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-95">
-          <caret line="236" column="23" selection-start-line="236" selection-start-column="13" selection-end-line="236" selection-end-column="23" />
+        <state relative-caret-position="-992">
+          <caret line="150" selection-start-line="150" selection-end-line="150" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1026">
+          <caret line="45" selection-start-line="45" selection-end-line="45" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
@@ -829,20 +861,54 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-10">
-          <caret line="114" column="52" lean-forward="true" selection-start-line="114" selection-start-column="52" selection-end-line="114" selection-end-column="52" />
+        <state relative-caret-position="1647">
+          <caret line="146" column="55" selection-start-line="146" selection-start-column="42" selection-end-line="146" selection-end-column="55" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../copy/FastMLFramework/ensembling/stacking/stacker.py">
+    <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="78" column="8" selection-start-line="78" selection-start-column="8" selection-end-line="78" selection-end-column="8" />
+        <state relative-caret-position="275">
+          <caret line="122" selection-start-line="122" selection-end-line="122" />
           <folding>
-            <element signature="e#0#15#0" expanded="true" />
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/sklearn/utils/validation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="45">
+          <caret line="586" column="45" selection-start-line="586" selection-start-column="24" selection-end-line="586" selection-end-column="45" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/sklearn/ensemble/base.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="214">
+          <caret line="93" column="13" selection-start-line="93" selection-start-column="13" selection-end-line="93" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/sklearn/ensemble/bagging.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="161">
+          <caret line="491" column="16" selection-start-line="491" selection-start-column="4" selection-end-line="491" selection-end-column="16" />
+          <folding>
+            <element signature="e#101#132#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="110">
+          <caret line="271" column="48" selection-start-line="271" selection-start-column="48" selection-end-line="271" selection-end-column="48" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>
