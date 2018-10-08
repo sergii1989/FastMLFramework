@@ -1,3 +1,7 @@
+import numpy as np
+import pandas as pd
+
+
 class ModelWrapper(object):
     def __init__(self, model, params=None, seed=27, model_name=None):
         self.model = model
@@ -35,7 +39,7 @@ class ModelWrapper(object):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
-    def run_prediction(self, x, predict_probability, num_iteration):
+    def run_prediction(self, x, predict_probability, class_index, num_iteration):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
@@ -97,10 +101,27 @@ class LightGBMWrapper(ModelWrapper):
                            eval_metric=eval_metric,
                            verbose=cv_verbosity)
 
-    def run_prediction(self, x, predict_probability, num_iteration=1000):
+    def run_prediction(self, x, predict_probability, class_index=None, num_iteration=1000
+                       ):  # type: (pd.DataFrame, bool, (None, int, list), int) -> np.ndarray
+        """
+        This method run prediction of target variable. Two options available for prediction: class labels or
+        class probabilities.
+        :param x: pandas DF with the features for which the prediction of the target to be made
+        :param predict_probability: if True -> use estimator.predict_proba() method, else -> estimator.predict()
+        :param class_index: index of the class label for which to predict the probability. Note: it is used only for
+                            classification tasks and when the predict_probability=True. It also important to notice that
+                            target should always be label encoded.
+                            - if class_index is None -> return probability of all classes in the target
+                            - if class_index is int -> return probability of selected class
+                            - if class_index is list of int -> return probability of selected classes
+        :param num_iteration: optimum number of iterations (used only for decision trees algorithms)
+        :return: np.ndarray with either predicted probability of class(es) or class label(s)
+        """
         if predict_probability:
-            return self.estimator.predict_proba(x, num_iteration=num_iteration)[:, 1]
-        return self.estimator.predict(x, num_iteration=num_iteration)
+            if class_index is not None:
+                return self.estimator.predict_proba(x, num_iteration=num_iteration)[:, class_index]  # return probability of selected class(es)
+            return self.estimator.predict_proba(x, num_iteration=num_iteration)  # return probability of all classes
+        return self.estimator.predict(x, num_iteration=num_iteration)  # return target class labels (not a probability!)
 
     def get_best_iteration(self):
         return self.estimator.booster_.best_iteration
@@ -171,10 +192,27 @@ class XGBWrapper(ModelWrapper):
                            early_stopping_rounds=self.params.get("early_stopping_rounds", None),
                            verbose=cv_verbosity)
 
-    def run_prediction(self, x, predict_probability, num_iteration=1000):
+    def run_prediction(self, x, predict_probability, class_index=None, num_iteration=1000
+                       ):  # type: (pd.DataFrame, bool, (None, int, list), int) -> np.ndarray
+        """
+        This method run prediction of target variable. Two options available for prediction: class labels or
+        class probabilities.
+        :param x: pandas DF with the features for which the prediction of the target to be made
+        :param predict_probability: if True -> use estimator.predict_proba() method, else -> estimator.predict()
+        :param class_index: index of the class label for which to predict the probability. Note: it is used only for
+                            classification tasks and when the predict_probability=True. It also important to notice that
+                            target should always be label encoded.
+                            - if class_index is None -> return probability of all classes in the target
+                            - if class_index is int -> return probability of selected class
+                            - if class_index is list of int -> return probability of selected classes
+        :param num_iteration: optimum number of iterations (used only for decision trees algorithms)
+        :return: np.ndarray with either predicted probability of class(es) or class label(s)
+        """
         if predict_probability:
-            return self.estimator.predict_proba(x, ntree_limit=num_iteration)[:, 1]
-        return self.estimator.predict(x, ntree_limit=num_iteration)
+            if class_index is not None:
+                return self.estimator.predict_proba(x, ntree_limit=num_iteration)[:, class_index]  # return probability of selected class(es)
+            return self.estimator.predict_proba(x, ntree_limit=num_iteration)  # return probability of all classes
+        return self.estimator.predict(x, ntree_limit=num_iteration)  # return target class labels (not a probability!)
 
     def get_best_iteration(self):
         return self.estimator.get_booster().best_iteration
@@ -241,10 +279,27 @@ class SklearnWrapper(ModelWrapper):
         """
         self.estimator.fit(train_x, train_y)
 
-    def run_prediction(self, x, predict_probability, num_iteration=1000):
+    def run_prediction(self, x, predict_probability, class_index=None, num_iteration=1000
+                       ):  # type: (pd.DataFrame, bool, (None, int, list), int) -> np.ndarray
+        """
+        This method run prediction of target variable. Two options available for prediction: class labels or
+        class probabilities.
+        :param x: pandas DF with the features for which the prediction of the target to be made
+        :param predict_probability: if True -> use estimator.predict_proba() method, else -> estimator.predict()
+        :param class_index: index of the class label for which to predict the probability. Note: it is used only for
+                            classification tasks and when the predict_probability=True. It also important to notice that
+                            target should always be label encoded.
+                            - if class_index is None -> return probability of all classes in the target
+                            - if class_index is int -> return probability of selected class
+                            - if class_index is list of int -> return probability of selected classes
+        :param num_iteration: optimum number of iterations (used only for decision trees algorithms)
+        :return: np.ndarray with either predicted probability of class(es) or class label(s)
+        """
         if predict_probability:
-            return self.estimator.predict_proba(x)[:, 1]
-        return self.estimator.predict(x)
+            if class_index is not None:
+                return self.estimator.predict_proba(x)[:, class_index]  # return probability of selected class(es)
+            return self.estimator.predict_proba(x)  # return probability of all classes
+        return self.estimator.predict(x)  # return target class labels (not a probability!)
 
     def get_features_importance(self):
         """
@@ -281,12 +336,40 @@ class CBWrapper(ModelWrapper):
         self.estimator = self.model(**self.params)
 
     def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
+        """
+        This method is responsible for fitting of Sklearn estimator. It should be noted that fit method in Sklearn API
+        does not support valid_x, valid_y, eval_metric, cv_verbosity arguments (thus they are not used here).
+        :param train_x: train dataset with features (not including the target)
+        :param train_y: train dataset with target column
+        :param valid_x: validation dataset with features (not including the target)
+        :param valid_y: validation dataset with target column
+        :param eval_metric: 'rmse', 'mae', 'logloss', 'auc', etc.
+        :param cv_verbosity: print info about CV training and validation errors every x iterations (e.g. 1000)
+        :return: fitted Sklearn estimator
+        """
         self.estimator.fit(train_x, train_y)
 
-    def run_prediction(self, x, predict_probability, num_iteration=1000):
+    def run_prediction(self, x, predict_probability, class_index=None, num_iteration=1000
+                       ):  # type: (pd.DataFrame, bool, (None, int, list), int) -> np.ndarray
+        """
+        This method run prediction of target variable. Two options available for prediction: class labels or
+        class probabilities.
+        :param x: pandas DF with the features for which the prediction of the target to be made
+        :param predict_probability: if True -> use estimator.predict_proba() method, else -> estimator.predict()
+        :param class_index: index of the class label for which to predict the probability. Note: it is used only for
+                            classification tasks and when the predict_probability=True. It also important to notice that
+                            target should always be label encoded.
+                            - if class_index is None -> return probability of all classes in the target
+                            - if class_index is int -> return probability of selected class
+                            - if class_index is list of int -> return probability of selected classes
+        :param num_iteration: optimum number of iterations (used only for decision trees algorithms)
+        :return: np.ndarray with either predicted probability of class(es) or class label(s)
+        """
         if predict_probability:
-            return self.estimator.predict_proba(x)[:, 1]
-        return self.estimator.predict(x)
+            if class_index is not None:
+                return self.estimator.predict_proba(x)[:, class_index]  # return probability of selected class(es)
+            return self.estimator.predict_proba(x)  # return probability of all classes
+        return self.estimator.predict(x)  # return target class labels (not a probability!)
 
     def get_features_importance(self):
         return
