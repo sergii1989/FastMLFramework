@@ -7,6 +7,8 @@ warnings.filterwarnings("ignore")
 
 
 class Blender(object):
+    BLENDING_RESULTS_DIR = 'blending'
+
     def __init__(self, train_oof, test_subm, target_column, index_column, cols_to_use,
                  metrics_scorer, metrics_decimals=6, target_decimals=6):
         """
