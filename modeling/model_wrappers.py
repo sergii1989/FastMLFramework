@@ -43,6 +43,10 @@ class ModelWrapper(object):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
+    def get_best_iteration(self):
+        # Abstract method, must be implemented by derived classes
+        raise NotImplemented()
+
     def get_features_importance(self):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
