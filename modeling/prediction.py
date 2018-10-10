@@ -9,24 +9,23 @@ import matplotlib.pyplot as plt
 
 from scipy import stats
 from sklearn import metrics
-from model_wrappers import ModelWrapper
+from modeling.model_wrappers import ModelWrapper
 from sklearn.model_selection import KFold, StratifiedKFold
 from generic_tools.utils import timing, create_output_dir
 from sklearn.metrics import confusion_matrix, classification_report
 
 
-class Predictor(object):
-    SOLUTION_DIR = 'single_model_solution'
+class BaseEstimator(object):
     FIGNAME_CONFUSION_MATRIX = 'confusion_matrix.png'
     FIGNAME_CV_RESULTS_VERSUS_SEEDS = 'cv_results_vs_seeds.png'
 
     def __init__(self, train_df, test_df, target_column, index_column, classifier, predict_probability, class_index,
                  eval_metric, metrics_scorer, metrics_decimals=6, target_decimals=6, cols_to_exclude=[],
                  num_folds=5, stratified=False, kfolds_shuffle=True, cv_verbosity=1000, bagging=False,
-                 data_split_seed=789987, model_seeds_list=[27], predict_test=True, output_dir=''):
+                 data_split_seed=789987, model_seeds_list=[27], predict_test=True, path_output_dir=''):
         """
-        This class run CV and makes OOF and submission predictions. It also allows to run CV in bagging mode using
-        different seeds for random generator.
+        This class is a base class for both single model predictions and models stacking. It run CV and makes OOF and
+        submission predictions. It also allows to run CV in bagging mode using different seeds for random generator.
         :param train_df: pandas DF with train data set
         :param test_df: pandas DF with test data set
         :param target_column: target column (to be predicted)
@@ -62,7 +61,7 @@ class Predictor(object):
         :param model_seeds_list: list of seeds to be used for CV and results prediction (including bagging)
         :param predict_test: IMPORTANT!! If False -> train model and predict OOF (i.e. validation only). Set True
                              if make a prediction for test data set
-        :param output_dir: name of directory to save results of CV and prediction
+        :param path_output_dir: full path to directory where the results of CV and prediction to be saved
         :return: out_of_fold predictions, submission predictions, oof_eval_results and feature_importance data frame
         """
 
@@ -92,7 +91,7 @@ class Predictor(object):
         self.predict_test = predict_test  # type: bool
         self.data_split_seed = data_split_seed  # type: int
         self.model_seeds_list = model_seeds_list  # type: list
-        self.path_output_dir = os.path.normpath(os.path.join(os.getcwd(), self.SOLUTION_DIR, output_dir))
+        self.path_output_dir = path_output_dir
         create_output_dir(self.path_output_dir)
 
         # Results of CV and test prediction
@@ -436,6 +435,7 @@ class Predictor(object):
         :param save: if True -> results will be saved to disk
         :return: plots confusion matrix and print classification report
         """
+        fig, ax = plt.subplots()
         true_labels = self.train_df[self.target_column].values.tolist()
         predicted_labels = map(labels_mapper, self.oof_preds[self.target_column + '_OOF'])
         cm = confusion_matrix(true_labels, predicted_labels)
@@ -447,13 +447,17 @@ class Predictor(object):
             print('Confusion matrix, without normalization')
 
         print('{0}\n'.format(cm))
-
         plt.imshow(cm, interpolation='nearest', cmap=cmap)
-        plt.title('Normalized confusion matrix' if normalize else 'Confusion matrix')
-        plt.colorbar()
+        ax.set_title('Normalized confusion matrix' if normalize else 'Confusion matrix')
+        plt.colorbar(ax=ax)
         tick_marks = np.arange(len(class_names))
-        plt.xticks(tick_marks, class_names, rotation=0)
-        plt.yticks(tick_marks, class_names)
+        ax.set_xticks(tick_marks)
+        ax.set_xlabel(class_names)
+        plt.setp(ax.get_xticklabels(), rotation=0)
+
+        ax.set_yticks(tick_marks)
+        ax.set_ylabel(class_names)
+        plt.setp(ax.get_xticklabels(), rotation=0)
 
         fmt = '.4f' if normalize else 'd'
         thresh = cm.max() / 2.
@@ -461,9 +465,9 @@ class Predictor(object):
             plt.text(j, i, format(cm[i, j], fmt),
                      horizontalalignment="center",
                      color="white" if cm[i, j] > thresh else "black")
-        plt.ylabel('True label')
-        plt.xlabel('Predicted label')
-        plt.tight_layout()
+        ax.set_ylabel('True label')
+        ax.set_xlabel('Predicted label')
+        fig.tight_layout()
 
         print ('Classification report:\n{0}'.format(
             classification_report(true_labels, predicted_labels, target_names=class_names)))
@@ -471,7 +475,7 @@ class Predictor(object):
         if save:
             full_path_to_file = os.path.join(self.path_output_dir, self.FIGNAME_CONFUSION_MATRIX)
             print('\nSaving confusion matrix graph into %s' % full_path_to_file)
-            plt.savefig(full_path_to_file)
+            fig.savefig(full_path_to_file)
 
     @staticmethod
     def verify_number_of_features_is_ok(df, n_features):  # type: (pd.DataFrame, int) -> None
@@ -487,7 +491,7 @@ class Predictor(object):
             raise ValueError("Number of features that are requested to plot {0} should be less than or equal to the "
                              "total number of features in the data set: {1}".format(n_features, n_max_feats))
 
-    def plot_features_importance(self, n_features=20, figsize_x=8, figsize_y=10, save=False):
+    def plot_features_importance(self, n_features=20, figsize_x=10, figsize_y=10, save=False):
         """
         This method plots features importance and saves the figure and the csv file to the disk.
         :param n_features: number of top most important features to show
@@ -504,15 +508,16 @@ class Predictor(object):
         best_features = features_importance.loc[features_importance.feature.isin(cols)].sort_values(
             by="importance", ascending=False)
 
-        plt.figure(figsize=(figsize_x, figsize_y))
-        sns.barplot(x="importance", y="feature", data=best_features)
-        plt.title('{0}: features importance (avg over folds/seeds)'.format(self.model_name.upper()))
-        plt.tight_layout()
+        fig, ax = plt.subplots(figsize=(figsize_x, figsize_y))
+        sns.barplot(x="importance", y="feature", data=best_features, ax=ax)
+        ax.set_title('{0}: features importance (avg over folds/seeds)'.format(self.model_name.upper()))
+        fig.tight_layout()
+        fig.subplots_adjust(right=0.8)
 
         if save:
             full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'feat_import']) + '.png')
             print('\nSaving features importance graph into %s' % full_path_to_file)
-            plt.savefig(full_path_to_file)
+            fig.savefig(full_path_to_file)
 
             full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'feat_import']) + '.csv')
             print('\nSaving {0} features into {1}'.format(self.model_name.upper(), full_path_to_file))
@@ -547,16 +552,19 @@ class Predictor(object):
         plt.tight_layout()
 
         if save:
-            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'feat_shap']) + '.png')
+            full_path_to_file = os.path.join(self.path_output_dir,
+                                             '_'.join([self.model_name, 'feat_shap']) + '.png')
             print('\nSaving features shap graph into %s' % full_path_to_file)
             plt.savefig(full_path_to_file)
 
-            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'feat_shap']) + '.csv')
+            full_path_to_file = os.path.join(self.path_output_dir,
+                                             '_'.join([self.model_name, 'feat_shap']) + '.csv')
             print('\nSaving {0} shap values into {1}'.format(self.model_name.upper(), full_path_to_file))
             shap_values = shap_values[["feature", "shap_value"]].groupby(
                 "feature").mean().sort_values(by="shap_value", ascending=False).reset_index()
             shap_values.to_csv(full_path_to_file, index=False)
-        del shap_values; gc.collect()
+        del shap_values;
+        gc.collect()
 
     def plot_cv_results_vs_used_seeds(self, figsize_x=14, figsize_y=4, annot_offset_x=3,
                                       annot_offset_y=5, annot_rotation=90, save=False):
@@ -594,7 +602,7 @@ class Predictor(object):
         if save:
             full_path_to_file = os.path.join(self.path_output_dir, self.FIGNAME_CV_RESULTS_VERSUS_SEEDS)
             print('\nSaving CV results vs seeds graph into %s' % full_path_to_file)
-            plt.savefig(full_path_to_file)
+            fig.savefig(full_path_to_file)
 
     def save_oof_results(self):
         float_format = '%.{0}f'.format(str(self.target_decimals)) if self.target_decimals > 0 else None
@@ -626,6 +634,63 @@ class Predictor(object):
             full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'bagged_SUBM']) + '.csv')
             print('\nSaving submission predictions for each seed into %s' % full_path_to_file)
             self.bagged_sub_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
+
+
+class Predictor(BaseEstimator):
+
+    def __init__(self, train_df, test_df, target_column, index_column, classifier, predict_probability, class_index,
+                 eval_metric, metrics_scorer, metrics_decimals=6, target_decimals=6, cols_to_exclude=[], num_folds=5,
+                 stratified=False, kfolds_shuffle=True, cv_verbosity=1000, bagging=False, data_split_seed=789987,
+                 model_seeds_list=[27], predict_test=True, project_location='', output_dirname=''):
+        """
+        This class runs CV and makes OOF and submission predictions. It also allows to run CV in bagging mode using
+        different seeds for random generator.
+        :param train_df: pandas DF with train data set
+        :param test_df: pandas DF with test data set
+        :param target_column: target column (to be predicted)
+        :param index_column: unique index column
+        :param classifier: wrapped estimator (object of ModelWrapper class)
+        :param predict_probability: if True -> use classifier.predict_proba(), else -> classifier.predict() method
+        :param class_index: index of the class label for which to predict the probability. Note: it is used only for
+                            classification tasks and when the predict_probability=True. It also important to notice that
+                            the target should always be label encoded.
+                            - if class_index is None -> return probability of all classes in the target
+                            - if class_index is int -> return probability of selected class
+                            - if class_index is list of int -> return probability of selected classes
+        :param eval_metric: 'rmse': root mean square error
+                            'mae': mean absolute error
+                            'logloss': negative log-likelihood
+                            'error': Binary classification error rate
+                            'error@t': a different than 0.5 binary classification threshold value could be specified
+                            'merror': Multiclass classification error rate
+                            'mlogloss': Multiclass logloss
+                            'auc': Area under the curve
+                            'map': Mean average precision
+                            ... others
+        :param metrics_scorer: http://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
+        :param metrics_decimals: rounding precision for evaluation metrics (e.g. for CV printouts)
+        :param target_decimals: rounding precision for target column
+        :param cols_to_exclude: list of columns to exclude from modelling
+        :param num_folds: number of folds to be used in CV
+        :param stratified: if True -> preserves the percentage of samples for each class in a fold
+        :param kfolds_shuffle: if True -> shuffle each stratification of the data before splitting into batches
+        :param cv_verbosity: print info about CV training and validation errors every x iterations (e.g. 1000)
+        :param bagging: if True -> runs CV with different seeds and then average the results
+        :param data_split_seed: seed used in splitting train/test data set
+        :param model_seeds_list: list of seeds to be used for CV and results prediction (including bagging)
+        :param predict_test: IMPORTANT!! If False -> train model and predict OOF (i.e. validation only). Set True
+                             if make a prediction for test data set
+        :param output_dirname: directory where to save results of CV and prediction
+        :return: out_of_fold predictions, submission predictions, oof_eval_results and feature_importance data frame
+        """
+
+        # Full path to solution directory
+        path_output_dir = os.path.normpath(os.path.join(project_location, output_dirname))
+        super(Predictor, self).__init__(
+            train_df, test_df, target_column, index_column, classifier, predict_probability, class_index, eval_metric,
+            metrics_scorer, metrics_decimals, target_decimals, cols_to_exclude, num_folds, stratified, kfolds_shuffle,
+            cv_verbosity, bagging, data_split_seed, model_seeds_list, predict_test, path_output_dir
+        )
 
 
 def prepare_lgbm(params):
@@ -666,7 +731,8 @@ def run_cv_and_prediction_iris(classifier='lgbm'):
     # Parameters
     predict_probability = False  # if True -> use estimator.predict_proba(), otherwise -> estimator.predict()
     class_index = 1  # in Target
-    solution_output_dir = 'C:\Kaggle'
+    project_location = ''  # 'C:\Kaggle\Iris'
+    output_dirname = ''  # 'iris_solution'
     target_column = 'TARGET'
     index_column = ''
     metrics_scorer = accuracy_score
@@ -751,11 +817,11 @@ def run_cv_and_prediction_iris(classifier='lgbm'):
         target_decimals=target_decimals, cols_to_exclude=cols_to_exclude, num_folds=num_folds,
         stratified=stratified, kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity, bagging=bagging,
         predict_test=predict_test, data_split_seed=data_split_seed, model_seeds_list=model_seeds_list,
-        output_dir=solution_output_dir
+        project_location=project_location, output_dirname=output_dirname
     )
     predictor.run_cv_and_prediction()
-    predictor.save_oof_results()
-    predictor.save_submission_results()
+    # predictor.save_oof_results()
+    # predictor.save_submission_results()
 
     test_accuracy = round(metrics_scorer(predictor.test_df[target_column], predictor.sub_preds[target_column]),
                           metrics_decimals)
@@ -786,7 +852,8 @@ def run_cv_and_prediction_kaggle(classifier='lgbm', debug=False):
     # Parameters
     predict_probability = True  # if True -> use estimator.predict_proba(), otherwise -> estimator.predict()
     class_index = 1  # in Target
-    solution_output_dir = 'C:\Kaggle'
+    project_location = ''  # 'C:\Kaggle\home_credit'
+    output_dirname = ''  # 'solution'
     target_column = 'TARGET'
     index_column = 'SK_ID_CURR'
     eval_metric = 'auc'
@@ -869,11 +936,11 @@ def run_cv_and_prediction_kaggle(classifier='lgbm', debug=False):
         target_decimals=target_decimals, cols_to_exclude=cols_to_exclude, num_folds=num_folds,
         stratified=stratified, kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity, bagging=bagging,
         predict_test=predict_test, data_split_seed=data_split_seed, model_seeds_list=model_seeds_list,
-        output_dir=solution_output_dir
+        project_location=project_location, output_dirname=output_dirname
     )
     predictor.run_cv_and_prediction()
-    predictor.save_oof_results()
-    predictor.save_submission_results()
+    # predictor.save_oof_results()
+    # predictor.save_submission_results()
 
 
 if __name__ == '__main__':
