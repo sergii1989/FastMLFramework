@@ -9,22 +9,21 @@ from generic_tools.utils import timing, create_output_dir
 
 
 class HyperParamsOptimization(object):
-    HYPERPARAMS_OPTIM_DIR = 'hyper_parameters_optimization'
 
-    def __init__(self, predictor, seed_val, output_dir, filename='optim_hp'):
+    def __init__(self, predictor, seed_val, project_location, output_dirname, filename='optim_hp'):
         """
         This is a base class for optimization of model's hyperparameters. Methods of this class can be reused in
         derived classes (as, for instance, in BayesHyperParamsOptimization). These methods allows adjusting of data
         types of the hyperparameters, auto-complete missing parameters, save / read parameters from the disk.
         :param predictor: instance of Predictor class.
         :param seed_val: seed numpy random generator
-        :param output_dir: name of directory to save results of hyper parameters optimization
+        :param output_dirname: name of directory to save results of hyper parameters optimization
         :param filename: name of hyperparameter optimizer (is used when saving results of optimization)
         """
         self.predictor = predictor  # type: Predictor
         self.seed_val = seed_val  # type: int
         self.filename = filename  # type: str
-        self.path_output_dir = os.path.normpath(os.path.join(os.getcwd(), self.HYPERPARAMS_OPTIM_DIR, output_dir))
+        self.path_output_dir = os.path.normpath(os.path.join(project_location, output_dirname))
         create_output_dir(self.path_output_dir)
 
         self.best_params = None  # type: dict
@@ -97,7 +96,7 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
     FILENAME = 'bayes_opt_hp'
     HPO_DF_NAME = 'bayes_hpo_all_runs_results.csv'
 
-    def __init__(self, predictor, hp_optimization_space, init_points=10, n_iter=15, seed_val=27, output_dir=''):
+    def __init__(self, predictor, hp_optimization_space, init_points=10, n_iter=15, seed_val=27, output_dirname=''):
         """
         This class adopts Bayes Optimization to find set of model's hyperparameters that lead to best CV results.
         :param predictor: instance of Predictor class.
@@ -105,9 +104,9 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         :param init_points: number of initial points in Bayes Optimization procedure
         :param n_iter: number of iteration in Bayes Optimization procedure
         :param seed_val: seed for numpy random generator
-        :param output_dir: name of directory to save results of hyper parameters optimization
+        :param output_dirname: name of directory to save results of hyper parameters optimization
         """
-        super(BayesHyperParamsOptimization, self).__init__(predictor, seed_val, output_dir, self.FILENAME)
+        super(BayesHyperParamsOptimization, self).__init__(predictor, seed_val, output_dirname, self.FILENAME)
         self.hp_optimization_space = hp_optimization_space
         self.init_points = init_points
         self.n_iter = n_iter
@@ -122,8 +121,8 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         hp_optimization_space = self._adjust_hyperparameters_datatypes(hp_optimization_space)
         hp_optimization_space = self._complete_missing_hyperparameters_from_init_params(hp_optimization_space)
         self.predictor.classifier.reinit_model_with_new_params(hp_optimization_space)
-        _, _, _, _, _, cv_score, cv_std = self.predictor._run_cv_one_seed(seed_val=self.seed_val, predict_test=False,
-                                                                          cv_verbosity=0)
+        _, _, _, _, _, cv_score, cv_std = self.predictor.run_cv_one_seed(seed_val=self.seed_val, predict_test=False,
+                                                                         cv_verbosity=0)
         # Store all used hyperparameters with the corresponding CV results in a pandas DF
         hpo_space_df = pd.DataFrame(index=hp_optimization_space.keys(), data=hp_optimization_space.values()).T
         hpo_space_df.insert(loc=0, column='cv_score', value=cv_score)
