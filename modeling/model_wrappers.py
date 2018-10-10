@@ -73,7 +73,6 @@ class LightGBMWrapper(ModelWrapper):
         super(LightGBMWrapper, self).__init__(model, params, seed, name)
 
     def _verify_model_has_seed_param(self):
-        # This method checks
         return 'random_state' in self.model().get_params()
 
     def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
