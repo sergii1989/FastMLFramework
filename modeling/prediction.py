@@ -680,6 +680,7 @@ class Predictor(BaseEstimator):
         :param model_seeds_list: list of seeds to be used for CV and results prediction (including bagging)
         :param predict_test: IMPORTANT!! If False -> train model and predict OOF (i.e. validation only). Set True
                              if make a prediction for test data set
+        :param project_location: path to the project
         :param output_dirname: directory where to save results of CV and prediction
         :return: out_of_fold predictions, submission predictions, oof_eval_results and feature_importance data frame
         """
