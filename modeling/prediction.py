@@ -220,7 +220,7 @@ class BaseEstimator(object):
         shap_values_df["fold"] = n_fold + 1
         return shap_values_df
 
-    def _run_cv_one_seed(self, seed_val=27, predict_test=True, cv_verbosity=None):
+    def run_cv_one_seed(self, seed_val=27, predict_test=True, cv_verbosity=None):
         """
         This method run CV with the single seed. It is called from more global method: run_cv_and_prediction().
         :param seed_val: seeds to be used in CV
@@ -346,7 +346,7 @@ class BaseEstimator(object):
 
             for i, seed_val in enumerate(self.model_seeds_list):
                 oof_preds, sub_preds, oof_eval_results, feature_importance_df, shap_values_df, cv_score, cv_std = \
-                    self._run_cv_one_seed(seed_val, self.predict_test)
+                    self.run_cv_one_seed(seed_val, self.predict_test)
 
                 # Convert to int if target rounding precision is 0 decimals
 
@@ -403,7 +403,7 @@ class BaseEstimator(object):
 
         else:
             oof_preds, sub_preds, oof_eval_results, feature_importance_df, shap_values_df, cv_score, cv_std = \
-                self._run_cv_one_seed(self.model_seeds_list[0], self.predict_test)
+                self.run_cv_one_seed(self.model_seeds_list[0], self.predict_test)
 
             oof_preds_df = self._prepare_single_seed_results(oof_preds, is_oof_prediction=True)
             self.oof_preds = oof_preds_df
