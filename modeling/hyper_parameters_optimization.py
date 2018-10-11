@@ -96,7 +96,8 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
     FILENAME = 'bayes_opt_hp'
     HPO_DF_NAME = 'bayes_hpo_all_runs_results.csv'
 
-    def __init__(self, predictor, hp_optimization_space, init_points=10, n_iter=15, seed_val=27, output_dirname=''):
+    def __init__(self, predictor, hp_optimization_space, init_points=10, n_iter=15, seed_val=27,
+                 project_location='', output_dirname=''):
         """
         This class adopts Bayes Optimization to find set of model's hyperparameters that lead to best CV results.
         :param predictor: instance of Predictor class.
@@ -104,9 +105,11 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         :param init_points: number of initial points in Bayes Optimization procedure
         :param n_iter: number of iteration in Bayes Optimization procedure
         :param seed_val: seed for numpy random generator
+        :param project_location: path to the project
         :param output_dirname: name of directory to save results of hyper parameters optimization
         """
-        super(BayesHyperParamsOptimization, self).__init__(predictor, seed_val, output_dirname, self.FILENAME)
+        super(BayesHyperParamsOptimization, self).__init__(predictor, seed_val, project_location,
+                                                           output_dirname, self.FILENAME)
         self.hp_optimization_space = hp_optimization_space
         self.init_points = init_points
         self.n_iter = n_iter
