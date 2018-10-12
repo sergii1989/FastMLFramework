@@ -19,7 +19,7 @@ class BaseEstimator(object):
     FIGNAME_CONFUSION_MATRIX = 'confusion_matrix.png'
     FIGNAME_CV_RESULTS_VERSUS_SEEDS = 'cv_results_vs_seeds.png'
 
-    def __init__(self, train_df, test_df, target_column, index_column, classifier, predict_probability, class_index,
+    def __init__(self, train_df, test_df, target_column, index_column, model, predict_probability, class_index,
                  eval_metric, metrics_scorer, metrics_decimals=6, target_decimals=6, cols_to_exclude=[],
                  num_folds=5, stratified=False, kfolds_shuffle=True, cv_verbosity=1000, bagging=False,
                  data_split_seed=789987, model_seeds_list=[27], predict_test=True, path_output_dir=''):
@@ -30,8 +30,8 @@ class BaseEstimator(object):
         :param test_df: pandas DF with test data set
         :param target_column: target column (to be predicted)
         :param index_column: unique index column
-        :param classifier: wrapped estimator (object of ModelWrapper class)
-        :param predict_probability: if True -> use classifier.predict_proba(), else -> classifier.predict() method
+        :param model: wrapped estimator (object of ModelWrapper class)
+        :param predict_probability: if True -> use model.predict_proba(), else -> model.predict() method
         :param class_index: index of the class label for which to predict the probability. Note: it is used only for
                             classification tasks and when the predict_probability=True. It also important to notice that
                             the target should always be label encoded.
@@ -72,8 +72,8 @@ class BaseEstimator(object):
         self.index_column = index_column  # type: str
 
         # Model data
-        self.classifier = classifier  # type: ModelWrapper
-        self.model_name = classifier.get_model_name()  # type: str
+        self.model = model  # type: ModelWrapper
+        self.model_name = model.get_name()  # type: str
         self.predict_probability = predict_probability  # type: bool
         self.class_index = class_index
 
@@ -153,7 +153,7 @@ class BaseEstimator(object):
             if is_oof_prediction:
                 df[self.target_column] = self.train_df[self.target_column].values
         else:
-            df[target_col] = bagged_df.loc[:, ~bagged_df.columns != self.target_column]\
+            df[target_col] = bagged_df.loc[:, bagged_df.columns != self.target_column]\
                 .mean(axis=1).round(self.target_decimals)
 
         # Convert to int if target rounding precision is 0 decimals
@@ -193,7 +193,7 @@ class BaseEstimator(object):
         :param n_fold: fold index
         :return: pandas DF with feature names and importances (in each considered fold)
         """
-        features_names, features_importances = self.classifier.get_features_importance()
+        features_names, features_importances = self.model.get_features_importance()
 
         fold_importance_df = pd.DataFrame()
         fold_importance_df["feature"] = features_names if features_names is not None else feats
@@ -209,7 +209,7 @@ class BaseEstimator(object):
         :param n_fold: fold index
         :return: pandas DF with feature names and mean absolute shap values (in each considered fold)
         """
-        explainer = shap.TreeExplainer(self.classifier.estimator)
+        explainer = shap.TreeExplainer(self.model.estimator)
         shap_values = explainer.shap_values(x)
 
         shap_values_df = pd.DataFrame()
@@ -257,8 +257,8 @@ class BaseEstimator(object):
             seed_val, self.train_df[feats].shape, self.test_df[feats].shape))
 
         np.random.seed(seed_val)  # for reproducibility
-        if self.classifier.model_seed_flag:
-            self.classifier.reset_models_seed(seed_val)
+        if self.model.has_seed_param:
+            self.model.reset_seed(seed_val)
 
         if self.stratified:
             folds = StratifiedKFold(n_splits=self.num_folds,
@@ -279,13 +279,13 @@ class BaseEstimator(object):
             train_x, train_y = self.train_df[feats].iloc[train_idx], self.train_df[target].iloc[train_idx]
             valid_x, valid_y = self.train_df[feats].iloc[valid_idx], self.train_df[target].iloc[valid_idx]
 
-            self.classifier.fit_model(train_x, train_y, valid_x, valid_y, eval_metric=self.eval_metric,
-                                      cv_verbosity=cv_verbosity)
-            best_iter_in_fold = self.classifier.get_best_iteration() if hasattr(
-                self.classifier, 'get_best_iteration') else 1
+            self.model.fit_estimator(train_x, train_y, valid_x, valid_y, eval_metric=self.eval_metric,
+                                     cv_verbosity=cv_verbosity)
+            best_iter_in_fold = self.model.get_best_iteration() if hasattr(
+                self.model, 'get_best_iteration') else 1
 
             # Out-of-fold prediction
-            oof_preds[valid_idx] = self.classifier.run_prediction(
+            oof_preds[valid_idx] = self.model.run_prediction(
                 x=valid_x,
                 num_iteration=best_iter_in_fold,
                 predict_probability=self.predict_probability,
@@ -294,14 +294,14 @@ class BaseEstimator(object):
 
             # Make a prediction for test data (if predict_test is True)
             if predict_test:
-                sub_preds.append(self.classifier.run_prediction(
+                sub_preds.append(self.model.run_prediction(
                     x=self.test_df[feats],
                     num_iteration=int(round(best_iter_in_fold * 1.1, 0)),
                     predict_probability=self.predict_probability,
                     class_index=self.class_index
                 ))
 
-            if hasattr(self.classifier.estimator, 'feature_importances_'):
+            if hasattr(self.model.estimator, 'feature_importances_'):
                 # Get feature importances per fold and store corresponding dataframe to list
                 fold_importance_df = self._get_feature_importances_in_fold(feats, n_fold)
                 feature_importance_df = pd.concat([feature_importance_df, fold_importance_df], axis=0)
@@ -650,7 +650,7 @@ class BaseEstimator(object):
 
 class Predictor(BaseEstimator):
 
-    def __init__(self, train_df, test_df, target_column, index_column, classifier, predict_probability, class_index,
+    def __init__(self, train_df, test_df, target_column, index_column, model, predict_probability, class_index,
                  eval_metric, metrics_scorer, metrics_decimals=6, target_decimals=6, cols_to_exclude=[], num_folds=5,
                  stratified=False, kfolds_shuffle=True, cv_verbosity=1000, bagging=False, data_split_seed=789987,
                  model_seeds_list=[27], predict_test=True, project_location='', output_dirname=''):
@@ -661,8 +661,8 @@ class Predictor(BaseEstimator):
         :param test_df: pandas DF with test data set
         :param target_column: target column (to be predicted)
         :param index_column: unique index column
-        :param classifier: wrapped estimator (object of ModelWrapper class)
-        :param predict_probability: if True -> use classifier.predict_proba(), else -> classifier.predict() method
+        :param model: wrapped estimator (object of ModelWrapper class)
+        :param predict_probability: if True -> use model.predict_proba(), else -> model.predict() method
         :param class_index: index of the class label for which to predict the probability. Note: it is used only for
                             classification tasks and when the predict_probability=True. It also important to notice that
                             the target should always be label encoded.
@@ -700,31 +700,19 @@ class Predictor(BaseEstimator):
         # Full path to solution directory
         path_output_dir = os.path.normpath(os.path.join(project_location, output_dirname))
         super(Predictor, self).__init__(
-            train_df, test_df, target_column, index_column, classifier, predict_probability, class_index, eval_metric,
+            train_df, test_df, target_column, index_column, model, predict_probability, class_index, eval_metric,
             metrics_scorer, metrics_decimals, target_decimals, cols_to_exclude, num_folds, stratified, kfolds_shuffle,
             cv_verbosity, bagging, data_split_seed, model_seeds_list, predict_test, path_output_dir
         )
 
 
-def prepare_lgbm(params):
-    from lightgbm import LGBMClassifier
-    from modeling.model_wrappers import LightGBMWrapper
-    lgbm_wrapped = LightGBMWrapper(model=LGBMClassifier, params=params, seed=27)
-    return lgbm_wrapped
-
-
-def prepare_xgb(params):
-    from xgboost import XGBClassifier
-    from modeling.model_wrappers import XGBWrapper
-    xgb_wrapped = XGBWrapper(model=XGBClassifier, params=params, seed=27)
-    return xgb_wrapped
-
-
-def run_cv_and_prediction_iris(classifier='lgbm'):
+def run_cv_and_prediction_iris(model='lightgbm'):
     import warnings
     from sklearn import datasets
     from sklearn.metrics import accuracy_score
     from sklearn.model_selection import train_test_split
+    from solution_pipeline.create_solution import get_wrapped_estimator
+
     warnings.filterwarnings("ignore")
     seed = 2018
 
@@ -742,7 +730,7 @@ def run_cv_and_prediction_iris(classifier='lgbm'):
     print('df_test shape: {0}'.format(test_data.shape))
 
     # Parameters
-    predict_probability = False  # if True -> use estimator.predict_proba(), otherwise -> estimator.predict()
+    predict_probability = False  # if True -> use model.predict_proba(), otherwise -> model.predict()
     class_index = 1  # in Target
     project_location = ''  # 'C:\Kaggle\Iris'
     output_dirname = ''  # 'iris_solution'
@@ -763,7 +751,7 @@ def run_cv_and_prediction_iris(classifier='lgbm'):
     # Columns to exclude from input data
     cols_to_exclude = ['TARGET']
 
-    if classifier is 'lgbm':
+    if model is 'lightgbm':
         params = {
             'boosting_type': 'gbdt',  # gbdt, gbrt, rf, random_forest, dart, goss
             'objective': 'multiclass',
@@ -781,9 +769,8 @@ def run_cv_and_prediction_iris(classifier='lgbm'):
             'n_jobs': -1,
             'verbose': -1
         }
-        classifier_model = prepare_lgbm(params)
         eval_metric = 'multi_error'  # see https://lightgbm.readthedocs.io/en/latest/Parameters.html
-    elif classifier is 'xgb':
+    elif model is 'xgboost':
         params = {
             'booster': 'gbtree',
             'objective': 'multi:softprob',  # 'binary:logistic'
@@ -800,7 +787,6 @@ def run_cv_and_prediction_iris(classifier='lgbm'):
             'n_jobs': -1,
             'verbose': -1
         }
-        classifier_model = prepare_xgb(params)
         eval_metric = 'merror'  # see https://xgboost.readthedocs.io/en/latest/parameter.html
     else:
         params = {
@@ -820,12 +806,13 @@ def run_cv_and_prediction_iris(classifier='lgbm'):
             'n_jobs': -1,
             'verbose': -1
         }
-        classifier_model = prepare_lgbm(params)
         eval_metric = 'multi_error'
+
+    estimator_wrapped = get_wrapped_estimator(model, params)
 
     predictor = Predictor(
         train_df=train_data, test_df=test_data, target_column=target_column, index_column=index_column,
-        classifier=classifier_model, predict_probability=predict_probability, class_index=class_index,
+        model=estimator_wrapped, predict_probability=predict_probability, class_index=class_index,
         eval_metric=eval_metric, metrics_scorer=metrics_scorer, metrics_decimals=metrics_decimals,
         target_decimals=target_decimals, cols_to_exclude=cols_to_exclude, num_folds=num_folds,
         stratified=stratified, kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity, bagging=bagging,
@@ -841,10 +828,11 @@ def run_cv_and_prediction_iris(classifier='lgbm'):
     print ('\nTest: {0}={1}\n'.format(metrics_scorer.func_name.upper(), test_accuracy))
 
 
-def run_cv_and_prediction_kaggle(classifier='lgbm', debug=False):
+def run_cv_and_prediction_kaggle(model='lightgbm', debug=False):
     import warnings
     from sklearn.metrics import roc_auc_score
     from data_processing.preprocessing import downcast_datatypes
+    from solution_pipeline.create_solution import get_wrapped_estimator
 
     warnings.filterwarnings("ignore")
 
@@ -863,7 +851,7 @@ def run_cv_and_prediction_kaggle(classifier='lgbm', debug=False):
     print('df_test shape: {0}'.format(test_data.shape))
 
     # Parameters
-    predict_probability = True  # if True -> use estimator.predict_proba(), otherwise -> estimator.predict()
+    predict_probability = True  # if True -> use model.predict_proba(), otherwise -> model.predict()
     class_index = 1  # in Target
     project_location = ''  # 'C:\Kaggle\home_credit'
     output_dirname = ''  # 'solution'
@@ -883,7 +871,7 @@ def run_cv_and_prediction_kaggle(classifier='lgbm', debug=False):
     model_seeds_list = [27, 55]
     cols_to_exclude = ['TARGET', 'SK_ID_CURR', 'SK_ID_BUREAU', 'SK_ID_PREV']
 
-    if classifier is 'lgbm':
+    if model is 'lightgbm':
         params = {
             'boosting_type': 'gbdt',  # gbdt, gbrt, rf, random_forest, dart, goss
             'objective': 'binary',
@@ -901,8 +889,7 @@ def run_cv_and_prediction_kaggle(classifier='lgbm', debug=False):
             'nthread': -1,
             'verbose': -1
         }
-        classifier_model = prepare_lgbm(params)
-    elif classifier is 'xgb':
+    elif model is 'xgboost':
         params = {
             'booster': 'gbtree',
             'objective': 'binary:logistic',
@@ -921,7 +908,6 @@ def run_cv_and_prediction_kaggle(classifier='lgbm', debug=False):
             'colsample_bylevel': 0.632,
             'scale_pos_weight': 2.5
         }
-        classifier_model = prepare_xgb(params)
     else:
         params = {
             'boosting_type': 'gbdt',  # gbdt, gbrt, rf, random_forest, dart, goss
@@ -940,11 +926,12 @@ def run_cv_and_prediction_kaggle(classifier='lgbm', debug=False):
             'nthread': -1,
             'verbose': -1
         }
-        classifier_model = prepare_lgbm(params)
+
+    estimator_wrapped = get_wrapped_estimator(model, params)
 
     predictor = Predictor(
         train_df=train_data, test_df=test_data, target_column=target_column, index_column=index_column,
-        classifier=classifier_model, predict_probability=predict_probability, class_index=class_index,
+        model=estimator_wrapped, predict_probability=predict_probability, class_index=class_index,
         eval_metric=eval_metric, metrics_scorer=metrics_scorer, metrics_decimals=metrics_decimals,
         target_decimals=target_decimals, cols_to_exclude=cols_to_exclude, num_folds=num_folds,
         stratified=stratified, kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity, bagging=bagging,
@@ -957,7 +944,7 @@ def run_cv_and_prediction_kaggle(classifier='lgbm', debug=False):
 
 
 if __name__ == '__main__':
-    run_cv_and_prediction_iris(classifier='lgbm')
-    # run_cv_and_prediction_iris(classifier='xgb')
-    # run_cv_and_prediction_kaggle(classifier='lgbm', debug=True)
-    # run_cv_and_prediction_kaggle(classifier='xgb', debug=True)
+    run_cv_and_prediction_iris(model='lightgbm')
+    # run_cv_and_prediction_iris(model='xgboost')
+    # run_cv_and_prediction_kaggle(model='lightgbm', debug=True)
+    # run_cv_and_prediction_kaggle(model='xgboost', debug=True)
