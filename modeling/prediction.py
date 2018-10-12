@@ -125,6 +125,10 @@ class BaseEstimator(object):
             index_values = self.train_df[self.index_column].values if is_oof_prediction \
                 else self.test_df[self.index_column].values
             df.insert(loc=0, column=self.index_column, value=index_values)
+
+        # Add column with real target values to OOF dataframe
+        if is_oof_prediction:
+            df[self.target_column] = self.train_df[self.target_column].values
         return df
 
     def _average_bagged_results(self, bagged_df, is_oof_prediction):  # type: (pd.DataFrame, bool) -> pd.DataFrame
@@ -142,10 +146,15 @@ class BaseEstimator(object):
             index_values = self.train_df[self.index_column].values if is_oof_prediction \
                 else self.test_df[self.index_column].values
             df[self.index_column] = index_values
-            df[target_col] = bagged_df.loc[:, bagged_df.columns != self.index_column]\
+            df[target_col] = bagged_df.loc[:, ~bagged_df.columns.isin([self.index_column, self.target_column])]\
                 .mean(axis=1).round(self.target_decimals)
+
+            # Add column with real target values to OOF dataframe
+            if is_oof_prediction:
+                df[self.target_column] = self.train_df[self.target_column].values
         else:
-            df[target_col] = bagged_df.mean(axis=1).round(self.target_decimals)
+            df[target_col] = bagged_df.loc[:, ~bagged_df.columns != self.target_column]\
+                .mean(axis=1).round(self.target_decimals)
 
         # Convert to int if target rounding precision is 0 decimals
         if self.target_decimals == 0:
@@ -167,6 +176,10 @@ class BaseEstimator(object):
                 else self.test_df[self.index_column].values
             df[self.index_column] = index_values
         df[target_col] = np.round(preds, self.target_decimals)
+
+        # Add column with real target values to OOF dataframe
+        if is_oof_prediction:
+            df[self.target_column] = self.train_df[self.target_column].values
 
         # Convert to int if target rounding precision is 0 decimals
         if self.target_decimals == 0:
@@ -546,16 +559,16 @@ class BaseEstimator(object):
         best_features = shap_values.loc[shap_values.feature.isin(cols)].sort_values(
             by="shap_value", ascending=False)
 
-        plt.figure(figsize=(figsize_x, figsize_y))
-        sns.barplot(x="shap_value", y="feature", data=best_features)
-        plt.title('{0}: shap values of features (avg over folds/seeds)'.format(self.model_name.upper()))
-        plt.tight_layout()
+        fig, ax = plt.subplots(figsize=(figsize_x, figsize_y))
+        sns.barplot(x="shap_value", y="feature", data=best_features, ax=ax)
+        ax.set_title('{0}: shap values of features (avg over folds/seeds)'.format(self.model_name.upper()))
+        fig.tight_layout()
 
         if save:
             full_path_to_file = os.path.join(self.path_output_dir,
                                              '_'.join([self.model_name, 'feat_shap']) + '.png')
             print('\nSaving features shap graph into %s' % full_path_to_file)
-            plt.savefig(full_path_to_file)
+            fig.savefig(full_path_to_file)
 
             full_path_to_file = os.path.join(self.path_output_dir,
                                              '_'.join([self.model_name, 'feat_shap']) + '.csv')
@@ -563,8 +576,7 @@ class BaseEstimator(object):
             shap_values = shap_values[["feature", "shap_value"]].groupby(
                 "feature").mean().sort_values(by="shap_value", ascending=False).reset_index()
             shap_values.to_csv(full_path_to_file, index=False)
-        del shap_values;
-        gc.collect()
+        del shap_values; gc.collect()
 
     def plot_cv_results_vs_used_seeds(self, figsize_x=14, figsize_y=4, annot_offset_x=3,
                                       annot_offset_y=5, annot_rotation=90, save=False):
