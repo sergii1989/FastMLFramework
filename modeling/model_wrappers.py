@@ -7,7 +7,7 @@ class ModelWrapper(object):
         self.model = model
         self.model_name = model_name
         self._verify_model_name_is_ok()
-        self.model_seed_flag = self._verify_model_has_seed_param()
+        self.has_seed_param = self._verify_model_has_seed_param()
         self._add_seed_to_params(params, seed)
         self.params = params
         self.estimator = self.model(**params)
@@ -31,11 +31,11 @@ class ModelWrapper(object):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
-    def reset_models_seed(self, seed):  # type: (int) -> None
+    def reset_seed(self, seed):  # type: (int) -> None
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
+    def fit_estimator(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
@@ -51,7 +51,7 @@ class ModelWrapper(object):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
-    def get_model_name(self):
+    def get_name(self):
         return self.model_name
 
 
@@ -76,7 +76,7 @@ class LightGBMWrapper(ModelWrapper):
         return 'random_state' in self.model().get_params()
 
     def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
-        if self.model_seed_flag:
+        if self.has_seed_param:
             params['random_state'] = seed
         return params
 
@@ -84,11 +84,11 @@ class LightGBMWrapper(ModelWrapper):
         self.params = new_params
         self.estimator = self.model(**self.params)
 
-    def reset_models_seed(self, seed):  # type: (int) -> None
+    def reset_seed(self, seed):  # type: (int) -> None
         self.params['random_state'] = seed
         self.estimator = self.model(**self.params)
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
+    def fit_estimator(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
         """
         This method is responsible for fitting of LGBM estimator.
         :param train_x: train dataset with features (not including the target)
@@ -163,7 +163,7 @@ class XGBWrapper(ModelWrapper):
         return 'random_state' in self.model().get_params()
 
     def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
-        if self.model_seed_flag:
+        if self.has_seed_param:
             params['random_state'] = seed
         return params
 
@@ -171,11 +171,11 @@ class XGBWrapper(ModelWrapper):
         self.params = new_params
         self.estimator = self.model(**self.params)
 
-    def reset_models_seed(self, seed):  # type: (int) -> None
+    def reset_seed(self, seed):  # type: (int) -> None
         self.params['random_state'] = seed
         self.estimator = self.model(**self.params)
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
+    def fit_estimator(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
         """
         This method is responsible for fitting of XGB estimator. It should be noted that in xgboost v0.72 (the latest
         at the moment of creation of this code), there is no support of early_stopping_rounds directly from general dict
@@ -256,7 +256,7 @@ class SklearnWrapper(ModelWrapper):
         return 'random_state' in self.model().get_params()
 
     def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
-        if self.model_seed_flag:
+        if self.has_seed_param:
             params['random_state'] = seed
         return params
 
@@ -264,11 +264,11 @@ class SklearnWrapper(ModelWrapper):
         self.params = new_params
         self.estimator = self.model(**self.params)
 
-    def reset_models_seed(self, seed):  # type: (int) -> None
+    def reset_seed(self, seed):  # type: (int) -> None
         self.params['random_state'] = seed
         self.estimator = self.model(**self.params)
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
+    def fit_estimator(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
         """
         This method is responsible for fitting of Sklearn estimator. It should be noted that fit method in Sklearn API
         does not support valid_x, valid_y, eval_metric, cv_verbosity arguments (thus they are not used here).
@@ -326,7 +326,7 @@ class CBWrapper(ModelWrapper):
         return 'random_state' in self.model().get_params()
 
     def _add_seed_to_params(self, params, seed):  # type: (dict, int) -> dict
-        if self.model_seed_flag:
+        if self.has_seed_param:
             params['random_state'] = seed
         return params
 
@@ -334,11 +334,11 @@ class CBWrapper(ModelWrapper):
         self.params = new_params
         self.estimator = self.model(**self.params)
 
-    def reset_models_seed(self, seed):  # type: (int) -> None
+    def reset_seed(self, seed):  # type: (int) -> None
         self.params['random_state'] = seed
         self.estimator = self.model(**self.params)
 
-    def fit_model(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
+    def fit_estimator(self, train_x, train_y, valid_x, valid_y, eval_metric, cv_verbosity):
         """
         This method is responsible for fitting of Sklearn estimator. It should be noted that fit method in Sklearn API
         does not support valid_x, valid_y, eval_metric, cv_verbosity arguments (thus they are not used here).
