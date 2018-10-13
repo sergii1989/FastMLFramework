@@ -113,7 +113,7 @@ class BaseEstimator(object):
         """
         return self.index_column is not None and self.index_column != ''
 
-    def _concat_bagged_results(self, list_bagged_df, is_oof_prediction):  # type: (list) -> pd.DataFrame
+    def _concat_bagged_results(self, list_bagged_df, is_oof_prediction):  # type: (list, bool) -> pd.DataFrame
         """
         This method concatenates pandas DFs which contain either out-of-fold or test prediction results.
         :param list_bagged_df: list of pandas DFs containing either OOF or test results for various seeds
@@ -281,8 +281,13 @@ class BaseEstimator(object):
 
             self.model.fit_estimator(train_x, train_y, valid_x, valid_y, eval_metric=self.eval_metric,
                                      cv_verbosity=cv_verbosity)
-            best_iter_in_fold = self.model.get_best_iteration() if hasattr(
-                self.model, 'get_best_iteration') else 1
+            try:
+                best_iter_in_fold = self.model.get_best_iteration()
+            except TypeError:
+                # There is only one gradient boosting algorithm in Sklearn: GradientBoostingClassifier.
+                # The rest of models has no attribute 'best_iter', thus we can set it to arbitrary number, e.g. 1.
+                # It will not be used in run_prediction() phase if self.model is of SklearnWrapper type.
+                best_iter_in_fold = 1
 
             # Out-of-fold prediction
             oof_preds[valid_idx] = self.model.run_prediction(
