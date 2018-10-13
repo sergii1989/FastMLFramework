@@ -123,7 +123,7 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         """
         hp_optimization_space = self._adjust_hyperparameters_datatypes(hp_optimization_space)
         hp_optimization_space = self._complete_missing_hyperparameters_from_init_params(hp_optimization_space)
-        self.predictor.classifier.reinit_model_with_new_params(hp_optimization_space)
+        self.predictor.model.reinit_model_with_new_params(hp_optimization_space)
         _, _, _, _, _, cv_score, cv_std = self.predictor.run_cv_one_seed(seed_val=self.seed_val, predict_test=False,
                                                                          cv_verbosity=0)
         # Store all used hyperparameters with the corresponding CV results in a pandas DF
