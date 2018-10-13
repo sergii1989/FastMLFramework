@@ -31,6 +31,7 @@
       <w>goss</w>
       <w>gridspec</w>
       <w>heatmap</w>
+      <w>hpos</w>
       <w>hyperparameter</w>
       <w>hyperparameters</w>
       <w>hyperparams</w>
@@ -39,12 +40,15 @@
       <w>kaggle</w>
       <w>kfolds</w>
       <w>kurtosis</w>
+      <w>lbfgs</w>
       <w>lgbm</w>
+      <w>liblinear</w>
       <w>lightgbm</w>
       <w>logloss</w>
       <w>merror</w>
       <w>mlogloss</w>
       <w>multiclass</w>
+      <w>multinomial</w>
       <w>ndarray</w>
       <w>nthread</w>
       <w>ntop</w>
@@ -52,6 +56,7 @@
       <w>pred</w>
       <w>preds</w>
       <w>proba</w>
+      <w>regressors</w>
       <w>reinit</w>
       <w>rmse</w>
       <w>shap</w>
