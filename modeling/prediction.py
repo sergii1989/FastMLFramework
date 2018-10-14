@@ -19,7 +19,7 @@ class BaseEstimator(object):
     FIGNAME_CONFUSION_MATRIX = 'confusion_matrix.png'
     FIGNAME_CV_RESULTS_VERSUS_SEEDS = 'cv_results_vs_seeds.png'
 
-    def __init__(self, train_df, test_df, target_column, index_column, model, predict_probability, class_index,
+    def __init__(self, train_df, test_df, target_column, index_column, model, predict_probability, class_label,
                  eval_metric, metrics_scorer, metrics_decimals=6, target_decimals=6, cols_to_exclude=[],
                  num_folds=5, stratified=False, kfolds_shuffle=True, cv_verbosity=1000, bagging=False,
                  data_split_seed=789987, model_seeds_list=[27], predict_test=True, path_output_dir=''):
@@ -32,12 +32,12 @@ class BaseEstimator(object):
         :param index_column: unique index column
         :param model: wrapped estimator (object of ModelWrapper class)
         :param predict_probability: if True -> use model.predict_proba(), else -> model.predict() method
-        :param class_index: index of the class label for which to predict the probability. Note: it is used only for
-                            classification tasks and when the predict_probability=True. It also important to notice that
-                            the target should always be label encoded.
-                            - if class_index is None -> return probability of all classes in the target
-                            - if class_index is int -> return probability of selected class
-                            - if class_index is list of int -> return probability of selected classes
+        :param class_label: class label(s) for which to predict the probability. Note: it is used only for
+                            classification tasks and when the predict_probability=True. Class label(s) should be
+                            selected from the target column.
+                            - if class_label is None -> return probability of all class labels in the target
+                            - if class_label is int -> return probability of selected class
+                            - if class_label is list of int -> return probability of selected classes
         :param eval_metric: 'rmse': root mean square error
                             'mae': mean absolute error
                             'logloss': negative log-likelihood
@@ -75,7 +75,7 @@ class BaseEstimator(object):
         self.model = model  # type: ModelWrapper
         self.model_name = model.get_name()  # type: str
         self.predict_probability = predict_probability  # type: bool
-        self.class_index = class_index
+        self.class_label = class_label
 
         # Settings for CV and test prediction
         self.num_folds = num_folds  # type: int
@@ -93,6 +93,9 @@ class BaseEstimator(object):
         self.model_seeds_list = model_seeds_list  # type: list
         self.path_output_dir = path_output_dir
         create_output_dir(self.path_output_dir)
+
+        # Verify that BaseEstimator is provided with the correct settings
+        self._verify_input_data_is_correct()
 
         # Results of CV and test prediction
         self.cv_score = None  # type: float
@@ -112,6 +115,26 @@ class BaseEstimator(object):
         :return: True or False
         """
         return self.index_column is not None and self.index_column != ''
+
+    def _verify_input_data_is_correct(self):
+        """
+        This method is used to verify correctness of the provided data
+        :return: None
+        """
+        assert self.target_column in self.train_df, \
+            'Please add {target} column to the train_oof dataframe'.format(target=self.target_column)
+
+        if self._index_column_is_defined():
+            assert self.index_column in self.train_df.columns, ('Please add {index} column to the train_oof '
+                                                                'dataframe'.format(index=self.index_column))
+            assert self.index_column in self.test_df.columns, ('Please add {index} column to the test_oof '
+                                                               'dataframe'.format(index=self.index_column))
+
+        assert callable(self.metrics_scorer), 'metrics_scorer should be callable function'
+        if 'sklearn.metrics' not in self.metrics_scorer.__module__:
+            raise TypeError("metrics_scorer should be function from sklearn.metrics module. "
+                            "Instead received {0}.".format(self.metrics_scorer.__module__))
+        return
 
     def _concat_bagged_results(self, list_bagged_df, is_oof_prediction):  # type: (list, bool) -> pd.DataFrame
         """
@@ -294,7 +317,7 @@ class BaseEstimator(object):
                 x=valid_x,
                 num_iteration=best_iter_in_fold,
                 predict_probability=self.predict_probability,
-                class_index=self.class_index
+                class_label=self.class_label
             )
 
             # Make a prediction for test data (if predict_test is True)
@@ -303,7 +326,7 @@ class BaseEstimator(object):
                     x=self.test_df[feats],
                     num_iteration=int(round(best_iter_in_fold * 1.1, 0)),
                     predict_probability=self.predict_probability,
-                    class_index=self.class_index
+                    class_label=self.class_label
                 ))
 
             if hasattr(self.model.estimator, 'feature_importances_'):
@@ -344,10 +367,6 @@ class BaseEstimator(object):
         different seeds for random generator.
         :return: out_of_fold predictions, submission predictions, oof_eval_results and feature_importance data frame
         """
-        assert callable(self.metrics_scorer), 'metrics_scorer should be callable function'
-        if 'sklearn.metrics' not in self.metrics_scorer.__module__:
-            raise TypeError("metrics_scorer should be function from sklearn.metrics module. "
-                            "Instead received {0}.".format(self.metrics_scorer.__module__))
 
         if self.bagging and len(self.model_seeds_list) == 1:
             raise ValueError('Number of seeds for bagging should be more than 1. Provided: {0}'
@@ -655,7 +674,7 @@ class BaseEstimator(object):
 
 class Predictor(BaseEstimator):
 
-    def __init__(self, train_df, test_df, target_column, index_column, model, predict_probability, class_index,
+    def __init__(self, train_df, test_df, target_column, index_column, model, predict_probability, class_label,
                  eval_metric, metrics_scorer, metrics_decimals=6, target_decimals=6, cols_to_exclude=[], num_folds=5,
                  stratified=False, kfolds_shuffle=True, cv_verbosity=1000, bagging=False, data_split_seed=789987,
                  model_seeds_list=[27], predict_test=True, project_location='', output_dirname=''):
@@ -668,12 +687,12 @@ class Predictor(BaseEstimator):
         :param index_column: unique index column
         :param model: wrapped estimator (object of ModelWrapper class)
         :param predict_probability: if True -> use model.predict_proba(), else -> model.predict() method
-        :param class_index: index of the class label for which to predict the probability. Note: it is used only for
-                            classification tasks and when the predict_probability=True. It also important to notice that
-                            the target should always be label encoded.
-                            - if class_index is None -> return probability of all classes in the target
-                            - if class_index is int -> return probability of selected class
-                            - if class_index is list of int -> return probability of selected classes
+        :param class_label: class label(s) for which to predict the probability. Note: it is used only for
+                            classification tasks and when the predict_probability=True. Class label(s) should be
+                            selected from the target column.
+                            - if class_label is None -> return probability of all class labels in the target
+                            - if class_label is int -> return probability of selected class
+                            - if class_label is list of int -> return probability of selected classes
         :param eval_metric: 'rmse': root mean square error
                             'mae': mean absolute error
                             'logloss': negative log-likelihood
@@ -705,7 +724,7 @@ class Predictor(BaseEstimator):
         # Full path to solution directory
         path_output_dir = os.path.normpath(os.path.join(project_location, output_dirname))
         super(Predictor, self).__init__(
-            train_df, test_df, target_column, index_column, model, predict_probability, class_index, eval_metric,
+            train_df, test_df, target_column, index_column, model, predict_probability, class_label, eval_metric,
             metrics_scorer, metrics_decimals, target_decimals, cols_to_exclude, num_folds, stratified, kfolds_shuffle,
             cv_verbosity, bagging, data_split_seed, model_seeds_list, predict_test, path_output_dir
         )
@@ -736,7 +755,7 @@ def run_cv_and_prediction_iris(model='lightgbm'):
 
     # Parameters
     predict_probability = False  # if True -> use model.predict_proba(), otherwise -> model.predict()
-    class_index = 1  # in Target
+    class_label = 1  # in Target
     project_location = ''  # 'C:\Kaggle\Iris'
     output_dirname = ''  # 'iris_solution'
     target_column = 'TARGET'
@@ -817,7 +836,7 @@ def run_cv_and_prediction_iris(model='lightgbm'):
 
     predictor = Predictor(
         train_df=train_data, test_df=test_data, target_column=target_column, index_column=index_column,
-        model=estimator_wrapped, predict_probability=predict_probability, class_index=class_index,
+        model=estimator_wrapped, predict_probability=predict_probability, class_label=class_label,
         eval_metric=eval_metric, metrics_scorer=metrics_scorer, metrics_decimals=metrics_decimals,
         target_decimals=target_decimals, cols_to_exclude=cols_to_exclude, num_folds=num_folds,
         stratified=stratified, kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity, bagging=bagging,
@@ -857,7 +876,7 @@ def run_cv_and_prediction_kaggle(model='lightgbm', debug=False):
 
     # Parameters
     predict_probability = True  # if True -> use model.predict_proba(), otherwise -> model.predict()
-    class_index = 1  # in Target
+    class_label = 1  # in Target
     project_location = ''  # 'C:\Kaggle\home_credit'
     output_dirname = ''  # 'solution'
     target_column = 'TARGET'
@@ -936,7 +955,7 @@ def run_cv_and_prediction_kaggle(model='lightgbm', debug=False):
 
     predictor = Predictor(
         train_df=train_data, test_df=test_data, target_column=target_column, index_column=index_column,
-        model=estimator_wrapped, predict_probability=predict_probability, class_index=class_index,
+        model=estimator_wrapped, predict_probability=predict_probability, class_label=class_label,
         eval_metric=eval_metric, metrics_scorer=metrics_scorer, metrics_decimals=metrics_decimals,
         target_decimals=target_decimals, cols_to_exclude=cols_to_exclude, num_folds=num_folds,
         stratified=stratified, kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity, bagging=bagging,
