@@ -39,7 +39,7 @@ class ModelWrapper(object):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
-    def run_prediction(self, x, predict_probability, class_index, num_iteration):
+    def run_prediction(self, x, predict_probability, class_label, num_iteration):
         # Abstract method, must be implemented by derived classes
         raise NotImplemented()
 
@@ -104,25 +104,25 @@ class LightGBMWrapper(ModelWrapper):
                            eval_metric=eval_metric,
                            verbose=cv_verbosity)
 
-    def run_prediction(self, x, predict_probability, class_index=None, num_iteration=1000
+    def run_prediction(self, x, predict_probability, class_label=None, num_iteration=1000
                        ):  # type: (pd.DataFrame, bool, (None, int, list), int) -> np.ndarray
         """
         This method run prediction of target variable. Two options available for prediction: class labels or
         class probabilities.
         :param x: pandas DF with the features for which the prediction of the target to be made
         :param predict_probability: if True -> use estimator.predict_proba() method, else -> estimator.predict()
-        :param class_index: index of the class label for which to predict the probability. Note: it is used only for
-                            classification tasks and when the predict_probability=True. It also important to notice that
-                            target should always be label encoded.
-                            - if class_index is None -> return probability of all classes in the target
-                            - if class_index is int -> return probability of selected class
-                            - if class_index is list of int -> return probability of selected classes
+        :param class_label: class label(s) for which to predict the probability. Note: it is used only for
+                            classification tasks and when the predict_probability=True. Class label(s) should be
+                            selected from the target column.
+                            - if class_label is None -> return probability of all class labels in the target
+                            - if class_label is int -> return probability of selected class
+                            - if class_label is list of int -> return probability of selected classes
         :param num_iteration: optimum number of iterations (used only for decision trees algorithms)
         :return: np.ndarray with either predicted probability of class(es) or class label(s)
         """
         if predict_probability:
-            if class_index is not None:
-                return self.estimator.predict_proba(x, num_iteration=num_iteration)[:, class_index]  # return probability of selected class(es)
+            if class_label is not None:
+                return self.estimator.predict_proba(x, num_iteration=num_iteration)[:, class_label]  # return probability of selected class(es)
             return self.estimator.predict_proba(x, num_iteration=num_iteration)  # return probability of all classes
         return self.estimator.predict(x, num_iteration=num_iteration)  # return target class labels (not a probability!)
 
@@ -195,25 +195,25 @@ class XGBWrapper(ModelWrapper):
                            early_stopping_rounds=self.params.get("early_stopping_rounds", None),
                            verbose=cv_verbosity)
 
-    def run_prediction(self, x, predict_probability, class_index=None, num_iteration=1000
+    def run_prediction(self, x, predict_probability, class_label=None, num_iteration=1000
                        ):  # type: (pd.DataFrame, bool, (None, int, list), int) -> np.ndarray
         """
         This method run prediction of target variable. Two options available for prediction: class labels or
         class probabilities.
         :param x: pandas DF with the features for which the prediction of the target to be made
         :param predict_probability: if True -> use estimator.predict_proba() method, else -> estimator.predict()
-        :param class_index: index of the class label for which to predict the probability. Note: it is used only for
-                            classification tasks and when the predict_probability=True. It also important to notice that
-                            target should always be label encoded.
-                            - if class_index is None -> return probability of all classes in the target
-                            - if class_index is int -> return probability of selected class
-                            - if class_index is list of int -> return probability of selected classes
+        :param class_label: class label(s) for which to predict the probability. Note: it is used only for
+                            classification tasks and when the predict_probability=True. Class label(s) should be
+                            selected from the target column.
+                            - if class_label is None -> return probability of all class labels in the target
+                            - if class_label is int -> return probability of selected class
+                            - if class_label is list of int -> return probability of selected classes
         :param num_iteration: optimum number of iterations (used only for decision trees algorithms)
         :return: np.ndarray with either predicted probability of class(es) or class label(s)
         """
         if predict_probability:
-            if class_index is not None:
-                return self.estimator.predict_proba(x, ntree_limit=num_iteration)[:, class_index]  # return probability of selected class(es)
+            if class_label is not None:
+                return self.estimator.predict_proba(x, ntree_limit=num_iteration)[:, class_label]  # return probability of selected class(es)
             return self.estimator.predict_proba(x, ntree_limit=num_iteration)  # return probability of all classes
         return self.estimator.predict(x, ntree_limit=num_iteration)  # return target class labels (not a probability!)
 
@@ -282,25 +282,25 @@ class SklearnWrapper(ModelWrapper):
         """
         self.estimator.fit(train_x, train_y)
 
-    def run_prediction(self, x, predict_probability, class_index=None, num_iteration=1000
+    def run_prediction(self, x, predict_probability, class_label=None, num_iteration=1000
                        ):  # type: (pd.DataFrame, bool, (None, int, list), int) -> np.ndarray
         """
         This method run prediction of target variable. Two options available for prediction: class labels or
         class probabilities.
         :param x: pandas DF with the features for which the prediction of the target to be made
         :param predict_probability: if True -> use estimator.predict_proba() method, else -> estimator.predict()
-        :param class_index: index of the class label for which to predict the probability. Note: it is used only for
-                            classification tasks and when the predict_probability=True. It also important to notice that
-                            target should always be label encoded.
-                            - if class_index is None -> return probability of all classes in the target
-                            - if class_index is int -> return probability of selected class
-                            - if class_index is list of int -> return probability of selected classes
+        :param class_label: class label(s) for which to predict the probability. Note: it is used only for
+                            classification tasks and when the predict_probability=True. Class label(s) should be
+                            selected from the target column.
+                            - if class_label is None -> return probability of all class labels in the target
+                            - if class_label is int -> return probability of selected class
+                            - if class_label is list of int -> return probability of selected classes
         :param num_iteration: optimum number of iterations (used only for decision trees algorithms)
         :return: np.ndarray with either predicted probability of class(es) or class label(s)
         """
         if predict_probability:
-            if class_index is not None:
-                return self.estimator.predict_proba(x)[:, class_index]  # return probability of selected class(es)
+            if class_label is not None:
+                return self.estimator.predict_proba(x)[:, class_label]  # return probability of selected class(es)
             return self.estimator.predict_proba(x)  # return probability of all classes
         return self.estimator.predict(x)  # return target class labels (not a probability!)
 
@@ -352,25 +352,25 @@ class CBWrapper(ModelWrapper):
         """
         self.estimator.fit(train_x, train_y)
 
-    def run_prediction(self, x, predict_probability, class_index=None, num_iteration=1000
+    def run_prediction(self, x, predict_probability, class_label=None, num_iteration=1000
                        ):  # type: (pd.DataFrame, bool, (None, int, list), int) -> np.ndarray
         """
         This method run prediction of target variable. Two options available for prediction: class labels or
         class probabilities.
         :param x: pandas DF with the features for which the prediction of the target to be made
         :param predict_probability: if True -> use estimator.predict_proba() method, else -> estimator.predict()
-        :param class_index: index of the class label for which to predict the probability. Note: it is used only for
-                            classification tasks and when the predict_probability=True. It also important to notice that
-                            target should always be label encoded.
-                            - if class_index is None -> return probability of all classes in the target
-                            - if class_index is int -> return probability of selected class
-                            - if class_index is list of int -> return probability of selected classes
+        :param class_label: class label(s) for which to predict the probability. Note: it is used only for
+                            classification tasks and when the predict_probability=True. Class label(s) should be
+                            selected from the target column.
+                            - if class_label is None -> return probability of all class labels in the target
+                            - if class_label is int -> return probability of selected class
+                            - if class_label is list of int -> return probability of selected classes
         :param num_iteration: optimum number of iterations (used only for decision trees algorithms)
         :return: np.ndarray with either predicted probability of class(es) or class label(s)
         """
         if predict_probability:
-            if class_index is not None:
-                return self.estimator.predict_proba(x)[:, class_index]  # return probability of selected class(es)
+            if class_label is not None:
+                return self.estimator.predict_proba(x)[:, class_label]  # return probability of selected class(es)
             return self.estimator.predict_proba(x)  # return probability of all classes
         return self.estimator.predict(x)  # return target class labels (not a probability!)
 
