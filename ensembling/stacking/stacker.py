@@ -1,107 +1,31 @@
 import os
-import gc
 import pandas as pd
 
-from pandas import testing as pdt
+from ensembling.ensembler import Ensembler
 from modeling.prediction import BaseEstimator
-from data_processing.preprocessing import downcast_datatypes
 
 
 class Stacker(BaseEstimator):
 
-    def __init__(self, stack_input, train_df, test_df, target_column, index_column, model, predict_probability,
-                 class_index, eval_metric, metrics_scorer, metrics_decimals=6, target_decimals=6, cols_to_exclude=[],
-                 num_folds=5, stratified=False, kfolds_shuffle=True, cv_verbosity=1000, bagging=False,
-                 data_split_seed=789987, model_seeds_list=[27], predict_test=True, project_location='',
+    def __init__(self, oof_input_files, train_df, test_df, target_column, index_column, stacker_model,
+                 predict_probability, class_index, eval_metric, metrics_scorer, metrics_decimals=6, target_decimals=6,
+                 cols_to_exclude=[], num_folds=5, stratified=False, kfolds_shuffle=True, cv_verbosity=1000,
+                 bagging=False, data_split_seed=789987, model_seeds_list=[27], predict_test=True, project_location='',
                  output_dirname=''):
 
         # Full path to solution directory
         path_output_dir = os.path.normpath(os.path.join(project_location, output_dirname))
 
-        self._verify_completeness_of_stack_input_data(stack_input)
-        self.stack_input = stack_input  # type: dict
-
-        train_oof, test_oof = self.load_oof_target_and_test_sets(project_location, train_df, test_df,
-                                                                 target_column, index_column, target_decimals)
-        self.train_oof = train_oof
-        self.test_oof = test_oof
+        self.ensembler = Ensembler()
+        self.train_oof, self.test_oof = \
+            self.ensembler.load_oof_target_and_test_data(oof_input_files, project_location, train_df, test_df,
+                                                         target_column, index_column, target_decimals)
 
         super(Stacker, self).__init__(
-            train_oof, test_oof, target_column, index_column, model, predict_probability, class_index, eval_metric,
-            metrics_scorer, metrics_decimals, target_decimals, cols_to_exclude, num_folds, stratified, kfolds_shuffle,
-            cv_verbosity, bagging, data_split_seed, model_seeds_list, predict_test, path_output_dir
+            self.train_oof, self.test_oof, target_column, index_column, stacker_model, predict_probability, class_index,
+            eval_metric, metrics_scorer, metrics_decimals, target_decimals, cols_to_exclude, num_folds, stratified,
+            kfolds_shuffle, cv_verbosity, bagging, data_split_seed, model_seeds_list, predict_test, path_output_dir
         )
-
-    @staticmethod
-    def _verify_completeness_of_stack_input_data(stack_input):
-        for solution in stack_input.values():
-            assert len(solution['files']) >= 2, (
-                "There should be at least two input files (1 with '_OOF' and 1 with '_SUBM' suffixes) for each "
-                "provided path. Instead got: %s" % solution['files'])
-            assert len(filter(lambda x: 'OOF' in x, solution['files'])) >= 1, (
-                "There should be at least one input file containing train out-of-fold predictions for each "
-                "provided path (i.e. file with '_OOF' suffix)")
-            assert len(filter(lambda x: 'SUBM' in x, solution['files'])) >= 1, (
-                "There should be at least one input file containing test predictions for each "
-                "provided path (i.e. file with '_SUBM' suffix)")
-
-    @staticmethod
-    def _verify_consistency_of_input_data(meta_data, model_data, target_column, index_column, is_train=True):
-        assert meta_data.shape[0] == model_data.shape[0]
-        if is_train:
-            assert target_column in meta_data
-            pdt.assert_series_equal(meta_data[target_column], model_data[target_column])
-        if index_column is not None and index_column != '':
-            assert index_column in meta_data
-            pdt.assert_series_equal(meta_data[index_column], model_data[index_column])
-
-    def _prepare_stacking_input_dataset(self, main_df, index_column, target_column, list_preds_df, target_decimals):
-        df = pd.concat(list_preds_df, axis=1).round(target_decimals)
-
-        # Convert to int if target rounding precision is 0 decimals
-        if target_decimals == 0:
-            df = df.astype(int)
-
-        # Add index column to the beginning of DF if index column is valid
-        if index_column is not None and index_column != '':
-            index_values = main_df[index_column].values
-            df.insert(loc=0, column=index_column, value=index_values)
-
-        # Add column with real target values to OOF dataframe
-        if target_column in main_df and main_df[target_column].notnull().all():
-            df[target_column] = main_df[target_column].values
-
-        return df
-
-    def load_oof_target_and_test_sets(self, project_location, train_df, test_df, target_column, index_column, target_decimals):
-        list_train_oof_df = []
-        list_test_preds_df = []
-
-        for results_suffix, solution_details in self.stack_input.iteritems():
-            for f in solution_details['files']:
-                full_path = os.path.normpath(os.path.join(project_location, solution_details['path'], f))
-                if 'OOF' in f:
-                    df = downcast_datatypes(pd.read_csv(full_path))
-                    self._verify_consistency_of_input_data(df, train_df, target_column, index_column, is_train=True)
-                    df = df.loc[:, ~df.columns.isin([index_column, target_column])]
-                    df.columns = ['_'.join([results_suffix, col]) for col in df.columns]
-                    list_train_oof_df.append(df)
-                elif 'SUBM' in f:
-                    df = downcast_datatypes(pd.read_csv(full_path))
-                    self._verify_consistency_of_input_data(df, test_df, target_column, index_column, is_train=False)
-                    df = df.loc[:, df.columns != index_column]
-                    df.columns = ['_'.join([results_suffix, col]) for col in df.columns]
-                    list_test_preds_df.append(df)
-                else:
-                    raise (ValueError, 'Filename %s does not contain OOF or SUBM suffix.')
-
-        oof_train_df = self._prepare_stacking_input_dataset(train_df, index_column, target_column,
-                                                            list_train_oof_df, target_decimals)
-        oof_test_df = self._prepare_stacking_input_dataset(test_df, index_column, target_column,
-                                                           list_test_preds_df, target_decimals)
-
-        del list_train_oof_df; list_test_preds_df; gc.collect()
-        return oof_train_df, oof_test_df
 
 
 def run_stacker_kaggle_example(stacker_model='logistic_regression', debug=True):
@@ -109,7 +33,6 @@ def run_stacker_kaggle_example(stacker_model='logistic_regression', debug=True):
     from sklearn.metrics import roc_auc_score
     from data_processing.preprocessing import downcast_datatypes
     from solution_pipeline.create_solution import get_wrapped_estimator
-
     warnings.filterwarnings("ignore")
 
     # Settings for debug
@@ -131,7 +54,7 @@ def run_stacker_kaggle_example(stacker_model='logistic_regression', debug=True):
     print('df_test shape: {0}'.format(test_data.shape))
 
     # Location and names of data sets with OOF and test predictions to be fed into stacker
-    stack_input = {
+    oof_input_files = {
         # 'lgbm_fds1_tp__fts_1_bayes_hpos1'
         'a': {
             'path': r"single_model_solution\lightgbm\features_dataset_001\target_permutation_fts_001\bayes_hpos_001",
@@ -211,8 +134,8 @@ def run_stacker_kaggle_example(stacker_model='logistic_regression', debug=True):
     stacker_wrapped = get_wrapped_estimator(stacker_model, params)
 
     stacker = Stacker(
-        stack_input=stack_input, train_df=train_data, test_df=test_data, target_column=target_column,
-        index_column=index_column, model=stacker_wrapped, predict_probability=predict_probability,
+        oof_input_files=oof_input_files, train_df=train_data, test_df=test_data, target_column=target_column,
+        index_column=index_column, stacker_model=stacker_wrapped, predict_probability=predict_probability,
         class_index=class_index, eval_metric=eval_metric, metrics_scorer=metrics_scorer,
         metrics_decimals=metrics_decimals, target_decimals=target_decimals, cols_to_exclude=cols_to_exclude,
         num_folds=num_folds, stratified=stratified, kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity,
