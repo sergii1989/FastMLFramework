@@ -15,11 +15,10 @@ warnings.simplefilter('ignore', UserWarning)
 
 
 class FeatureSelector(object):
-    FEATURE_SELECTION_DIR = 'features_selection'
 
     def __init__(self, train_df, target_column, index_column, cat_features, eval_metric, metrics_scorer,
                  metrics_decimals, num_folds, stratified, kfolds_shuffle, int_threshold,
-                 seed_val, output_dir):
+                 seed_val, project_location, output_dirname):
 
         # Input data
         self.train_df = train_df  # type: pd.DataFrame
@@ -36,7 +35,7 @@ class FeatureSelector(object):
         self.kfolds_shuffle = kfolds_shuffle  # type: bool
         self.metrics_decimals = metrics_decimals  # type: int
         self.seed_val = seed_val  # type: int
-        self.path_output_dir = os.path.normpath(os.path.join(os.getcwd(), self.FEATURE_SELECTION_DIR, output_dir))
+        self.path_output_dir = os.path.normpath(os.path.join(project_location, output_dirname))
         create_output_dir(self.path_output_dir)
 
         self._verify_input_data_is_correct()
@@ -64,7 +63,8 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
 
     def __init__(self, train_df, target_column, index_column, cat_features, lgbm_params_feats_exploration,
                  lgbm_params_feats_selection, eval_metric, metrics_scorer, metrics_decimals=6, num_folds=5,
-                 stratified=False, kfolds_shuffle=True, int_threshold=9, seed_val=27, output_dir=''):
+                 stratified=False, kfolds_shuffle=True, int_threshold=9, seed_val=27, project_location='',
+                 output_dirname=''):
         """
         This class adopts logic for selection of features based on target permutation. This selection process tests
         the actual importance significance against the distribution of features importance when fitted to noise
@@ -96,12 +96,12 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         :param int_threshold: this threshold is used to limit number of int8-type numerical features to be interpreted
                           as categorical (see auto_selector_of_categorical_features() method in utils.py)
         :param seed_val: seed numpy random generator
-        :param output_dir: name of directory to save results of feature selection process
+        :param output_dirname: name of directory to save results of feature selection process
         """
 
         super(FeatureSelectorByTargetPermutation, self).__init__(
             train_df, target_column, index_column, cat_features, eval_metric, metrics_scorer, metrics_decimals,
-            num_folds, stratified, kfolds_shuffle, int_threshold, seed_val, output_dir
+            num_folds, stratified, kfolds_shuffle, int_threshold, seed_val, project_location, output_dirname
         )
 
         # Dicts with LGB model parameters to be used in feature exploration and selection stages, correspondingly
@@ -313,8 +313,8 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         :return: best threshold value
         """
         if importance not in ('gain_score', 'split_score'):
-            raise ValueError, "Importance type should be either 'gain_score' or 'split_score'. " \
-                              "Instead received {0}".format(importance)
+            raise (ValueError, "Importance type should be either 'gain_score' or 'split_score'. "
+                               "Instead received {0}".format(importance))
 
         best_thresh_df = self.cv_results_vs_thresh_df.loc[pd.IndexSlice[:, [importance.split('_')[0].upper()]], :].copy()
         best_thresh_df['cv_bst_score_rank'] = best_thresh_df['cv_bst_score'].rank(method='min', ascending=cv_asc_rank)
@@ -341,8 +341,8 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         :return: list of features for given importance type with the feature_score >= threshold
         """
         if importance not in ('gain_score', 'split_score'):
-            raise ValueError, "Importance type should be either 'gain_score' or 'split_score'. " \
-                              "Instead received {0}".format(importance)
+            raise (ValueError, "Importance type should be either 'gain_score' or 'split_score'. "
+                               "Instead received {0}".format(importance))
 
         list_of_features = list(self.features_scores_df.loc[self.features_scores_df[importance] >= thresh,
                                                             'feature']) + [self.target_column, self.index_column]
@@ -400,8 +400,10 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
             sns.barplot(x=importance, y='feature',
                         data=self.features_scores_df.sort_values(importance, ascending=False)
                         .iloc[0:ntop_feats], ax=ax)
-            ax.set_title('Feature scores wrt {0} importances'.format(importance.split('_')[0]), fontsize=14)
+            if i == 0:
+                ax.set_title('Feature scores wrt {0} importances'.format(importance.split('_')[0]), fontsize=14)
         plt.tight_layout()
+        plt.subplots_adjust(right=0.95)
 
         if save:
             full_path_to_file = os.path.join(self.path_output_dir, self.FIGNAME_FEATS_SCORE_VS_IMPORTANCE)
@@ -488,11 +490,14 @@ def main_feat_selector_by_target_permutation():
     from sklearn.metrics import roc_auc_score
     from data_processing.preprocessing import downcast_datatypes
 
-    output_dir = 'fts_001' # where the results of feature selection will be stored
+    project_location = 'C:\Kaggle\example'
+    output_dirname = 'fts_001'  # where the results of feature selection will be stored
 
     # Input data
     path_to_data = r'C:\Kaggle\kaggle_home_credit_default_risk\feature_selection'
     full_path_to_file = os.path.join(path_to_data, 'train_dataset_lgbm_10.csv')
+
+    # Read input data
     data = downcast_datatypes(pd.read_csv(full_path_to_file)).reset_index(drop=True)
     print('df_train shape: {0}'.format(data.shape))
 
@@ -557,7 +562,8 @@ def main_feat_selector_by_target_permutation():
                                            eval_metric=eval_metric, metrics_scorer=metrics_scorer,
                                            metrics_decimals=metrics_decimals, num_folds=num_folds,
                                            stratified=stratified, kfolds_shuffle=kfolds_shuffle,
-                                           seed_val=seed_val, output_dir=output_dir)
+                                           seed_val=seed_val, project_location=project_location,
+                                           output_dirname=output_dirname)
 
     feat_select_target_perm.get_actual_importances_distribution(num_boost_rounds=350)
     print(feat_select_target_perm.actual_imp_df.head())

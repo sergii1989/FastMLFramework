@@ -1,56 +1,50 @@
+import os
 import warnings
 import pandas as pd
 import numpy.testing as npt
+
 from collections import OrderedDict
 from bayes_opt import BayesianOptimization
+from ensembling.ensembler import Ensembler
+from generic_tools.utils import timing, create_output_dir
+
 warnings.filterwarnings("ignore")
 
 
 class Blender(object):
-    def __init__(self, train_oof, test_subm, target_column, index_column, cols_to_use,
-                 metrics_scorer, metrics_decimals=6, target_decimals=6):
+
+    def __init__(self, oof_input_files, train_df, test_df, target_column, index_column, metrics_scorer,
+                 metrics_decimals=6, target_decimals=6, project_location='', output_dirname=''):
         """
         This is a base class for blending models prediction. The blender is trained on out-of-fold predictions (OOF)
         of the 1st (or 2nd) level models and applied to test submissions. The blender is optimized in a way to maximize
         evaluation metrics.
-        :param train_oof: pandas DF with the train OOF predictions and target variable
-        :param test_subm: pandas DF with the test predictions
+        :param oof_input_files: dict with locations and names of train and test OOF data sets (to be used in blending)
+        :param train_df: pandas DF with train data set
+        :param test_df: pandas DF with test data set
         :param target_column: target column (to be predicted)
         :param index_column: unique index column
-        :param cols_to_use: list of columns to be feed into blender
         :param metrics_scorer: http://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
         :param metrics_decimals: round precision (decimals) of the metrics (e.g. used in printouts)
         :param target_decimals: round precision (decimals) of the target column
+        :param project_location: path to the project
+        :param output_dirname: name of directory where to save results of blending procedure
         """
-        self.train_oof = train_oof
-        self.test_subm = test_subm
+
+        self.ensembler = Ensembler()
+        self.train_oof, self.test_oof = \
+            self.ensembler.load_oof_target_and_test_data(oof_input_files, project_location, train_df, test_df,
+                                                         target_column, index_column, target_decimals)
+
         self.target_column = target_column
         self.index_column = index_column
-        self.cols_to_use = cols_to_use
         self.metrics_scorer = metrics_scorer
         self.metrics_decimals = metrics_decimals
         self.target_decimals = target_decimals
-        self._verify_input_data_is_correct()
 
-    def _verify_input_data_is_correct(self):
-        """
-        This method is used to verify correctness of the provided data
-        :return: None
-        """
-        assert self.target_column in self.train_oof.columns, \
-            'Please add {target} column to the train_oof dataframe'.format(target=self.target_column)
-        assert callable(self.metrics_scorer), 'metrics_scorer should be callable function'
-
-        if self.index_column is not None and self.index_column != '':
-            assert ((self.index_column in self.train_oof.columns) | (self.index_column in self.train_oof.index)), \
-                'Please add {index} column to the train_oof dataframe'.format(index=self.index_column)
-            assert ((self.index_column in self.test_subm.columns) | (self.index_column in self.test_subm.index)), \
-                'Please add {index} column to the test_subm dataframe'.format(index=self.index_column)
-
-        if 'sklearn.metrics' not in self.metrics_scorer.__module__:
-            raise TypeError("metrics_scorer should be function from sklearn.metrics module. "
-                            "Instead received {0}.".format(self.metrics_scorer.__module__))
-        return
+        # Full path to solution directory
+        self.path_output_dir = os.path.normpath(os.path.join(project_location, output_dirname))
+        create_output_dir(self.path_output_dir)
 
     def evaluate_results(self, **params):
         # Abstract method, must be implemented by derived classes
@@ -62,23 +56,39 @@ class Blender(object):
 
 
 class BayesOptimizationBlender(Blender):
-    def __init__(self, train_oof, test_subm, target_column, index_column, cols_to_use,
-                 metrics_scorer, metrics_decimals=6, target_decimals=6):
+
+    def __init__(self, oof_input_files, train_df, test_df, target_column, index_column, metrics_scorer,
+                 metrics_decimals=6, target_decimals=6, init_points=10, n_iter=15, seed_val=27,
+                 project_location='', output_dirname=''):
         """
         This class implements blender based on Bayes Optimization procedure. It is trained on out-of-fold predictions
         of the 1st (or 2nd) level models and applied to test submissions. The blender is optimized in a way to maximize
         evaluation metrics.
-        :param train_oof: pandas DF with the train OOF predictions and target variable
-        :param test_subm: pandas DF with the test predictions
+        :param oof_input_files: dict with locations and names of train and test OOF data sets (to be used in blending)
+        :param train_df: pandas DF with train data set
+        :param test_df: pandas DF with test data set
         :param target_column: target column (to be predicted)
         :param index_column: unique index column
-        :param cols_to_use: list of columns to be feed into blender
         :param metrics_scorer: http://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
         :param metrics_decimals: round precision (decimals) of the metrics (e.g. used in printouts)
         :param target_decimals: round precision (decimals) of the target column
+        :param init_points: number of initial points in Bayes Optimization procedure
+        :param n_iter: number of iteration in Bayes Optimization procedure
+        :param seed_val: seed for numpy random generator
+        :param project_location: path to the project
+        :param output_dirname: name of directory where to save results of blending procedure
         """
-        super(BayesOptimizationBlender, self).__init__(train_oof, test_subm, target_column, index_column, cols_to_use,
-                                                       metrics_scorer, metrics_decimals, target_decimals)
+
+        super(BayesOptimizationBlender, self).__init__(
+            oof_input_files, train_df, test_df, target_column, index_column, metrics_scorer,
+            metrics_decimals, target_decimals, project_location, output_dirname
+        )
+
+        # Bayes optimization settings
+        self.init_points = init_points
+        self.n_iter = n_iter
+        self.seed_val = seed_val
+
         self.blended_train_score = None  # type: float
         self.optimal_weights_df = None  # type: pd.DataFrame
         self.test_file_blended = None  # type: pd.DataFrame
@@ -109,33 +119,27 @@ class BayesOptimizationBlender(Blender):
         for p in params:
             params[p] = params[p] / s
         test_pred = pd.DataFrame()
-        for f in self.cols_to_use:
+
+        feats = [f for f in self.train_oof.columns if f not in (self.target_column, self.index_column)]
+        for f in self.train_oof[feats]:
             test_pred[f] = self.train_oof[f] * params[f]
         return self.metrics_scorer(self.train_oof[self.target_column], test_pred.mean(axis=1))
 
-    def run(self, init_points, n_iter, path_to_save_data=None):
+    @timing
+    def run(self):
         """
         This method runs Bayes Search of optimal weights to the individual model's predictions with the goal of
         maximizing evaluation metrics score on the train data set. After optimal weights are found, apply them to
         the test predictions. Main outcome of this function is two attributes: self.optimal_weights_df -> pandas DF
         with the optimal weights and self.test_file_blended -> pandas DF with the blended test predictions.
-        :param init_points: number of initial points in Bayes Optimization procedure
-        :param n_iter: number of iteration in Bayes Optimization procedure
-        :param path_to_save_data: if not None -> save optimized weights to the disc using given path
         :return: None
         """
 
-        # TODO: to refactor run() function so to make it general for all type of optimizers
-
         print('\nRunning Bayes Optimization...')
-        if path_to_save_data is None:
-            print('Optimal weights will not be stored to the disk: path_to_save_data={}\n'.format(path_to_save_data))
-        else:
-            print('Optimal weights will be stored to {}\n'.format(path_to_save_data))
-
-        params = OrderedDict((c, (0, 1)) for c in self.train_oof[self.cols_to_use])
-        bo = BayesianOptimization(self.evaluate_results, params)
-        bo.maximize(init_points=init_points, n_iter=n_iter)
+        feats = [f for f in self.train_oof.columns if f not in (self.target_column, self.index_column)]
+        params = OrderedDict((c, (0, 1)) for c in self.train_oof[feats])
+        bo = BayesianOptimization(self.evaluate_results, params, random_state=self.seed_val)
+        bo.maximize(init_points=self.init_points, n_iter=self.n_iter)
 
         # Extracting max score and optimal weights (the raw ones, not normalized)
         best_params = bo.res['max']['max_params']
@@ -157,93 +161,97 @@ class BayesOptimizationBlender(Blender):
                                                                            ascending=False).rename_axis("model")
         self.optimal_weights_df = optimal_weights_df
 
-        if path_to_save_data is not None:
-            self.save_weigths(path_to_save_data)
-
         test_file_blended = pd.DataFrame()
         if self.index_column is not None and self.index_column != '':
-            test_file_blended[self.index_column] = self.test_subm[self.index_column].values
+            test_file_blended[self.index_column] = self.test_oof[self.index_column].values
 
-        test_file_blended[self.target_column] = self.test_subm[optimal_weights.keys()]\
+        # If self.train_oof dataframe contains non-bagged out-of-fold predictions by single models, then the names of
+        # columns in self.test_oof should be adjusted so to match the names in self.train_oof. In the case of test
+        # dataframe, prediction column is called as self.target column, whereas for train - self.target column + '_OOF'
+        cols_rename = {col: col + '_OOF' for col in self.test_oof if self.target_column in col}
+        if len(cols_rename):
+            self.test_oof.rename(columns=cols_rename, inplace=True)
+
+        test_file_blended[self.target_column] = self.test_oof[optimal_weights.keys()]\
             .mul(optimal_weights.values()).sum(axis=1).round(self.target_decimals).values
         self.test_file_blended = test_file_blended
 
-    def save_weigths(self, path_to_save_data):  # type: (str) -> None
+    def save_weights(self):
         """
         This method saves Bayes Optimized weights to the disc.
-        :param path_to_save_data: path to be used when storing csv file with the weights
         :return: None
         """
-        filename = '_'.join(list(self.optimal_weights_df.index)) + '_' + str(self.blended_train_score) + '.csv'
-        output_figname = ('\\'.join([path_to_save_data, filename]))
+        filename = "_".join(['blender_optimal_weights', str(self.blended_train_score)]) + '.csv'
+        output_figname = os.path.join(self.path_output_dir, filename)
         print('\nSaving optimal weights DF into %s' % output_figname)
         self.optimal_weights_df.to_csv(output_figname)
 
 
-def main():
+def run_blender_kaggle_example(debug=True):
+    import warnings
     from sklearn.metrics import roc_auc_score
     from data_processing.preprocessing import downcast_datatypes
+    warnings.filterwarnings("ignore")
 
-    target_decimals = 2
-    metrics_decimals = 4
+    # Settings for debug
+    num_rows = 2000
 
-    n_iter = 5
-    init_points = 10
+    # Input data
+    path_to_data = r'C:\Kaggle\kaggle_home_credit_default_risk\feature_selection'
 
+    # Reading train data set
+    full_path_to_file = os.path.join(path_to_data, 'train_dataset_lgbm_10.csv')
+    train_data = downcast_datatypes(pd.read_csv(full_path_to_file, nrows=num_rows if debug else None))\
+        .reset_index(drop=True)
+    print('df_train shape: {0}'.format(train_data.shape))
+
+    # Reading test data set
+    full_path_to_file = os.path.join(path_to_data, 'test_dataset_lgbm_10.csv')
+    test_data = downcast_datatypes(pd.read_csv(full_path_to_file, nrows=num_rows if debug else None))\
+        .reset_index(drop=True)
+    print('df_test shape: {0}'.format(test_data.shape))
+
+    oof_input_files = {
+        # 'lgbm_fds1_tp__fts_1_bayes_hpos1'
+        'a': {
+            'path': r"single_model_solution\lightgbm\features_dataset_001\target_permutation_fts_001\bayes_hpos_001",
+            'files': ['lgbm_bagged_OOF.csv', 'lgbm_bagged_SUBM.csv'],
+        },
+        # 'xgb_fds1_tp__fts_1_bayes_hpos1'
+        'b': {
+            'path': r"single_model_solution\xgboost\features_dataset_001\target_permutation_fts_001\bayes_hpos_001",
+            'files': ['xgb_bagged_OOF.csv', 'xgb_bagged_SUBM.csv'],
+        }
+    }
+
+    project_location = 'c:\Kaggle\home_credit_default_risk'  # ''
+    output_dirname = ''  # 'solution'
     target_column = 'TARGET'
     index_column = 'SK_ID_CURR'
     metrics_scorer = roc_auc_score
+    target_decimals = 2
+    metrics_decimals = 4
+    n_iter = 2
+    init_points = 2
+    seed_val = 27
 
-    raw_data_location = r'C:\Kaggle\kaggle_home_credit_default_risk\raw_data'
-    path_to_results = r'C:\Kaggle\kaggle_home_credit_default_risk\models\results'
-
-    filenames = \
-        [
-            'xgb_1',
-            'lgbm_13'
-        ]
-
-    train_oof = []
-    for filename in filenames:
-        path_to_data = path_to_results + '\\' + filename + '_OOF.csv'
-        df_temp = pd.read_csv(path_to_data).round(metrics_decimals).rename(columns={target_column + '_OOF': filename})
-        df_temp[filename + '_rank'] = df_temp[filename].rank(method='min')
-        train_oof.append(df_temp)
-    train_oof = pd.concat(train_oof, axis=1).reset_index(drop=True)
-
-    test_subm = []
-    for filename in filenames:
-        path_to_data = path_to_results + '\\' + filename + '.csv'
-        df_temp = pd.read_csv(path_to_data)[target_column].round(metrics_decimals).rename(index=filename).to_frame()
-        df_temp[filename + '_rank'] = df_temp[filename].rank(method='min')
-        test_subm.append(df_temp)
-    test_subm = pd.concat(test_subm, axis=1).reset_index(drop=True)
-
-    target_columns_oof = filenames  # raw predicted target (oof)
-    # rank_cols_oof = [filename + '_rank' for filename in filenames]  # rank transformed predicted values of target
-    print('Shape OOF for train: {0}'.format(train_oof.shape))
-    print('Shape preds for test: {0}'.format(test_subm.shape))
-
-    cols_to_use = target_columns_oof
-
-    application_train = downcast_datatypes(pd.read_csv(''.join([raw_data_location, '/application_train.csv']),
-                                                       usecols=[index_column, target_column, 'CODE_GENDER']))
-    application_train = application_train.loc[application_train['CODE_GENDER'] != 'XNA',
-                                              [index_column, target_column]].reset_index(drop=True)
-    application_test = downcast_datatypes(pd.read_csv(''.join([raw_data_location, '/application_test.csv']),
-                                                      usecols=[index_column])).reset_index(drop=True)
-
-    train_oof = pd.concat([application_train, train_oof], axis=1)
-    test_subm = pd.concat([application_test, test_subm], axis=1)
-
-    bayes_blender = BayesOptimizationBlender(train_oof=train_oof, test_subm=test_subm,
-                                             target_column=target_column, index_column=index_column,
-                                             cols_to_use=cols_to_use, metrics_scorer=metrics_scorer,
+    bayes_blender = BayesOptimizationBlender(oof_input_files=oof_input_files,
+                                             train_df=train_data,
+                                             test_df=test_data,
+                                             target_column=target_column,
+                                             index_column=index_column,
+                                             metrics_scorer=metrics_scorer,
                                              metrics_decimals=metrics_decimals,
                                              target_decimals=target_decimals,
+                                             init_points=init_points,
+                                             n_iter=n_iter,
+                                             seed_val=seed_val,
+                                             project_location=project_location,
+                                             output_dirname=output_dirname
                                              )
-    bayes_blender.run(init_points, n_iter, path_to_save_data=path_to_results)
+    bayes_blender.run()
+    bayes_blender.save_weights()
 
 
 if __name__ == '__main__':
-    main()
+    run_blender_kaggle_example(debug=True)

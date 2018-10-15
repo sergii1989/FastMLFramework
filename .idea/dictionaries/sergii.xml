@@ -5,6 +5,7 @@
       <w>annot</w>
       <w>barplot</w>
       <w>boruta</w>
+      <w>boxcox</w>
       <w>bylevel</w>
       <w>bytree</w>
       <w>cmap</w>
@@ -14,15 +15,24 @@
       <w>dataframe</w>
       <w>dataset</w>
       <w>datatypes</w>
+      <w>dirname</w>
+      <w>distplot</w>
+      <w>distrib</w>
+      <w>dropna</w>
       <w>dtrain</w>
+      <w>ensembler</w>
+      <w>ensembling</w>
       <w>explainer</w>
       <w>figname</w>
       <w>figsize</w>
+      <w>filenames</w>
       <w>gbdt</w>
       <w>gbrt</w>
       <w>gbtree</w>
       <w>goss</w>
       <w>gridspec</w>
+      <w>heatmap</w>
+      <w>hpos</w>
       <w>hyperparameter</w>
       <w>hyperparameters</w>
       <w>hyperparams</w>
@@ -31,17 +41,23 @@
       <w>kaggle</w>
       <w>kfolds</w>
       <w>kurtosis</w>
+      <w>lbfgs</w>
       <w>lgbm</w>
+      <w>liblinear</w>
+      <w>lightgbm</w>
       <w>logloss</w>
       <w>merror</w>
       <w>mlogloss</w>
       <w>multiclass</w>
+      <w>multinomial</w>
+      <w>ndarray</w>
       <w>nthread</w>
       <w>ntop</w>
       <w>optim</w>
       <w>pred</w>
       <w>preds</w>
       <w>proba</w>
+      <w>regressors</w>
       <w>reinit</w>
       <w>rmse</w>
       <w>shap</w>
@@ -52,6 +68,8 @@
       <w>stdv</w>
       <w>subm</w>
       <w>targer</w>
+      <w>vmax</w>
+      <w>vmin</w>
       <w>xgboost</w>
       <w>xpos</w>
       <w>yerr</w>
