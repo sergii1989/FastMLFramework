@@ -91,7 +91,7 @@ class BaseEstimator(object):
         self.predict_test = predict_test  # type: bool
         self.data_split_seed = data_split_seed  # type: int
         self.model_seeds_list = model_seeds_list  # type: list
-        self.path_output_dir = path_output_dir
+        self.path_output_dir = path_output_dir  # type: str
         create_output_dir(self.path_output_dir)
 
         # Verify that BaseEstimator is provided with the correct settings
@@ -129,6 +129,17 @@ class BaseEstimator(object):
                                                                 'dataframe'.format(index=self.index_column))
             assert self.index_column in self.test_df.columns, ('Please add {index} column to the test_oof '
                                                                'dataframe'.format(index=self.index_column))
+
+        unique_target_classes = self.train_df[self.target_column].unique().tolist()
+        if self.class_label is not None:
+            if isinstance(self.class_label, list) or isinstance(self.class_label, tuple):
+                assert len(set(self.class_label).difference(set(unique_target_classes))) == 0, (
+                    'Requested class label(s) {0} are not in the unique target values {1} of the '
+                    'train data set.'.format(self.class_label, unique_target_classes))
+            else:
+                assert self.class_label in unique_target_classes, (
+                    'Requested class label [{0}] is not in the unique target values {1} of the '
+                    'train data set.'.format(self.class_label, unique_target_classes))
 
         assert callable(self.metrics_scorer), 'metrics_scorer should be callable function'
         if 'sklearn.metrics' not in self.metrics_scorer.__module__:
