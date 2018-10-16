@@ -38,7 +38,7 @@ class HyperParamsOptimization(object):
         :param hp_optimization_space: dict with hyperparameters to be optimized within corresponding variation ranges
         :return: updated hp_optimization_space dict
         """
-        map_dict = self.predictor.classifier.HP_DATATYPES  # dict with a data types for a model hyperparameters
+        map_dict = self.predictor.model.HP_DATATYPES  # dict with a data types for a model hyperparameters
         return {k: map_dict[k](v) if k in map_dict else v for k, v in hp_optimization_space.items()}
 
     def _complete_missing_hyperparameters_from_init_params(self, hp_optimization_space):  # type: (dict) -> dict
@@ -48,7 +48,7 @@ class HyperParamsOptimization(object):
         :param hp_optimization_space: dict with hyperparameters to be optimized within corresponding variation ranges
         :return: updated hp_optimization_space dict
         """
-        init_params = self.predictor.classifier.params
+        init_params = self.predictor.model.params
         for key in set(init_params.keys()).difference(set(hp_optimization_space.keys())):
             hp_optimization_space[key] = init_params[key]
         return hp_optimization_space
