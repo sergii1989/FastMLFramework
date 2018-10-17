@@ -376,3 +376,23 @@ class CBWrapper(ModelWrapper):
 
     def get_features_importance(self):
         return
+
+
+def get_wrapped_estimator(model, model_init_params):
+    if model == 'lightgbm':
+        from lightgbm import LGBMClassifier
+        return LightGBMWrapper(model=LGBMClassifier, params=model_init_params)
+    elif model == 'xgboost':
+        from xgboost import XGBClassifier
+        return XGBWrapper(model=XGBClassifier, params=model_init_params)
+    elif model == 'et':
+        from sklearn.ensemble import ExtraTreesClassifier
+        SklearnWrapper(model=ExtraTreesClassifier, params=model_init_params, name='et')
+    elif model == 'logistic_regression':
+        from sklearn.linear_model import LogisticRegression
+        return SklearnWrapper(model=LogisticRegression, params=model_init_params, name='logreg')
+    elif model == 'linear_regression':
+        from sklearn.linear_model import LinearRegression
+        return SklearnWrapper(model=LinearRegression, params=model_init_params, name='linreg')
+    else:
+        raise NotImplemented()
