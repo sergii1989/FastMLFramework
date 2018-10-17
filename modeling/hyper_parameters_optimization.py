@@ -162,3 +162,10 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         full_path_to_file = os.path.join(self.path_output_dir, self.HPO_DF_NAME)
         print('\nSaving all hp results into %s' % full_path_to_file)
         self.hpo_cv_df.to_csv(full_path_to_file, index=False)
+
+
+def load_hp_optimization_class(hpo_method):
+    if hpo_method == 'bayes':
+        return BayesHyperParamsOptimization
+    else:
+        raise NotImplemented()
