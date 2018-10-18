@@ -30,6 +30,7 @@
       <w>gbdt</w>
       <w>gbrt</w>
       <w>gbtree</w>
+      <w>getcwd</w>
       <w>goss</w>
       <w>gridspec</w>
       <w>heatmap</w>
@@ -38,6 +39,7 @@
       <w>hyperparameters</w>
       <w>hyperparams</w>
       <w>importances</w>
+      <w>ipynb</w>
       <w>jupyter</w>
       <w>kaggle</w>
       <w>kfolds</w>
@@ -57,9 +59,11 @@
       <w>nthread</w>
       <w>ntop</w>
       <w>optim</w>
+      <w>optimizator</w>
       <w>pred</w>
       <w>preds</w>
       <w>proba</w>
+      <w>pyhocon</w>
       <w>regressors</w>
       <w>reinit</w>
       <w>rmse</w>
@@ -71,6 +75,7 @@
       <w>stdv</w>
       <w>subm</w>
       <w>targer</w>
+      <w>thres</w>
       <w>vmax</w>
       <w>vmin</w>
       <w>xgboost</w>
