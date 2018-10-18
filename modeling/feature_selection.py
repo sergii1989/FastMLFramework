@@ -486,6 +486,13 @@ class SequentialFeatureSelector(FeatureSelector):
         super(SequentialFeatureSelector, self).__init__()
 
 
+def load_feature_selector_class(feature_selector_method):
+    if feature_selector_method == 'target_permutation':
+        return FeatureSelectorByTargetPermutation
+    else:
+        raise NotImplemented()
+
+
 def main_feat_selector_by_target_permutation():
     from sklearn.metrics import roc_auc_score
     from data_processing.preprocessing import downcast_datatypes

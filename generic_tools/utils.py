@@ -9,6 +9,7 @@ import numpy as np
 from time import time
 from typing import Any
 from functools import wraps
+from sklearn import metrics
 from datetime import datetime
 from requests.compat import urljoin
 from contextlib import contextmanager
@@ -52,6 +53,23 @@ def timing(func):
 
 def get_current_timestamp():
     return datetime.now().strftime('%Y-%m-%d_%H-%M')
+
+
+def get_metrics_scorer(metrics_scorer):  # type: (str) -> metrics
+    """
+    This method returns sklearn's metrics scorer function to the given string name
+    :param metrics_scorer: name of the metrics score function to be used for results evaluation.
+                           The metrics_scorer should be a string representation of any function from:
+                           http://scikit-learn.org/stable/modules/classes.html#module-sklearn.metricsname
+    :return: sklearn's metrics scorer function
+    """
+    metrics_scorer = metrics_scorer.encode()  # since parsing of pyhocon config returns utf8-encoded string
+    scorer = __import__('sklearn.metrics', globals(), locals(), [metrics_scorer], 0)
+    try:
+        return getattr(scorer, metrics_scorer)
+    except AttributeError as e:
+        print("Module {0} has no '{1}' score function. Please use in the config file one of the following "
+              "functions:\n\n{2}".format(scorer.__name__, metrics_scorer, scorer.__all__))
 
 
 def merge_two_dicts(x, y):  # type: (dict, dict) -> dict
