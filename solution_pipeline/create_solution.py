@@ -504,13 +504,6 @@ if __name__ == '__main__':
     hpos_output_dir = folders_handler.get_hpo_output_dir()[1]
     solution_output_dir = folders_handler.get_solution_output_dir()[1]
 
-    print(ftg_output_dir)
-    if run_feature_selection:
-        print(fts_output_dir)
-    if run_hpo:
-        print(hpos_output_dir)
-    print(solution_output_dir)
-
     # luigi.build([RunStackerPrediction()], local_scheduler=True)
     luigi.build([RunSingleModelPrediction(project_location=project_location,
                                           run_feature_selection=run_feature_selection,
@@ -519,4 +512,4 @@ if __name__ == '__main__':
                                           fts_output_dir=fts_output_dir,
                                           hpos_output_dir=hpos_output_dir,
                                           solution_output_dir=solution_output_dir,
-                                          config=config)], local_scheduler=True)
+                                          config=config)], local_scheduler=False)
