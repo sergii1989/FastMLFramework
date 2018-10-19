@@ -3,6 +3,8 @@ from pyhocon.config_tree import ConfigTree
 
 
 class ResultsLocationManager(object):
+    DIR_NO_FEATURE_SELECTION = 'no_fs'  # name of sub-directory if run_feature_selection = False
+    DIR_NO_HYPER_PARAMS_OPTIM = 'no_hpo'  # name of sub-directory if run_hpo = False
 
     def __init__(self, config, run_feature_selection, run_hpo):  # type: (ConfigTree, bool, bool) -> None
         """
@@ -58,10 +60,11 @@ class ResultsLocationManager(object):
             feats_selection_dir_name = self.config.get_string('features_selection.feats_selection_dir_name')
             feats_selection_output_dir = os.path.join(feats_generation_dir_name,
                                                       '_'.join([feats_selection_method, feats_selection_dir_name]))
-            feats_selection_results_dir_path = os.path.join(
-                self.project_structure['FEATURE_SELECTION_DIR'], feats_selection_output_dir)
-            return feats_selection_output_dir, feats_selection_results_dir_path
-        return None, None
+        else:
+            feats_selection_output_dir = os.path.join(feats_generation_dir_name, self.DIR_NO_FEATURE_SELECTION)
+        feats_selection_results_dir_path = os.path.join(self.project_structure['FEATURE_SELECTION_DIR'],
+                                                        feats_selection_output_dir)
+        return feats_selection_output_dir, feats_selection_results_dir_path
 
     def get_hpo_output_dir(self):
         """
@@ -73,27 +76,18 @@ class ResultsLocationManager(object):
 
         :return: name of hyper-parameters optimization output directory, and composed path to it
         """
-
-        feats_generation_dir_name, feats_generation_results_dir_path = self.get_feature_generation_output_dir()
+        feats_selection_output_dir, feats_selection_results_dir_path = self.get_feature_selection_output_dir()
 
         if self.run_hpo:
-            # Name of HPO method
             hpo_method = self.config.get_string('hp_optimization.method')
-
-            # Name of HPO subdirectory where to store
             hpo_name_dir = self.config.get_string('hp_optimization.name_hpo_dir')
-
-            if self.run_feature_selection:
-                feats_selection_output_dir, feats_selection_results_dir_path = \
-                    self.get_feature_selection_output_dir()
-                hpo_output_dir = os.path.normpath(os.path.join(self.model, feats_selection_output_dir,
-                                                               '_'.join([hpo_method, hpo_name_dir])))
-            else:
-                hpo_output_dir = os.path.normpath(os.path.join(self.model, feats_generation_dir_name,
-                                                               '_'.join([hpo_method, hpo_name_dir])))
-            hpo_results_dir_path = os.path.join(self.project_structure['HYPERPARAMS_OPTIM_DIR'], hpo_output_dir)
-            return hpo_output_dir, hpo_results_dir_path
-        return None, None
+            hpo_output_dir = os.path.normpath(os.path.join(self.model, feats_selection_output_dir,
+                                                           '_'.join([hpo_method, hpo_name_dir])))
+        else:
+            hpo_output_dir = os.path.normpath(os.path.join(self.model, feats_selection_output_dir,
+                                                           self.DIR_NO_HYPER_PARAMS_OPTIM))
+        hpo_results_dir_path = os.path.join(self.project_structure['HYPERPARAMS_OPTIM_DIR'], hpo_output_dir)
+        return hpo_output_dir, hpo_results_dir_path
 
     def get_solution_output_dir(self):
         """
@@ -107,17 +101,8 @@ class ResultsLocationManager(object):
 
         :return: name of single model prediction results directory, and composed path to it
         """
-        feats_generation_dir_name, ftg_output_dir = self.get_feature_generation_output_dir()
-
-        if self.run_hpo:
-            hpo_output_dir, hpo_results_dir_path = self.get_hpo_output_dir()
-            single_model_solution_output_dir = hpo_output_dir
-        else:
-            if self.run_feature_selection:
-                feats_selection_output_dir, feats_selection_results_dir_path = self.get_feature_selection_output_dir()
-                single_model_solution_output_dir = os.path.join(self.model, feats_selection_output_dir)
-            else:
-                single_model_solution_output_dir = os.path.join(self.model, feats_generation_dir_name)
+        hpo_output_dir, hpo_results_dir_path = self.get_hpo_output_dir()
+        single_model_solution_output_dir = hpo_output_dir
         single_model_results_dir_path = os.path.join(self.project_structure['SOLUTION_DIR'],
                                                      single_model_solution_output_dir)
         return single_model_solution_output_dir, single_model_results_dir_path
