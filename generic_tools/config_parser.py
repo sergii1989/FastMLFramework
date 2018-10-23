@@ -5,8 +5,10 @@ from pyhocon.config_tree import ConfigTree
 
 
 class ConfigFileHandler(object):
-    DIR_NO_FEATURE_SELECTION = 'no_fs'  # name of sub-directory if run_feature_selection = False
-    DIR_NO_HYPER_PARAMS_OPTIM = 'no_hpo'  # name of sub-directory if run_hpo = False
+    SUBDIR_NO_FEATURE_SELECTION = 'no_feat_selection'  # name of sub-directory if run_feature_selection = False
+    SUBDIR_NO_HYPER_PARAMS_OPTIM = 'no_hp_optimization'  # name of sub-directory if run_hpo = False
+    SUBDIR_BAGGING_ON = 'bagging_on'  # name of sub-directory if run_bagging = True
+    SUBDIR_BAGGING_OFF = 'bagging_off'  # name of sub-directory if run_bagging = False
 
     def __init__(self, project_location, config_directory, config_file):  # type: (str, str, str) -> None
         """
@@ -72,7 +74,7 @@ class ConfigFileHandler(object):
             feats_selection_output_dir = os.path.join(feats_generation_dir_name,
                                                       '_'.join([feats_selection_method, feats_selection_dir_name]))
         else:
-            feats_selection_output_dir = os.path.join(feats_generation_dir_name, self.DIR_NO_FEATURE_SELECTION)
+            feats_selection_output_dir = os.path.join(feats_generation_dir_name, self.SUBDIR_NO_FEATURE_SELECTION)
         feats_selection_results_dir_path = os.path.join(self.project_structure['FEATURE_SELECTION_DIR'],
                                                         feats_selection_output_dir)
         return feats_selection_output_dir, feats_selection_results_dir_path
@@ -100,11 +102,11 @@ class ConfigFileHandler(object):
                                                            '_'.join([hpo_method, hpo_name_dir])))
         else:
             hpo_output_dir = os.path.normpath(os.path.join(model, feats_selection_output_dir,
-                                                           self.DIR_NO_HYPER_PARAMS_OPTIM))
+                                                           self.SUBDIR_NO_HYPER_PARAMS_OPTIM))
         hpo_results_dir_path = os.path.join(self.project_structure['HYPERPARAMS_OPTIM_DIR'], hpo_output_dir)
         return hpo_output_dir, hpo_results_dir_path
 
-    def _get_solution_output_dir(self, model, run_feature_selection, run_hpo):
+    def _get_solution_output_dir(self, model, run_feature_selection, run_hpo, run_bagging):
         """
         This method returns path to a sub-directory in SOLUTION_DIR of the project (self.project_structure) where
         to store single model prediction results (both OOF and test predictions, CV data, feature importances (if tree
@@ -117,29 +119,33 @@ class ConfigFileHandler(object):
         :param model: name of model to be used for prediction (e.g. lightgbm, xgboost, logistic regression, etc.)
         :param run_feature_selection: if True -> run feature selection procedure
         :param run_hpo: if True -> run hyper-parameters optimization
+        :param run_bagging: if True -> run bagging over different seeds
         :return: name of single model prediction results directory, and composed path to it
         """
         hpo_output_dir, hpo_results_dir_path = self._get_hpo_output_dir(model, run_feature_selection, run_hpo)
         single_model_solution_output_dir = hpo_output_dir
         single_model_results_dir_path = os.path.join(self.project_structure['SOLUTION_DIR'],
-                                                     single_model_solution_output_dir)
+                                                     single_model_solution_output_dir,
+                                                     self.SUBDIR_BAGGING_ON if run_bagging else self.SUBDIR_BAGGING_OFF)
         return single_model_solution_output_dir, single_model_results_dir_path
 
-    def _check_if_run_fs_and_hpo(self, model):
+    def _check_run_settings(self, model):
         run_feature_selection = self.config.get_bool('modeling_settings.%s.run_fs' % model)
         run_hpo = self.config.get_bool('modeling_settings.%s.run_hpo' % model)
-        return run_feature_selection, run_hpo
+        run_bagging = self.config.get_bool('modeling_settings.%s.bagging' % model)
+        return run_feature_selection, run_hpo, run_bagging
 
-    def _prepare_single_model_input_parameters_for_luigi(self, model, run_feature_selection, run_hpo):
-        return {'model': model,
-                'project_location': self.project_location,
-                'run_feature_selection': run_feature_selection,
-                'run_hpo': run_hpo,
-                'config': self.config,
-                'ftg_output_dir': self._get_feature_generation_output_dir(model)[1],
-                'fts_output_dir': self._get_feature_selection_output_dir(model, run_feature_selection)[1],
-                'hpos_output_dir': self._get_hpo_output_dir(model, run_feature_selection, run_hpo)[1],
-                'solution_output_dir': self._get_solution_output_dir(model, run_feature_selection, run_hpo)[1]}
+    def _prepare_single_model_input_parameters_for_luigi(self, model, run_feature_selection, run_hpo, run_bagging):
+        return {
+            'model': model,
+            'project_location': self.project_location,
+            'run_feature_selection': run_feature_selection,
+            'run_hpo': run_hpo,
+            'config': self.config,
+            'fg_output_dir': self._get_feature_generation_output_dir(model)[1],
+            'fs_output_dir': self._get_feature_selection_output_dir(model, run_feature_selection)[1],
+            'hpo_output_dir': self._get_hpo_output_dir(model, run_feature_selection, run_hpo)[1],
+            'solution_output_dir': self._get_solution_output_dir(model, run_feature_selection, run_hpo, run_bagging)[1]}
 
     def prepare_input_parameters_for_luigi_pipeline(self):  # type: () -> list
         base_models = self.config.get('modeling_settings.models')
@@ -147,18 +153,20 @@ class ConfigFileHandler(object):
         if isinstance(base_models, list):
             luigi_pipeline_input_parameters = []
             for model in base_models:
-                run_feature_selection, run_hpo = self._check_if_run_fs_and_hpo(model)
+                run_feature_selection, run_hpo, run_bagging = self._check_run_settings(model)
                 input_parameters = self._prepare_single_model_input_parameters_for_luigi(model,
                                                                                          run_feature_selection,
-                                                                                         run_hpo)
+                                                                                         run_hpo,
+                                                                                         run_bagging)
                 luigi_pipeline_input_parameters.append(input_parameters)
             return luigi_pipeline_input_parameters
 
         elif isinstance(base_models, basestring):
-            run_feature_selection, run_hpo = self._check_if_run_fs_and_hpo(base_models)
+            run_feature_selection, run_hpo, run_bagging = self._check_run_settings(base_models)
             input_parameters = self._prepare_single_model_input_parameters_for_luigi(base_models,
                                                                                      run_feature_selection,
-                                                                                     run_hpo)
+                                                                                     run_hpo,
+                                                                                     run_bagging)
             return [input_parameters]
         else:
             raise TypeError("modeling_settings.models in config file should be either list or string. "
