@@ -22,7 +22,7 @@ warnings.filterwarnings("ignore")
 
 class TrainDataIngestion(luigi.Task):
     project_location = luigi.Parameter()
-    ftg_output_dir = luigi.Parameter()
+    fg_output_dir = luigi.Parameter()
     config = luigi.Parameter()  # type: ConfigTree
 
     def run(self):
@@ -31,19 +31,19 @@ class TrainDataIngestion(luigi.Task):
         num_rows = self.config.get_int('modeling_settings.num_rows')
 
         # Load train and test data set from feature generation pool and downcast data types
-        full_path_to_file = os.path.normpath(os.path.join(self.project_location, self.ftg_output_dir, 'train.csv'))
+        full_path_to_file = os.path.normpath(os.path.join(self.project_location, self.fg_output_dir, 'train.csv'))
         train_data = downcast_datatypes(pd.read_csv(full_path_to_file, nrows=num_rows if debug else None)) \
             .reset_index(drop=True)
 
-        full_path_to_file = os.path.normpath(os.path.join(self.project_location, self.ftg_output_dir, 'test.csv'))
+        full_path_to_file = os.path.normpath(os.path.join(self.project_location, self.fg_output_dir, 'test.csv'))
         test_data = downcast_datatypes(pd.read_csv(full_path_to_file, nrows=num_rows if debug else None)) \
             .reset_index(drop=True)
 
         print('Train DF shape: {0}\n'.format(train_data.shape, train_data.info()))
         print('Test DF shape: {0}'.format(test_data.shape))
 
-        new_train_name = os.path.normpath(os.path.join(self.project_location, self.ftg_output_dir, 'train_new.csv'))
-        new_test_name = os.path.normpath(os.path.join(self.project_location, self.ftg_output_dir, 'test_new.csv'))
+        new_train_name = os.path.normpath(os.path.join(self.project_location, self.fg_output_dir, 'train_new.csv'))
+        new_test_name = os.path.normpath(os.path.join(self.project_location, self.fg_output_dir, 'test_new.csv'))
         print('\nSaving %s\n' % new_train_name)
         print('\nSaving %s\n' % new_test_name)
 
@@ -52,20 +52,21 @@ class TrainDataIngestion(luigi.Task):
 
     def output(self):
         return {'train_data': luigi.LocalTarget(os.path.normpath(os.path.join(self.project_location,
-                                                                              self.ftg_output_dir,
+                                                                              self.fg_output_dir,
                                                                               'train_new.csv'))),
                 'test_data': luigi.LocalTarget(os.path.normpath(os.path.join(self.project_location,
-                                                                             self.ftg_output_dir,
+                                                                             self.fg_output_dir,
                                                                              'test_new.csv')))}
 
 
 @requires(TrainDataIngestion)
 class FeatureSelection(luigi.Task):
     project_location = luigi.Parameter()
-    ftg_output_dir = luigi.Parameter()
-    fts_output_dir = luigi.Parameter()
+    fg_output_dir = luigi.Parameter()
+    fs_output_dir = luigi.Parameter()
     feats_select_method = luigi.Parameter()
     config = luigi.Parameter()  # type: ConfigTree
+    fs_results_file = 'optimal_features.txt'
 
     def run(self):
         # Load train data set from feature generation pool
@@ -79,7 +80,7 @@ class FeatureSelection(luigi.Task):
             train_data[f_] = train_data[f_].astype('category')
         cat_features = categorical_feats  # None
 
-        # feats_select_method = self.config.get_string('modeling_settings.%s.fs_method' % self.model)
+        # Extracting settings from config
         feature_selector = load_feature_selector_class(self.feats_select_method)
         target_column = self.config.get_string('raw_data_settings.target_column')
         index_column = self.config.get_string('raw_data_settings.index_column')
@@ -112,7 +113,7 @@ class FeatureSelection(luigi.Task):
             metrics_decimals=metrics_decimals, num_folds=num_folds,
             stratified=stratified, kfolds_shuffle=kfolds_shuffle,
             seed_val=fs_seed_val, project_location=project_location,
-            output_dirname=self.fts_output_dir
+            output_dirname=self.fs_output_dir
         )
 
         # TODO: think how to pass func_1 and func_2 differently
@@ -142,26 +143,24 @@ class FeatureSelection(luigi.Task):
                                                           cv_std_asc_rank=False)
         opt_feats = features_selection.get_list_of_features(importance='gain_score', thresh=opt_thres)
 
-        full_path_to_file = os.path.normpath(os.path.join(self.project_location, self.fts_output_dir,
-                                                          'optimal_features.txt'))
-
+        full_path_to_file = os.path.normpath(os.path.join(self.project_location,
+                                                          self.fs_output_dir,
+                                                          self.fs_results_file))
         print('\nSaving %s\n' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
             f.write(json.dumps(opt_feats))
 
     def output(self):
-        return {
-            'opt_feats': luigi.LocalTarget(os.path.normpath(os.path.join(
-                self.project_location, self.fts_output_dir, 'optimal_features.txt')))
-        }
+        return luigi.LocalTarget(os.path.normpath(os.path.join(
+            self.project_location, self.fs_output_dir, self.fs_results_file)))
 
 
 class InitializeSingleModelPredictor(luigi.Task):
-    run_feature_selection = luigi.Parameter()
+    run_feature_selection = luigi.BoolParameter()
     project_location = luigi.Parameter()
     model = luigi.Parameter()
-    ftg_output_dir = luigi.Parameter()
-    fts_output_dir = luigi.Parameter()
+    fg_output_dir = luigi.Parameter()
+    fs_output_dir = luigi.Parameter()
     solution_output_dir = luigi.Parameter()
     config = luigi.Parameter()  # type: ConfigTree
 
@@ -170,8 +169,8 @@ class InitializeSingleModelPredictor(luigi.Task):
         if self.run_feature_selection:
             feats_select_method = self.config.get_string('modeling_settings.%s.fs_method' % self.model)
             requirements['features'] = FeatureSelection(project_location=self.project_location,
-                                                        ftg_output_dir=self.ftg_output_dir,
-                                                        fts_output_dir=self.fts_output_dir,
+                                                        fg_output_dir=self.fg_output_dir,
+                                                        fs_output_dir=self.fs_output_dir,
                                                         feats_select_method=feats_select_method,
                                                         config=self.config)
         return requirements
@@ -184,9 +183,10 @@ class InitializeSingleModelPredictor(luigi.Task):
         opt_feats = []
         if self.run_feature_selection:
             # Load set of features from feature_selection procedure
-            with open(self.input()['features']['opt_feats'].path, 'r') as f:
+            with open(self.input()['features'].path, 'r') as f:
                 opt_feats = json.load(f)
 
+        # Extracting settings from config
         target_column = self.config.get_string('raw_data_settings.target_column')
         index_column = self.config.get_string('raw_data_settings.index_column')
         model_init_params = dict(self.config.get_config('single_model_init_params.%s' % self.model))
@@ -236,12 +236,14 @@ class InitializeSingleModelPredictor(luigi.Task):
 @requires(InitializeSingleModelPredictor)
 class RunSingleModelHPO(luigi.Task):
     model = luigi.Parameter()
-    hpos_output_dir = luigi.Parameter()
+    hpo_output_dir = luigi.Parameter()
+    hp_results_file = 'optimized_hp.txt'
 
     def run(self):
         # Load initialized single model predictor
         predictor = pickle.load(open(self.input().path, "rb"))
 
+        # Extracting settings from config
         hpo_method = self.config.get_string('modeling_settings.%s.hpo_method' % self.model)
         hp_optimizator = load_hp_optimization_class(hpo_method)
         hpo_seed_val = self.config.get_int('modeling_settings.hpo_seed_value')
@@ -254,36 +256,34 @@ class RunSingleModelHPO(luigi.Task):
         hpo = hp_optimizator(
             predictor, hp_optimization_space=hp_optimization_space,
             init_points=init_points, n_iter=n_iter, seed_val=hpo_seed_val,
-            project_location=project_location, output_dirname=self.hpos_output_dir
+            project_location=project_location, output_dirname=self.hpo_output_dir
         )
 
         # Run optimization and save output results
         hpo.run()
-        hpo.save_optimized_hp()
-        hpo.save_all_hp_results()
+        hpo.save_hpo_history()
 
-        full_path_to_file = os.path.normpath(os.path.join(self.project_location, self.hpos_output_dir,
-                                                          'optim_hp.txt'))
-
+        full_path_to_file = os.path.normpath(os.path.join(self.project_location,
+                                                          self.hpo_output_dir,
+                                                          self.hp_results_file))
         print('\nSaving %s\n' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
             f.write(json.dumps(hpo.best_params))
 
     def output(self):
-        return luigi.LocalTarget(os.path.normpath(os.path.join(
-            self.project_location, self.hpos_output_dir, 'optim_hp.txt')))
+        return luigi.LocalTarget(os.path.join(self.project_location, self.hpo_output_dir, self.hp_results_file))
 
 
 class RunSingleModelPrediction(luigi.Task):
-    project_location = luigi.Parameter()
-    model = luigi.Parameter()
-    run_feature_selection = luigi.Parameter()
-    run_hpo = luigi.Parameter()
-    ftg_output_dir = luigi.Parameter()
-    fts_output_dir = luigi.Parameter()
-    hpos_output_dir = luigi.Parameter()
-    solution_output_dir = luigi.Parameter()
-    config = luigi.Parameter()
+    project_location = luigi.Parameter()  # absolute path to project's main directory
+    model = luigi.Parameter()  # name of estimator model
+    run_feature_selection = luigi.BoolParameter()  # if True -> run feature selection
+    run_hpo = luigi.BoolParameter()  # if True -> run hyper-parameters optimization
+    fg_output_dir = luigi.Parameter()  # feature generation directory (to be used as input for train data ingestion)
+    fs_output_dir = luigi.Parameter()  # feature selection directory (where results of feature selection to be saved)
+    hpo_output_dir = luigi.Parameter()  # hyper-parameters optimization directory (where results of hpo to be saved)
+    solution_output_dir = luigi.Parameter()  # output directory where results of a single model prediction to be saved
+    config = luigi.Parameter()  # config file with the problem settings
 
     def requires(self):
         requirements = {'predictor': self.clone(InitializeSingleModelPredictor)}
@@ -353,7 +353,7 @@ class InitializeStacker(luigi.Task):
     # full_path_to_file   = os.path.normpath(os.path.join(project_location, stacking_output_dir, 'stacker.pickle'))
 
     def requires(self):
-        return TrainDataIngestion(self.project_location, self.ftg_output_dir)
+        return TrainDataIngestion(self.project_location, self.fg_output_dir)
 
     def run(self):
         # Load train and test data sets
@@ -440,7 +440,7 @@ class RunStackerHPO(luigi.Task):
         # Run optimization and save output results
         stacker_hpo.run()
         stacker_hpo.save_optimized_hp()
-        stacker_hpo.save_all_hp_results()
+        stacker_hpo.save_hpo_history()
 
         print('\nSaving %s\n' % self.full_path_to_file)
         with open(self.full_path_to_file, 'w') as f:
