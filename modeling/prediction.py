@@ -653,23 +653,23 @@ class BaseEstimator(object):
 
     def save_oof_results(self):
         float_format = '%.{0}f'.format(str(self.target_decimals)) if self.target_decimals > 0 else None
-
         full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'OOF']) + '.csv')
         print('\nSaving elaborated OOF predictions into %s' % full_path_to_file)
         self.oof_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
+        float_format = '%.{0}f'.format(str(self.metrics_decimals)) if self.metrics_decimals > 0 else None
         full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'CV']) + '.csv')
         print('\nSaving CV results into %s' % full_path_to_file)
         self.oof_eval_results.to_csv(full_path_to_file, index=False, float_format=float_format)
 
         if self.bagged_oof_preds is not None:
+            float_format = '%.{0}f'.format(str(self.target_decimals)) if self.target_decimals > 0 else None
             full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'bagged_OOF']) + '.csv')
             print('\nSaving OOF predictions for each seed into %s' % full_path_to_file)
             self.bagged_oof_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
     def save_submission_results(self):
         float_format = '%.{0}f'.format(str(self.target_decimals)) if self.target_decimals > 0 else None
-
         if self.sub_preds is None:
             raise ValueError('Submission file is empty. Please set flag predict_test = True in run_cv_and_prediction() '
                              'to generate submission file.')
