@@ -12,7 +12,7 @@ class Ensembler(object):
     def _verify_oof_input_data_completeness(oof_input_files):
         for solution in oof_input_files.values():
             assert len(solution['files']) >= 2, (
-                    "There should be at least two input files (1 with '_OOF' and 1 with '_SUBM' suffixes) for each "
+                    "There should be at least two input files (1 'train_OOF' and 1 with '_SUBM' suffixes) for each "
                     "provided path. Instead got: %s" % solution['files'])
             assert len(filter(lambda x: 'OOF' in x, solution['files'])) >= 1, (
                 "There should be at least one input file containing train out-of-fold predictions for each "

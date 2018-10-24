@@ -16,8 +16,15 @@ from sklearn.metrics import confusion_matrix, classification_report
 
 
 class BaseEstimator(object):
+    FIGNAME_FEAT_IMPORT = 'features_importance.csv'
     FIGNAME_CONFUSION_MATRIX = 'confusion_matrix.png'
-    FIGNAME_CV_RESULTS_VERSUS_SEEDS = 'cv_results_vs_seeds.png'
+    FIGNAME_CV_RESULTS_VERSUS_SEEDS = 'cv_results.png'
+    FILENAME_CV_RESULTS = 'cv_results.csv'
+    FILENAME_FEATS_IMPORT = 'features_importance.png'
+    FILENAME_TRAIN_OOF_RESULTS = 'train_OOF.csv'
+    FILENAME_TRAIN_OOF_RESULTS_BAGGED = 'train_OOF_bagged.csv'
+    FILENAME_TEST_RESULTS = 'test.csv'
+    FILENAME_TEST_RESULTS_BAGGED = 'test_bagged.csv'
 
     def __init__(self, train_df, test_df, target_column, index_column, model, predict_probability, class_label,
                  eval_metric, metrics_scorer, metrics_decimals=6, target_decimals=6, cols_to_exclude=[],
@@ -122,12 +129,12 @@ class BaseEstimator(object):
         :return: None
         """
         assert self.target_column in self.train_df, \
-            'Please add {target} column to the train_oof dataframe'.format(target=self.target_column)
+            'Please add {target} column to the train dataframe'.format(target=self.target_column)
 
         if self._index_column_is_defined():
-            assert self.index_column in self.train_df.columns, ('Please add {index} column to the train_oof '
+            assert self.index_column in self.train_df.columns, ('Please add {index} column to the train '
                                                                 'dataframe'.format(index=self.index_column))
-            assert self.index_column in self.test_df.columns, ('Please add {index} column to the test_oof '
+            assert self.index_column in self.test_df.columns, ('Please add {index} column to the test '
                                                                'dataframe'.format(index=self.index_column))
 
         unique_target_classes = self.train_df[self.target_column].unique().tolist()
@@ -563,11 +570,11 @@ class BaseEstimator(object):
         fig.subplots_adjust(right=0.8)
 
         if save:
-            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'feat_import']) + '.png')
+            full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_FEATS_IMPORT)
             print('\nSaving features importance graph into %s' % full_path_to_file)
             fig.savefig(full_path_to_file)
 
-            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'feat_import']) + '.csv')
+            full_path_to_file = os.path.join(self.path_output_dir, 'features_importance.csv')
             print('\nSaving {0} features into {1}'.format(self.model_name.upper(), full_path_to_file))
             features_importance = features_importance[["feature", "importance"]].groupby(
                 "feature").mean().sort_values(by="importance", ascending=False).reset_index()
@@ -653,18 +660,18 @@ class BaseEstimator(object):
 
     def save_oof_results(self):
         float_format = '%.{0}f'.format(str(self.target_decimals)) if self.target_decimals > 0 else None
-        full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'OOF']) + '.csv')
+        full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_TRAIN_OOF_RESULTS)
         print('\nSaving elaborated OOF predictions into %s' % full_path_to_file)
         self.oof_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
         float_format = '%.{0}f'.format(str(self.metrics_decimals)) if self.metrics_decimals > 0 else None
-        full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'CV']) + '.csv')
+        full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_CV_RESULTS)
         print('\nSaving CV results into %s' % full_path_to_file)
         self.oof_eval_results.to_csv(full_path_to_file, index=False, float_format=float_format)
 
         if self.bagged_oof_preds is not None:
             float_format = '%.{0}f'.format(str(self.target_decimals)) if self.target_decimals > 0 else None
-            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'bagged_OOF']) + '.csv')
+            full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_TRAIN_OOF_RESULTS_BAGGED)
             print('\nSaving OOF predictions for each seed into %s' % full_path_to_file)
             self.bagged_oof_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
@@ -673,12 +680,12 @@ class BaseEstimator(object):
         if self.sub_preds is None:
             raise ValueError('Submission file is empty. Please set flag predict_test = True in run_cv_and_prediction() '
                              'to generate submission file.')
-        full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'SUBM']) + '.csv')
+        full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_TEST_RESULTS)
         print('\nSaving submission predictions into %s' % full_path_to_file)
         self.sub_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
         if self.bagged_sub_preds is not None:
-            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'bagged_SUBM']) + '.csv')
+            full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_TEST_RESULTS_BAGGED)
             print('\nSaving submission predictions for each seed into %s' % full_path_to_file)
             self.bagged_sub_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 

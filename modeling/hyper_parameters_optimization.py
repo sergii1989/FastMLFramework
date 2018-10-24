@@ -93,8 +93,8 @@ class HyperParamsOptimization(object):
 
 
 class BayesHyperParamsOptimization(HyperParamsOptimization):
-    HPO_RESULTS_FILENAME = 'bayes_opt_hp'
-    HPO_HISTORY_FILENAME = 'opt_history'
+    FILENAME_HPO_RESULTS = 'bayes_opt_hp'
+    FILENAME_HPO_HISTORY = 'opt_history'
 
     def __init__(self, predictor, hp_optimization_space, init_points=10, n_iter=15, seed_val=27,
                  project_location='', output_dirname=''):
@@ -109,7 +109,7 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         :param output_dirname: name of directory to save results of hyper parameters optimization
         """
         super(BayesHyperParamsOptimization, self).__init__(predictor, seed_val, project_location,
-                                                           output_dirname, self.HPO_RESULTS_FILENAME)
+                                                           output_dirname, self.FILENAME_HPO_RESULTS)
         self.hp_optimization_space = hp_optimization_space
         self.init_points = init_points
         self.n_iter = n_iter
@@ -160,7 +160,7 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         :return: None
         """
         filename = '_'.join([self.predictor.model_name,
-                             self.HPO_HISTORY_FILENAME,
+                             self.FILENAME_HPO_HISTORY,
                              'max_cv',
                              str(self.best_score)]) + '.csv'
 

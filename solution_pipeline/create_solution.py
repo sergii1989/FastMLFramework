@@ -95,9 +95,9 @@ class FeatureSelection(luigi.Task):
         nb_runs = config.get_int('features_selection.%s.nb_target_permutation_runs' % self.feats_select_method)
         fs_seed_val = config.get_int('modeling_settings.fs_seed_value')
         thresholds = config.get_list('features_selection.%s.eval_feats_removal_impact_on_cv_score.'
-                                          'thresholds' % self.feats_select_method)
+                                     'thresholds' % self.feats_select_method)
         n_thresholds = config.get_int('features_selection.%s.eval_feats_removal_impact_on_cv_score.'
-                                           'n_thresholds' % self.feats_select_method)
+                                      'n_thresholds' % self.feats_select_method)
         eval_metric = config.get_string('modeling_settings.cv_params.eval_metric')
         metrics_scorer = get_metrics_scorer(config.get('modeling_settings.cv_params.metrics_scorer'))
         metrics_decimals = config.get_int('modeling_settings.cv_params.metrics_decimals')
@@ -106,9 +106,9 @@ class FeatureSelection(luigi.Task):
         kfolds_shuffle = config.get_bool('modeling_settings.cv_params.kfolds_shuffle')
 
         lgbm_params_feats_exploration = dict(config.get_config('features_selection.%s.lgbm_params.'
-                                                                    'feats_exploration' % self.feats_select_method))
+                                                               'feats_exploration' % self.feats_select_method))
         lgbm_params_feats_selection = dict(config.get_config('features_selection.%s.lgbm_params.'
-                                                                  'feats_selection' % self.feats_select_method))
+                                                             'feats_selection' % self.feats_select_method))
         # Initialize feature selection procedure
         features_selection = feature_selector(
             train_df=train_data, target_column=target_column, index_column=index_column,
@@ -170,6 +170,7 @@ class InitializeSingleModelPredictor(luigi.Task):
     fg_output_dir = luigi.Parameter()  # type: str
     fs_output_dir = luigi.Parameter()  # type: str
     solution_output_dir = luigi.Parameter()  # type: str
+    output_pickle_file = 'predictor_initialized.pickle'
 
     def requires(self):
         requirements = {'data': self.clone(TrainDataIngestion)}
@@ -235,15 +236,13 @@ class InitializeSingleModelPredictor(luigi.Task):
             output_dirname=self.solution_output_dir
         )
 
-        full_path_to_file = os.path.normpath(os.path.join(self.project_location, self.solution_output_dir,
-                                                          'predictor.pickle'))
+        full_path_to_file = os.path.join(self.project_location, self.solution_output_dir, self.output_pickle_file)
         print('\nSaving %s\n' % full_path_to_file)
         with open(full_path_to_file, 'wb') as f:
             pickle.dump(predictor, f)
 
     def output(self):
-        return luigi.LocalTarget(os.path.normpath(os.path.join(
-            self.project_location, self.solution_output_dir, 'predictor.pickle')))
+        return luigi.LocalTarget(os.path.join(self.project_location, self.solution_output_dir, self.output_pickle_file))
 
 
 @requires(InitializeSingleModelPredictor)
@@ -292,15 +291,17 @@ class RunSingleModelHPO(luigi.Task):
 
 class RunSingleModelPrediction(luigi.Task):
     project_location = luigi.Parameter()  # absolute path to project's main directory
-    config_directory = luigi.Parameter()  #
-    config_file = luigi.Parameter()  #
+    config_directory = luigi.Parameter()  # name of config sub-directory in project directory
+    config_file = luigi.Parameter()  # name of config file in the config sub-directory
     model = luigi.Parameter()  # name of estimator model
     run_feature_selection = luigi.BoolParameter()  # if True -> run feature selection
     run_hpo = luigi.BoolParameter()  # if True -> run hyper-parameters optimization
+    run_bagging = luigi.BoolParameter()  # if True -> run bagging
     fg_output_dir = luigi.Parameter()  # feature generation directory (to be used as input for train data ingestion)
     fs_output_dir = luigi.Parameter()  # feature selection directory (where results of feature selection to be saved)
     hpo_output_dir = luigi.Parameter()  # hyper-parameters optimization directory (where results of hpo to be saved)
     solution_output_dir = luigi.Parameter()  # output directory where results of a single model prediction to be saved
+    output_pickle_file = 'predictor_with_results.pickle'
 
     def requires(self):
         requirements = {'predictor': self.clone(InitializeSingleModelPredictor)}
@@ -341,15 +342,13 @@ class RunSingleModelPrediction(luigi.Task):
         predictor.save_oof_results()
         predictor.save_submission_results()
 
-        full_path_to_file = os.path.normpath(os.path.join(self.project_location, self.solution_output_dir,
-                                                          'predictor_with_results.pickle'))
+        full_path_to_file = os.path.join(self.project_location, self.solution_output_dir, self.output_pickle_file)
         print('\nSaving %s\n' % full_path_to_file)
         with open(full_path_to_file, 'wb') as f:
             pickle.dump(predictor, f)
 
     def output(self):
-        return luigi.LocalTarget(os.path.normpath(os.path.join(
-            self.project_location, self.solution_output_dir, 'predictor_with_results.pickle')))
+        return luigi.LocalTarget(os.path.join(self.project_location, self.solution_output_dir, self.output_pickle_file))
 
 
 class BuildSolution(luigi.WrapperTask):
@@ -442,7 +441,7 @@ class RunStackerHPO(luigi.Task):
     def run(self):
         # Parsing config (actually it is cached)
         config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
-        
+
         # Load initialized stacker
         stacker = pickle.load(open(self.input().path, "rb"))
         stacker_model = config.get_string('stacker.meta_model')

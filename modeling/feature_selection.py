@@ -56,10 +56,10 @@ class FeatureSelector(object):
 
 class FeatureSelectorByTargetPermutation(FeatureSelector):
     FEATURE_SELECTION_METHOD = 'target_permutation'
-    FIGNAME_FEATS_SCORE_VS_IMPORTANCE = 'feature_score_vs_importance.png'
-    FIGNAME_CV_VERSUS_FEATURES_SCORE_THRESHOLD = 'cv_vs_feats_score_threshold.png'
-    CV_RESULTS_VS_FEATS_SCORE_THRESH_DF_NAME = 'cv_results_vs_feats_score_thresh.csv'
-    FEATURES_SCORES_DF_NAME = 'feature_scores.csv'
+    FIGNAME_FEATS_SCORE_VS_IMPORTANCE = 'feats_score_vs_importance.png'
+    FIGNAME_CV_VERSUS_FEATURES_SCORE_THRESHOLD = 'cv_vs_feats_score_thresh.png'
+    FILENAME_CV_RESULTS_VS_FEATS_SCORE_THRESH = 'cv_results_vs_feats_score_thresh.csv'
+    FILENAME_FEATS_SCORE = 'feats_score.csv'
 
     def __init__(self, train_df, target_column, index_column, cat_features, lgbm_params_feats_exploration,
                  lgbm_params_feats_selection, eval_metric, metrics_scorer, metrics_decimals=6, num_folds=5,
@@ -458,7 +458,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         This method persists features scores DF to the disk
         :return: None
         """
-        full_path_to_file = os.path.join(self.path_output_dir, self.FEATURES_SCORES_DF_NAME)
+        full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_FEATS_SCORE)
         print('\nSaving feature scores DF into %s' % full_path_to_file)
         self.features_scores_df.to_csv(full_path_to_file, index=False)
 
@@ -467,7 +467,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         This method persists DF with CV results at various features scores thresholds to the disk
         :return: None
         """
-        full_path_to_file = os.path.join(self.path_output_dir, self.CV_RESULTS_VS_FEATS_SCORE_THRESH_DF_NAME)
+        full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_CV_RESULTS_VS_FEATS_SCORE_THRESH)
         print('\nSaving DF with CV results at various features scores thresholds into %s' % full_path_to_file)
         self.cv_results_vs_thresh_df.reset_index().to_csv(full_path_to_file, index=False)
 

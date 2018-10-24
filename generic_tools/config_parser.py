@@ -158,6 +158,7 @@ class ConfigFileHandler(object):
             'model': model,
             'run_feature_selection': run_feature_selection,
             'run_hpo': run_hpo,
+            'run_bagging': run_bagging,
             'fg_output_dir': self._get_feature_generation_output_dir(model)[1],
             'fs_output_dir': self._get_feature_selection_output_dir(model, run_feature_selection)[1],
             'hpo_output_dir': self._get_hpo_output_dir(model, run_feature_selection, run_hpo)[1],
