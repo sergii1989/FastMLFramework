@@ -21,14 +21,16 @@ warnings.filterwarnings("ignore")
 
 
 class TrainDataIngestion(luigi.Task):
-    project_location = luigi.Parameter()
-    fg_output_dir = luigi.Parameter()
-    config = luigi.Parameter()  # type: ConfigTree
+    project_location = luigi.Parameter()  # type: str
+    fg_output_dir = luigi.Parameter()  # type: str
 
     def run(self):
+        # Parsing config (actually it is cached)
+        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+
         # Settings for debug
-        debug = self.config.get_bool('modeling_settings.debug')
-        num_rows = self.config.get_int('modeling_settings.num_rows')
+        debug = config.get_bool('modeling_settings.debug')
+        num_rows = config.get_int('modeling_settings.num_rows')
 
         # Load train and test data set from feature generation pool and downcast data types
         full_path_to_file = os.path.normpath(os.path.join(self.project_location, self.fg_output_dir, 'train.csv'))
@@ -61,14 +63,18 @@ class TrainDataIngestion(luigi.Task):
 
 @requires(TrainDataIngestion)
 class FeatureSelection(luigi.Task):
-    project_location = luigi.Parameter()
-    fg_output_dir = luigi.Parameter()
-    fs_output_dir = luigi.Parameter()
-    feats_select_method = luigi.Parameter()
-    config = luigi.Parameter()  # type: ConfigTree
+    project_location = luigi.Parameter()  # type: str
+    config_directory = luigi.Parameter()  # type: str
+    config_file = luigi.Parameter()  # type: str
+    fg_output_dir = luigi.Parameter()  # type: str
+    fs_output_dir = luigi.Parameter()  # type: str
+    feats_select_method = luigi.Parameter()  # type: str
     fs_results_file = 'optimal_features.txt'
 
     def run(self):
+        # Parsing config (actually it is cached)
+        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+
         # Load train data set from feature generation pool
         train_data = pd.read_csv(self.input()['train_data'].path)
 
@@ -82,26 +88,26 @@ class FeatureSelection(luigi.Task):
 
         # Extracting settings from config
         feature_selector = load_feature_selector_class(self.feats_select_method)
-        target_column = self.config.get_string('raw_data_settings.target_column')
-        index_column = self.config.get_string('raw_data_settings.index_column')
-        int_threshold = self.config.get_int('features_selection.%s.int_threshold' % self.feats_select_method)
-        num_boost_rounds = self.config.get_int('features_selection.%s.num_boost_rounds' % self.feats_select_method)
-        nb_runs = self.config.get_int('features_selection.%s.nb_target_permutation_runs' % self.feats_select_method)
-        fs_seed_val = self.config.get_int('modeling_settings.fs_seed_value')
-        thresholds = self.config.get_list('features_selection.%s.eval_feats_removal_impact_on_cv_score.'
+        target_column = config.get_string('raw_data_settings.target_column')
+        index_column = config.get_string('raw_data_settings.index_column')
+        int_threshold = config.get_int('features_selection.%s.int_threshold' % self.feats_select_method)
+        num_boost_rounds = config.get_int('features_selection.%s.num_boost_rounds' % self.feats_select_method)
+        nb_runs = config.get_int('features_selection.%s.nb_target_permutation_runs' % self.feats_select_method)
+        fs_seed_val = config.get_int('modeling_settings.fs_seed_value')
+        thresholds = config.get_list('features_selection.%s.eval_feats_removal_impact_on_cv_score.'
                                           'thresholds' % self.feats_select_method)
-        n_thresholds = self.config.get_int('features_selection.%s.eval_feats_removal_impact_on_cv_score.'
+        n_thresholds = config.get_int('features_selection.%s.eval_feats_removal_impact_on_cv_score.'
                                            'n_thresholds' % self.feats_select_method)
-        eval_metric = self.config.get_string('modeling_settings.cv_params.eval_metric')
-        metrics_scorer = get_metrics_scorer(self.config.get('modeling_settings.cv_params.metrics_scorer'))
-        metrics_decimals = self.config.get_int('modeling_settings.cv_params.metrics_decimals')
-        num_folds = self.config.get_int('modeling_settings.cv_params.num_folds')
-        stratified = self.config.get_bool('modeling_settings.cv_params.stratified')
-        kfolds_shuffle = self.config.get_bool('modeling_settings.cv_params.kfolds_shuffle')
+        eval_metric = config.get_string('modeling_settings.cv_params.eval_metric')
+        metrics_scorer = get_metrics_scorer(config.get('modeling_settings.cv_params.metrics_scorer'))
+        metrics_decimals = config.get_int('modeling_settings.cv_params.metrics_decimals')
+        num_folds = config.get_int('modeling_settings.cv_params.num_folds')
+        stratified = config.get_bool('modeling_settings.cv_params.stratified')
+        kfolds_shuffle = config.get_bool('modeling_settings.cv_params.kfolds_shuffle')
 
-        lgbm_params_feats_exploration = dict(self.config.get_config('features_selection.%s.lgbm_params.'
+        lgbm_params_feats_exploration = dict(config.get_config('features_selection.%s.lgbm_params.'
                                                                     'feats_exploration' % self.feats_select_method))
-        lgbm_params_feats_selection = dict(self.config.get_config('features_selection.%s.lgbm_params.'
+        lgbm_params_feats_selection = dict(config.get_config('features_selection.%s.lgbm_params.'
                                                                   'feats_selection' % self.feats_select_method))
         # Initialize feature selection procedure
         features_selection = feature_selector(
@@ -156,26 +162,33 @@ class FeatureSelection(luigi.Task):
 
 
 class InitializeSingleModelPredictor(luigi.Task):
-    run_feature_selection = luigi.BoolParameter()
-    project_location = luigi.Parameter()
-    model = luigi.Parameter()
-    fg_output_dir = luigi.Parameter()
-    fs_output_dir = luigi.Parameter()
-    solution_output_dir = luigi.Parameter()
-    config = luigi.Parameter()  # type: ConfigTree
+    project_location = luigi.Parameter()  # type: str
+    config_directory = luigi.Parameter()  # type: str
+    config_file = luigi.Parameter()  # type: str
+    model = luigi.Parameter()  # type: str
+    run_feature_selection = luigi.BoolParameter()  # type: bool
+    fg_output_dir = luigi.Parameter()  # type: str
+    fs_output_dir = luigi.Parameter()  # type: str
+    solution_output_dir = luigi.Parameter()  # type: str
 
     def requires(self):
         requirements = {'data': self.clone(TrainDataIngestion)}
         if self.run_feature_selection:
-            feats_select_method = self.config.get_string('modeling_settings.%s.fs_method' % self.model)
+            # Parsing config (actually it is cached)
+            config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+            feats_select_method = config.get_string('modeling_settings.%s.fs_method' % self.model)
             requirements['features'] = FeatureSelection(project_location=self.project_location,
+                                                        config_directory=self.config_directory,
+                                                        config_file = self.config_file,
                                                         fg_output_dir=self.fg_output_dir,
                                                         fs_output_dir=self.fs_output_dir,
-                                                        feats_select_method=feats_select_method,
-                                                        config=self.config)
+                                                        feats_select_method=feats_select_method)
         return requirements
 
     def run(self):
+        # Parsing config (actually it is cached)
+        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+
         # Load train and test data sets
         train_data = pd.read_csv(self.input()['data']['train_data'].path)
         test_data = pd.read_csv(self.input()['data']['test_data'].path)
@@ -187,25 +200,25 @@ class InitializeSingleModelPredictor(luigi.Task):
                 opt_feats = json.load(f)
 
         # Extracting settings from config
-        target_column = self.config.get_string('raw_data_settings.target_column')
-        index_column = self.config.get_string('raw_data_settings.index_column')
-        model_init_params = dict(self.config.get_config('single_model_init_params.%s' % self.model))
+        target_column = config.get_string('raw_data_settings.target_column')
+        index_column = config.get_string('raw_data_settings.index_column')
+        model_init_params = dict(config.get_config('single_model_init_params.%s' % self.model))
         estimator_wrapped = get_wrapped_estimator(self.model, model_init_params)
-        predict_probability = self.config.get_bool('modeling_settings.%s.predict_probability' % self.model)
-        class_label = self.config.get('modeling_settings.%s.class_label' % self.model)
-        cols_to_exclude = self.config.get_list('modeling_settings.cols_to_exclude')
-        bagging = self.config.get_bool('modeling_settings.%s.bagging' % self.model)
-        predict_test = self.config.get_bool('modeling_settings.predict_test')
-        eval_metric = self.config.get_string('modeling_settings.cv_params.eval_metric')
-        metrics_scorer = get_metrics_scorer(self.config.get('modeling_settings.cv_params.metrics_scorer'))
-        metrics_decimals = self.config.get_int('modeling_settings.cv_params.metrics_decimals')
-        target_decimals = self.config.get_int('modeling_settings.cv_params.target_decimals')
-        num_folds = self.config.get_int('modeling_settings.cv_params.num_folds')
-        stratified = self.config.get_bool('modeling_settings.cv_params.stratified')
-        kfolds_shuffle = self.config.get_bool('modeling_settings.cv_params.kfolds_shuffle')
-        cv_verbosity = self.config.get_int('modeling_settings.cv_params.cv_verbosity')
-        data_split_seed = self.config.get_int('modeling_settings.cv_params.data_split_seed')
-        model_seeds_list = self.config.get_list('modeling_settings.model_seeds_list')
+        predict_probability = config.get_bool('modeling_settings.%s.predict_probability' % self.model)
+        class_label = config.get('modeling_settings.%s.class_label' % self.model)
+        cols_to_exclude = config.get_list('modeling_settings.cols_to_exclude')
+        bagging = config.get_bool('modeling_settings.%s.run_bagging' % self.model)
+        predict_test = config.get_bool('modeling_settings.predict_test')
+        eval_metric = config.get_string('modeling_settings.cv_params.eval_metric')
+        metrics_scorer = get_metrics_scorer(config.get('modeling_settings.cv_params.metrics_scorer'))
+        metrics_decimals = config.get_int('modeling_settings.cv_params.metrics_decimals')
+        target_decimals = config.get_int('modeling_settings.cv_params.target_decimals')
+        num_folds = config.get_int('modeling_settings.cv_params.num_folds')
+        stratified = config.get_bool('modeling_settings.cv_params.stratified')
+        kfolds_shuffle = config.get_bool('modeling_settings.cv_params.kfolds_shuffle')
+        cv_verbosity = config.get_int('modeling_settings.cv_params.cv_verbosity')
+        data_split_seed = config.get_int('modeling_settings.cv_params.data_split_seed')
+        model_seeds_list = config.get_list('modeling_settings.model_seeds_list')
 
         # Initialize single model predictor
         predictor = Predictor(
@@ -235,21 +248,24 @@ class InitializeSingleModelPredictor(luigi.Task):
 
 @requires(InitializeSingleModelPredictor)
 class RunSingleModelHPO(luigi.Task):
-    model = luigi.Parameter()
-    hpo_output_dir = luigi.Parameter()
-    hp_results_file = 'optimized_hp.txt'
+    model = luigi.Parameter()  # type: str
+    hpo_output_dir = luigi.Parameter()  # type: str
+    hpo_results_file = 'optimized_hp.txt'
 
     def run(self):
+        # Parsing config (actually it is cached)
+        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+
         # Load initialized single model predictor
         predictor = pickle.load(open(self.input().path, "rb"))
 
         # Extracting settings from config
-        hpo_method = self.config.get_string('modeling_settings.%s.hpo_method' % self.model)
+        hpo_method = config.get_string('modeling_settings.%s.hpo_method' % self.model)
         hp_optimizator = load_hp_optimization_class(hpo_method)
-        hpo_seed_val = self.config.get_int('modeling_settings.hpo_seed_value')
-        init_points = self.config.get_int('hp_optimization.%s.init_points' % hpo_method)
-        n_iter = self.config.get_int('hp_optimization.%s.n_iter' % hpo_method)
-        hp_optimization_space = dict(self.config.get_config(
+        hpo_seed_val = config.get_int('modeling_settings.hpo_seed_value')
+        init_points = config.get_int('hp_optimization.%s.init_points' % hpo_method)
+        n_iter = config.get_int('hp_optimization.%s.n_iter' % hpo_method)
+        hp_optimization_space = dict(config.get_config(
             'hp_optimization.%s.hpo_space.single_model_solution.%s' % (hpo_method, self.model)))
 
         # Initialize hyper-parameter optimizator
@@ -265,17 +281,19 @@ class RunSingleModelHPO(luigi.Task):
 
         full_path_to_file = os.path.normpath(os.path.join(self.project_location,
                                                           self.hpo_output_dir,
-                                                          self.hp_results_file))
+                                                          self.hpo_results_file))
         print('\nSaving %s\n' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
             f.write(json.dumps(hpo.best_params))
 
     def output(self):
-        return luigi.LocalTarget(os.path.join(self.project_location, self.hpo_output_dir, self.hp_results_file))
+        return luigi.LocalTarget(os.path.join(self.project_location, self.hpo_output_dir, self.hpo_results_file))
 
 
 class RunSingleModelPrediction(luigi.Task):
     project_location = luigi.Parameter()  # absolute path to project's main directory
+    config_directory = luigi.Parameter()  #
+    config_file = luigi.Parameter()  #
     model = luigi.Parameter()  # name of estimator model
     run_feature_selection = luigi.BoolParameter()  # if True -> run feature selection
     run_hpo = luigi.BoolParameter()  # if True -> run hyper-parameters optimization
@@ -283,7 +301,6 @@ class RunSingleModelPrediction(luigi.Task):
     fs_output_dir = luigi.Parameter()  # feature selection directory (where results of feature selection to be saved)
     hpo_output_dir = luigi.Parameter()  # hyper-parameters optimization directory (where results of hpo to be saved)
     solution_output_dir = luigi.Parameter()  # output directory where results of a single model prediction to be saved
-    config = luigi.Parameter()  # config file with the problem settings
 
     def requires(self):
         requirements = {'predictor': self.clone(InitializeSingleModelPredictor)}
@@ -356,39 +373,42 @@ class InitializeStacker(luigi.Task):
         return TrainDataIngestion(self.project_location, self.fg_output_dir)
 
     def run(self):
+        # Parsing config (actually it is cached)
+        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+
         # Load train and test data sets
         train_data = pd.read_csv(self.input()['data']['train_data'].path)
         test_data = pd.read_csv(self.input()['data']['test_data'].path)
 
         # Read dict with OOF input file names, locations and short labels to be used when naming output files
-        oof_input_files = dict(self.config.get_config('stacker.oof_input_files'))
+        oof_input_files = dict(config.get_config('stacker.oof_input_files'))
         for key in oof_input_files:
             oof_input_files[key] = dict(oof_input_files[key])
 
         # Input settings for Stacker
-        target_column = self.config.get_string('raw_data_settings.target_column')
-        index_column = self.config.get_string('raw_data_settings.index_column')
-        stacker_model = self.config.get_string('stacker.meta_model')
-        stacker_init_params = dict(self.config.get_config('stacker.%s.init_params' % stacker_model))
+        target_column = config.get_string('raw_data_settings.target_column')
+        index_column = config.get_string('raw_data_settings.index_column')
+        stacker_model = config.get_string('stacker.meta_model')
+        stacker_init_params = dict(config.get_config('stacker.%s.init_params' % stacker_model))
         stacker_wrapped = get_wrapped_estimator(stacker_model, stacker_init_params)
-        stacker_predict_probability = self.config.get_bool('stacker.%s.predict_probability' % stacker_model)
-        class_label = self.config.get('modeling_settings.class_label')
-        stacker_eval_metric = self.config.get_string('stacker.%s.eval_metric' % stacker_model)
-        stacker_metrics_scorer = get_metrics_scorer(self.config.get('stacker.%s.metrics_scorer' % stacker_model))
-        stacker_metrics_decimals = self.config.get_int('stacker.%s.metrics_decimals' % stacker_model)
-        stacker_target_decimals = self.config.get_int('stacker.%s.target_decimals' % stacker_model)
-        cols_to_exclude = self.config.get_list('modeling_settings.cols_to_exclude')
-        num_folds = self.config.get_int('modeling_settings.cv_params.num_folds')
-        stratified = self.config.get_bool('modeling_settings.cv_params.stratified')
-        kfolds_shuffle = self.config.get_bool('modeling_settings.cv_params.kfolds_shuffle')
-        cv_verbosity = self.config.get_int('modeling_settings.cv_params.cv_verbosity')
-        stacker_bagging = self.config.get_bool('stacker.%s.bagging' % stacker_model)
-        data_split_seed = self.config.get_int('modeling_settings.cv_params.data_split_seed')
-        model_seeds_list = self.config.get_list('modeling_settings.model_seeds_list')
+        stacker_predict_probability = config.get_bool('stacker.%s.predict_probability' % stacker_model)
+        class_label = config.get('modeling_settings.class_label')
+        stacker_eval_metric = config.get_string('stacker.%s.eval_metric' % stacker_model)
+        stacker_metrics_scorer = get_metrics_scorer(config.get('stacker.%s.metrics_scorer' % stacker_model))
+        stacker_metrics_decimals = config.get_int('stacker.%s.metrics_decimals' % stacker_model)
+        stacker_target_decimals = config.get_int('stacker.%s.target_decimals' % stacker_model)
+        cols_to_exclude = config.get_list('modeling_settings.cols_to_exclude')
+        num_folds = config.get_int('modeling_settings.cv_params.num_folds')
+        stratified = config.get_bool('modeling_settings.cv_params.stratified')
+        kfolds_shuffle = config.get_bool('modeling_settings.cv_params.kfolds_shuffle')
+        cv_verbosity = config.get_int('modeling_settings.cv_params.cv_verbosity')
+        stacker_bagging = config.get_bool('stacker.%s.run_bagging' % stacker_model)
+        data_split_seed = config.get_int('modeling_settings.cv_params.data_split_seed')
+        model_seeds_list = config.get_list('modeling_settings.model_seeds_list')
 
         # TODO: to add this logic
         # If True -> use raw features additionally to out-of-fold results
-        stacker_use_raw_features = self.config.get_bool('stacker.%s.use_raw_features' % stacker_model)
+        stacker_use_raw_features = config.get_bool('stacker.%s.use_raw_features' % stacker_model)
 
         # Initializing stacker
         stacker = Stacker(
@@ -420,16 +440,19 @@ class RunStackerHPO(luigi.Task):
         return InitializeStacker()
 
     def run(self):
+        # Parsing config (actually it is cached)
+        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        
         # Load initialized stacker
         stacker = pickle.load(open(self.input().path, "rb"))
-        stacker_model = self.config.get_string('stacker.meta_model')
-        stacker_hpo_method = self.config.get_string('stacker.%s.hpo_method' % stacker_model)
+        stacker_model = config.get_string('stacker.meta_model')
+        stacker_hpo_method = config.get_string('stacker.%s.hpo_method' % stacker_model)
         stacker_hp_optimizator = load_hp_optimization_class(stacker_hpo_method)
         stacker_hpo_space = dict(
-            self.config.get_config('stacker.%s.%s.hpo_space' % (stacker_model, stacker_hpo_method)))
-        stacker_hpo_init_points = self.config.get_int('stacker.%s.%s.init_points' % (stacker_model, stacker_hpo_method))
-        stacker_hpo_n_iter = self.config.get_int('stacker.%s.%s.n_iter' % (stacker_model, stacker_hpo_method))
-        stacker_hpo_seed_val = self.config.get_int('stacker.%s.%s.seed_value' % (stacker_model, stacker_hpo_method))
+            config.get_config('stacker.%s.%s.hpo_space' % (stacker_model, stacker_hpo_method)))
+        stacker_hpo_init_points = config.get_int('stacker.%s.%s.init_points' % (stacker_model, stacker_hpo_method))
+        stacker_hpo_n_iter = config.get_int('stacker.%s.%s.n_iter' % (stacker_model, stacker_hpo_method))
+        stacker_hpo_seed_val = config.get_int('stacker.%s.%s.seed_value' % (stacker_model, stacker_hpo_method))
 
         # Initialize hyper-parameter optimizator
         stacker_hpo = stacker_hp_optimizator(

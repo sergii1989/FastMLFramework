@@ -2,6 +2,7 @@ import os
 
 from pyhocon import ConfigFactory
 from pyhocon.config_tree import ConfigTree
+from functools32 import lru_cache
 
 
 class ConfigFileHandler(object):
@@ -23,14 +24,18 @@ class ConfigFileHandler(object):
         self.project_location = project_location
         self.config_directory = config_directory
         self.config_file = config_file
-        self.config = self._parse_config_file()  # configuration file with all settings for running the pipeline
 
-        # Names of folders composing the backbone of the project (features_generation, features_selection,
-        # hyper_parameters_optimization, single_model_solution, stacking, blending, etc.)
-        self.project_structure = dict(self.config.get_config('project_structure'))
-
-    def _parse_config_file(self):  # type: () -> ConfigTree
-        path_to_config = os.path.normpath(os.path.join(self.project_location, self.config_directory, self.config_file))
+    @staticmethod
+    @lru_cache(2)
+    def parse_config_file(project_location, config_directory, config_file):  # type: (str, str, str) -> ConfigTree
+        """
+        This method returns parsed configuration file with all settings for running the pipeline
+        :param project_location:
+        :param config_directory:
+        :param config_file:
+        :return:
+        """
+        path_to_config = os.path.normpath(os.path.join(project_location, config_directory, config_file))
         if os.path.exists(path_to_config):
             return ConfigFactory.parse_file(path_to_config)
         else:
@@ -48,8 +53,11 @@ class ConfigFileHandler(object):
         :param model: name of model to be used for prediction (e.g. lightgbm, xgboost, logistic regression, etc.)
         :return: name of features generation directory, and composed path to it
         """
-        feats_generation_dir_name = self.config.get_string('modeling_settings.%s.name_feats_generation_dir' % model)
-        feats_generation_results_dir_path = os.path.join(self.project_structure['FEATURE_GENERATION_DIR'],
+        config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        project_structure = dict(config.get_config('project_structure'))
+
+        feats_generation_dir_name = config.get_string('modeling_settings.%s.name_feats_generation_dir' % model)
+        feats_generation_results_dir_path = os.path.join(project_structure['FEATURE_GENERATION_DIR'],
                                                          feats_generation_dir_name)
         return feats_generation_dir_name, feats_generation_results_dir_path
 
@@ -66,16 +74,18 @@ class ConfigFileHandler(object):
         :param run_feature_selection: if True -> run feature selection procedure
         :return: name of features selection output directory, and composed path to it
         """
+        config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        project_structure = dict(config.get_config('project_structure'))
         feats_generation_dir_name, feats_generation_results_dir_path = self._get_feature_generation_output_dir(model)
 
         if run_feature_selection:
-            feats_selection_method = self.config.get_string('modeling_settings.%s.fs_method' % model)
-            feats_selection_dir_name = self.config.get_string('features_selection.name_fs_dir')
+            feats_selection_method = config.get_string('modeling_settings.%s.fs_method' % model)
+            feats_selection_dir_name = config.get_string('features_selection.name_fs_dir')
             feats_selection_output_dir = os.path.join(feats_generation_dir_name,
                                                       '_'.join([feats_selection_method, feats_selection_dir_name]))
         else:
             feats_selection_output_dir = os.path.join(feats_generation_dir_name, self.SUBDIR_NO_FEATURE_SELECTION)
-        feats_selection_results_dir_path = os.path.join(self.project_structure['FEATURE_SELECTION_DIR'],
+        feats_selection_results_dir_path = os.path.join(project_structure['FEATURE_SELECTION_DIR'],
                                                         feats_selection_output_dir)
         return feats_selection_output_dir, feats_selection_results_dir_path
 
@@ -92,18 +102,20 @@ class ConfigFileHandler(object):
         :param run_hpo: if True -> run hyper-parameters optimization
         :return: name of hyper-parameters optimization output directory, and composed path to it
         """
+        config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        project_structure = dict(config.get_config('project_structure'))
         feats_selection_output_dir, feats_selection_results_dir_path = \
             self._get_feature_selection_output_dir(model, run_feature_selection)
 
         if run_hpo:
-            hpo_method = self.config.get_string('modeling_settings.%s.hpo_method' % model)
-            hpo_name_dir = self.config.get_string('hp_optimization.name_hpo_dir')
+            hpo_method = config.get_string('modeling_settings.%s.hpo_method' % model)
+            hpo_name_dir = config.get_string('hp_optimization.name_hpo_dir')
             hpo_output_dir = os.path.normpath(os.path.join(model, feats_selection_output_dir,
                                                            '_'.join([hpo_method, hpo_name_dir])))
         else:
             hpo_output_dir = os.path.normpath(os.path.join(model, feats_selection_output_dir,
                                                            self.SUBDIR_NO_HYPER_PARAMS_OPTIM))
-        hpo_results_dir_path = os.path.join(self.project_structure['HYPERPARAMS_OPTIM_DIR'], hpo_output_dir)
+        hpo_results_dir_path = os.path.join(project_structure['HYPERPARAMS_OPTIM_DIR'], hpo_output_dir)
         return hpo_output_dir, hpo_results_dir_path
 
     def _get_solution_output_dir(self, model, run_feature_selection, run_hpo, run_bagging):
@@ -122,33 +134,38 @@ class ConfigFileHandler(object):
         :param run_bagging: if True -> run bagging over different seeds
         :return: name of single model prediction results directory, and composed path to it
         """
+        config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        project_structure = dict(config.get_config('project_structure'))
         hpo_output_dir, hpo_results_dir_path = self._get_hpo_output_dir(model, run_feature_selection, run_hpo)
         single_model_solution_output_dir = hpo_output_dir
-        single_model_results_dir_path = os.path.join(self.project_structure['SOLUTION_DIR'],
+        single_model_results_dir_path = os.path.join(project_structure['SOLUTION_DIR'],
                                                      single_model_solution_output_dir,
                                                      self.SUBDIR_BAGGING_ON if run_bagging else self.SUBDIR_BAGGING_OFF)
         return single_model_solution_output_dir, single_model_results_dir_path
 
     def _check_run_settings(self, model):
-        run_feature_selection = self.config.get_bool('modeling_settings.%s.run_fs' % model)
-        run_hpo = self.config.get_bool('modeling_settings.%s.run_hpo' % model)
-        run_bagging = self.config.get_bool('modeling_settings.%s.bagging' % model)
+        config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        run_feature_selection = config.get_bool('modeling_settings.%s.run_fs' % model)
+        run_hpo = config.get_bool('modeling_settings.%s.run_hpo' % model)
+        run_bagging = config.get_bool('modeling_settings.%s.run_bagging' % model)
         return run_feature_selection, run_hpo, run_bagging
 
     def _prepare_single_model_input_parameters_for_luigi(self, model, run_feature_selection, run_hpo, run_bagging):
         return {
-            'model': model,
             'project_location': self.project_location,
+            'config_directory': self.config_directory,
+            'config_file': self.config_file,
+            'model': model,
             'run_feature_selection': run_feature_selection,
             'run_hpo': run_hpo,
-            'config': self.config,
             'fg_output_dir': self._get_feature_generation_output_dir(model)[1],
             'fs_output_dir': self._get_feature_selection_output_dir(model, run_feature_selection)[1],
             'hpo_output_dir': self._get_hpo_output_dir(model, run_feature_selection, run_hpo)[1],
             'solution_output_dir': self._get_solution_output_dir(model, run_feature_selection, run_hpo, run_bagging)[1]}
 
     def prepare_input_parameters_for_luigi_pipeline(self):  # type: () -> list
-        base_models = self.config.get('modeling_settings.models')
+        config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        base_models = config.get('modeling_settings.models')
 
         if isinstance(base_models, list):
             luigi_pipeline_input_parameters = []
