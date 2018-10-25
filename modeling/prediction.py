@@ -82,7 +82,7 @@ class BaseEstimator(object):
         self.model = model  # type: ModelWrapper
         self.model_name = model.get_name()  # type: str
         self.predict_probability = predict_probability  # type: bool
-        self.class_label = class_label
+        self.class_label = class_label if predict_probability else None
 
         # Settings for CV and test prediction
         self.num_folds = num_folds  # type: int
@@ -114,6 +114,9 @@ class BaseEstimator(object):
         self.bagged_sub_preds = None  # type: pd.DataFrame
         self.feature_importance = None  # type: pd.DataFrame
         self.shap_values = None  # type: pd.DataFrame
+
+        # TODO: to add a variable defining whether evaluation metrics should be minimized / maximized
+        # self.cv_maximize = True
 
     def _index_column_is_defined(self):  # type: (None) -> bool
         """
