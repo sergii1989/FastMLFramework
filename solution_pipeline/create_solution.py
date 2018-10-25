@@ -7,15 +7,15 @@ import numpy as np
 import pandas as pd
 
 from luigi.util import requires
-from pyhocon.config_tree import ConfigTree
 from modeling.prediction import Predictor
 from ensembling.stacking.stacker import Stacker
-from generic_tools.utils import get_metrics_scorer
-from generic_tools.config_parser import ConfigFileHandler
 from modeling.model_wrappers import get_wrapped_estimator
 from modeling.feature_selection import load_feature_selector_class
 from modeling.hyper_parameters_optimization import load_hp_optimization_class
 from data_processing.preprocessing import downcast_datatypes
+from generic_tools.config_parser import ConfigFileHandler
+from generic_tools.utils import (get_metrics_scorer, generate_single_model_solution_id_key,
+                                 merge_two_dicts, create_output_dir)
 
 warnings.filterwarnings("ignore")
 
@@ -118,7 +118,7 @@ class FeatureSelection(luigi.Task):
             eval_metric=eval_metric, metrics_scorer=metrics_scorer,
             metrics_decimals=metrics_decimals, num_folds=num_folds,
             stratified=stratified, kfolds_shuffle=kfolds_shuffle,
-            seed_val=fs_seed_val, project_location=project_location,
+            seed_val=fs_seed_val, project_location=self.project_location,
             output_dirname=self.fs_output_dir
         )
 
@@ -154,7 +154,7 @@ class FeatureSelection(luigi.Task):
                                                           self.fs_results_file))
         print('\nSaving %s\n' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
-            f.write(json.dumps(opt_feats))
+            f.write(json.dumps(opt_feats, indent=4))
 
     def output(self):
         return luigi.LocalTarget(os.path.normpath(os.path.join(
@@ -180,7 +180,7 @@ class InitializeSingleModelPredictor(luigi.Task):
             feats_select_method = config.get_string('modeling_settings.%s.fs_method' % self.model)
             requirements['features'] = FeatureSelection(project_location=self.project_location,
                                                         config_directory=self.config_directory,
-                                                        config_file = self.config_file,
+                                                        config_file=self.config_file,
                                                         fg_output_dir=self.fg_output_dir,
                                                         fs_output_dir=self.fs_output_dir,
                                                         feats_select_method=feats_select_method)
@@ -225,15 +225,14 @@ class InitializeSingleModelPredictor(luigi.Task):
         predictor = Predictor(
             train_df=train_data[opt_feats] if self.run_feature_selection else train_data,
             test_df=test_data[opt_feats] if self.run_feature_selection else test_data,
-            target_column=target_column, index_column=index_column,
-            model=estimator_wrapped, predict_probability=predict_probability,
-            class_label=class_label, eval_metric=eval_metric, metrics_scorer=metrics_scorer,
+            target_column=target_column, index_column=index_column, cols_to_exclude=cols_to_exclude,
+            model=estimator_wrapped, predict_probability=predict_probability, class_label=class_label,
+            bagging=bagging, predict_test=predict_test,
+            eval_metric=eval_metric, metrics_scorer=metrics_scorer,
             metrics_decimals=metrics_decimals, target_decimals=target_decimals,
-            cols_to_exclude=cols_to_exclude, num_folds=num_folds, stratified=stratified,
-            kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity, bagging=bagging,
-            predict_test=predict_test, data_split_seed=data_split_seed,
-            model_seeds_list=model_seeds_list, project_location=project_location,
-            output_dirname=self.solution_output_dir
+            num_folds=num_folds, stratified=stratified, kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity,
+            data_split_seed=data_split_seed, model_seeds_list=model_seeds_list,
+            project_location=self.project_location, output_dirname=self.solution_output_dir
         )
 
         full_path_to_file = os.path.join(self.project_location, self.solution_output_dir, self.output_pickle_file)
@@ -268,22 +267,22 @@ class RunSingleModelHPO(luigi.Task):
             'hp_optimization.%s.hpo_space.single_model_solution.%s' % (hpo_method, self.model)))
 
         # Initialize hyper-parameter optimizator
-        hpo = hp_optimizator(
-            predictor, hp_optimization_space=hp_optimization_space,
-            init_points=init_points, n_iter=n_iter, seed_val=hpo_seed_val,
-            project_location=project_location, output_dirname=self.hpo_output_dir
-        )
+        hpo = hp_optimizator(predictor=predictor,
+                             hp_optimization_space=hp_optimization_space,
+                             init_points=init_points,
+                             n_iter=n_iter,
+                             seed_val=hpo_seed_val,
+                             project_location=self.project_location,
+                             output_dirname=self.hpo_output_dir)
 
         # Run optimization and save output results
         hpo.run()
         hpo.save_hpo_history()
 
-        full_path_to_file = os.path.normpath(os.path.join(self.project_location,
-                                                          self.hpo_output_dir,
-                                                          self.hpo_results_file))
+        full_path_to_file = os.path.join(self.project_location, self.hpo_output_dir, self.hpo_results_file)
         print('\nSaving %s\n' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
-            f.write(json.dumps(hpo.best_params))
+            f.write(json.dumps(hpo.best_params, indent=4))
 
     def output(self):
         return luigi.LocalTarget(os.path.join(self.project_location, self.hpo_output_dir, self.hpo_results_file))
@@ -301,7 +300,7 @@ class RunSingleModelPrediction(luigi.Task):
     fs_output_dir = luigi.Parameter()  # feature selection directory (where results of feature selection to be saved)
     hpo_output_dir = luigi.Parameter()  # hyper-parameters optimization directory (where results of hpo to be saved)
     solution_output_dir = luigi.Parameter()  # output directory where results of a single model prediction to be saved
-    output_pickle_file = 'predictor_with_results.pickle'
+    output_filename = 'oof_data_info.txt'
 
     def requires(self):
         requirements = {'predictor': self.clone(InitializeSingleModelPredictor)}
@@ -342,34 +341,68 @@ class RunSingleModelPrediction(luigi.Task):
         predictor.save_oof_results()
         predictor.save_submission_results()
 
-        full_path_to_file = os.path.join(self.project_location, self.solution_output_dir, self.output_pickle_file)
+        # Prepare output file for ensembling
+        solution_id = generate_single_model_solution_id_key(predictor.model_name)
+        files = [predictor.FILENAME_TRAIN_OOF_RESULTS, predictor.FILENAME_TEST_RESULTS]
+        if predictor.bagged_oof_preds is not None:
+            files.extend([predictor.FILENAME_TRAIN_OOF_RESULTS_BAGGED, predictor.FILENAME_TEST_RESULTS_BAGGED])
+        output = {
+            solution_id:
+                {
+                    'path': os.path.join(self.project_location, self.solution_output_dir),
+                    'files': files
+                }
+        }
+        full_path_to_file = os.path.join(self.project_location, self.solution_output_dir, self.output_filename)
         print('\nSaving %s\n' % full_path_to_file)
-        with open(full_path_to_file, 'wb') as f:
-            pickle.dump(predictor, f)
+        with open(full_path_to_file, 'w') as f:
+            f.write(json.dumps(output, indent=4))
 
     def output(self):
-        return luigi.LocalTarget(os.path.join(self.project_location, self.solution_output_dir, self.output_pickle_file))
+        return luigi.LocalTarget(os.path.join(self.project_location, self.solution_output_dir, self.output_filename))
 
 
-class BuildSolution(luigi.WrapperTask):
+class MakeSingleModelsPredictions(luigi.Task):
     project_location = luigi.Parameter()  # type: str
     config_directory = luigi.Parameter()  # type: str
     config_file = luigi.Parameter()  # type: str
+    output_filename = 'oof_data_info.txt'
 
     def requires(self):
         config_handler = ConfigFileHandler(self.project_location, self.config_directory, self.config_file)
-        collection_input_parameters = config_handler.prepare_input_parameters_for_luigi_pipeline()
+        collection_input_parameters = config_handler.pipeline_parameters_for_single_models_solutions()
         for input_parameters in collection_input_parameters:
             yield RunSingleModelPrediction(**input_parameters)
 
+    def run(self):
+        oof_input_files = {}
+        for input_target in self.input():
+            with open(input_target.path, 'r') as f:
+                oof_input_files = merge_two_dicts(oof_input_files, json.load(f))
+
+        # TODO: to refactor this part
+        create_output_dir(os.path.join(self.project_location, 'results_ensembling'))
+        full_path_to_file = os.path.join(self.project_location, 'results_ensembling', self.output_filename)
+        print('\nSaving %s\n' % full_path_to_file)
+        with open(full_path_to_file, 'w') as f:
+            f.write(json.dumps(oof_input_files, indent=4))
+
+    def output(self):
+        return luigi.LocalTarget(os.path.join(self.project_location, 'results_ensembling', self.output_filename))
+
 
 class InitializeStacker(luigi.Task):
-
-    # stacking_output_dir = config.get_string('stacker.full_path_output')
-    # full_path_to_file   = os.path.normpath(os.path.join(project_location, stacking_output_dir, 'stacker.pickle'))
+    project_location = luigi.Parameter()  # type: str
+    stacker_model = luigi.Parameter()  # type: str
+    stacking_output_dir = luigi.Parameter()  # type: str
+    fg_output_dir = luigi.Parameter()  # type: str
+    config_directory = luigi.Parameter()  # type: str
+    config_file = luigi.Parameter()  # type: str
+    output_pickle_file = 'stacker_initialized.pickle'
 
     def requires(self):
-        return TrainDataIngestion(self.project_location, self.fg_output_dir)
+        return {'data': self.clone(TrainDataIngestion),
+                'oof_data_info': self.clone(MakeSingleModelsPredictions)}
 
     def run(self):
         # Parsing config (actually it is cached)
@@ -379,64 +412,65 @@ class InitializeStacker(luigi.Task):
         train_data = pd.read_csv(self.input()['data']['train_data'].path)
         test_data = pd.read_csv(self.input()['data']['test_data'].path)
 
-        # Read dict with OOF input file names, locations and short labels to be used when naming output files
-        oof_input_files = dict(config.get_config('stacker.oof_input_files'))
-        for key in oof_input_files:
-            oof_input_files[key] = dict(oof_input_files[key])
+        # Load oof data information
+        with open(self.input()['oof_data_info'].path, 'r') as f:
+            oof_input_files = json.load(f)
 
         # Input settings for Stacker
         target_column = config.get_string('raw_data_settings.target_column')
         index_column = config.get_string('raw_data_settings.index_column')
-        stacker_model = config.get_string('stacker.meta_model')
-        stacker_init_params = dict(config.get_config('stacker.%s.init_params' % stacker_model))
-        stacker_wrapped = get_wrapped_estimator(stacker_model, stacker_init_params)
-        stacker_predict_probability = config.get_bool('stacker.%s.predict_probability' % stacker_model)
-        class_label = config.get('modeling_settings.class_label')
-        stacker_eval_metric = config.get_string('stacker.%s.eval_metric' % stacker_model)
-        stacker_metrics_scorer = get_metrics_scorer(config.get('stacker.%s.metrics_scorer' % stacker_model))
-        stacker_metrics_decimals = config.get_int('stacker.%s.metrics_decimals' % stacker_model)
-        stacker_target_decimals = config.get_int('stacker.%s.target_decimals' % stacker_model)
+
+        # Extracting settings from config
+        stacker_init_params = dict(config.get_config('stacking_model_init_params.%s' % self.stacker_model))
+        stacker_wrapped = get_wrapped_estimator(self.stacker_model, stacker_init_params)
+        stacker_predict_probability = config.get_bool('stacker.%s.predict_probability' % self.stacker_model)
+        class_label = config.get('stacker.%s.class_label' % self.stacker_model)
+        stacker_eval_metric = config.get_string('stacker.%s.eval_metric' % self.stacker_model)
+        stacker_metrics_scorer = get_metrics_scorer(config.get('stacker.%s.metrics_scorer' % self.stacker_model))
+        stacker_metrics_decimals = config.get_int('stacker.%s.metrics_decimals' % self.stacker_model)
+        stacker_target_decimals = config.get_int('stacker.%s.target_decimals' % self.stacker_model)
         cols_to_exclude = config.get_list('modeling_settings.cols_to_exclude')
         num_folds = config.get_int('modeling_settings.cv_params.num_folds')
         stratified = config.get_bool('modeling_settings.cv_params.stratified')
         kfolds_shuffle = config.get_bool('modeling_settings.cv_params.kfolds_shuffle')
         cv_verbosity = config.get_int('modeling_settings.cv_params.cv_verbosity')
-        stacker_bagging = config.get_bool('stacker.%s.run_bagging' % stacker_model)
+        stacker_bagging = config.get_bool('stacker.%s.run_bagging' % self.stacker_model)
         data_split_seed = config.get_int('modeling_settings.cv_params.data_split_seed')
         model_seeds_list = config.get_list('modeling_settings.model_seeds_list')
 
         # TODO: to add this logic
         # If True -> use raw features additionally to out-of-fold results
-        stacker_use_raw_features = config.get_bool('stacker.%s.use_raw_features' % stacker_model)
+        stack_bagged_results = config.get_bool('modeling_settings.stack_bagged_results')
+        stacker_use_raw_features = config.get_bool('stacker.%s.use_raw_features' % self.stacker_model)
 
         # Initializing stacker
         stacker = Stacker(
             oof_input_files=oof_input_files, train_df=train_data, test_df=test_data,
-            target_column=target_column, index_column=index_column,
-            stacker_model=stacker_wrapped, predict_probability=stacker_predict_probability,
-            class_label=class_label, eval_metric=stacker_eval_metric, metrics_scorer=stacker_metrics_scorer,
+            target_column=target_column, index_column=index_column, cols_to_exclude=cols_to_exclude,
+            stacker_model=stacker_wrapped, stack_bagged_results=stack_bagged_results, bagging=stacker_bagging,
+            predict_probability=stacker_predict_probability, class_label=class_label,
+            eval_metric=stacker_eval_metric, metrics_scorer=stacker_metrics_scorer,
             metrics_decimals=stacker_metrics_decimals, target_decimals=stacker_target_decimals,
-            cols_to_exclude=cols_to_exclude, num_folds=num_folds, stratified=stratified,
-            kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity, bagging=stacker_bagging,
+            num_folds=num_folds, stratified=stratified, kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity,
             data_split_seed=data_split_seed, model_seeds_list=model_seeds_list,
             project_location=self.project_location, output_dirname=self.stacking_output_dir
         )
 
-        print('\nSaving %s\n' % self.full_path_to_file)
-        with open(self.full_path_to_file, 'wb') as f:
+        full_path_to_file = os.path.join(self.project_location, self.stacking_output_dir, self.output_pickle_file)
+        print('\nSaving %s\n' % full_path_to_file)
+        with open(full_path_to_file, 'wb') as f:
             pickle.dump(stacker, f)
 
     def output(self):
-        return luigi.LocalTarget(self.full_path_to_file)
+        return luigi.LocalTarget(os.path.join(self.project_location, self.stacking_output_dir, self.output_pickle_file))
 
 
+@requires(InitializeStacker)
 class RunStackerHPO(luigi.Task):
-
-    # stacking_output_dir = config.get_string('stacker.full_path_output')
-    # full_path_to_file   = os.path.normpath(os.path.join(project_location, stacking_output_dir, 'optim_hp.txt'))
-
-    def requires(self):
-        return InitializeStacker()
+    project_location = luigi.Parameter()  # type: str
+    stacker_model = luigi.Parameter()  # type: str
+    stacking_output_dir = luigi.Parameter()  # type: str
+    stacker_hpo_results_file = 'stacker_optimized_hp.txt'
 
     def run(self):
         # Parsing config (actually it is cached)
@@ -444,54 +478,69 @@ class RunStackerHPO(luigi.Task):
 
         # Load initialized stacker
         stacker = pickle.load(open(self.input().path, "rb"))
-        stacker_model = config.get_string('stacker.meta_model')
-        stacker_hpo_method = config.get_string('stacker.%s.hpo_method' % stacker_model)
+
+        # Extracting settings from config
+        stacker_hpo_method = config.get_string('stacker.%s.hpo_method' % self.stacker_model)
         stacker_hp_optimizator = load_hp_optimization_class(stacker_hpo_method)
-        stacker_hpo_space = dict(
-            config.get_config('stacker.%s.%s.hpo_space' % (stacker_model, stacker_hpo_method)))
-        stacker_hpo_init_points = config.get_int('stacker.%s.%s.init_points' % (stacker_model, stacker_hpo_method))
-        stacker_hpo_n_iter = config.get_int('stacker.%s.%s.n_iter' % (stacker_model, stacker_hpo_method))
-        stacker_hpo_seed_val = config.get_int('stacker.%s.%s.seed_value' % (stacker_model, stacker_hpo_method))
+        stacker_hpo_space = dict(config.get_config(
+            'hp_optimization.%s.hpo_space.stacker_model.%s' % (stacker_hpo_method, self.stacker_model)))
+
+        stacker_hpo_init_points = config.get_int('hp_optimization.%s.init_points' % stacker_hpo_method)
+        stacker_hpo_n_iter = config.get_int('hp_optimization.%s.n_iter' % stacker_hpo_method)
+        stacker_hpo_seed_val = config.get_int('modeling_settings.stacker_hpo_seed')
 
         # Initialize hyper-parameter optimizator
-        stacker_hpo = stacker_hp_optimizator(
-            stacker, hp_optimization_space=stacker_hpo_space, init_points=stacker_hpo_init_points,
-            n_iter=stacker_hpo_n_iter, seed_val=stacker_hpo_seed_val, output_dir=self.stacking_output_dir
-        )
+        stacker_hpo = stacker_hp_optimizator(predictor=stacker,
+                                             hp_optimization_space=stacker_hpo_space,
+                                             init_points=stacker_hpo_init_points,
+                                             n_iter=stacker_hpo_n_iter,
+                                             seed_val=stacker_hpo_seed_val,
+                                             project_location=self.project_location,
+                                             output_dirname=self.stacking_output_dir)
 
         # Run optimization and save output results
         stacker_hpo.run()
-        stacker_hpo.save_optimized_hp()
         stacker_hpo.save_hpo_history()
 
-        print('\nSaving %s\n' % self.full_path_to_file)
-        with open(self.full_path_to_file, 'w') as f:
-            f.write(json.dumps(stacker_hpo.best_params))
+        full_path_to_file = os.path.join(self.project_location, self.stacking_output_dir, self.stacker_hpo_results_file)
+        print('\nSaving %s\n' % full_path_to_file)
+        with open(full_path_to_file, 'w') as f:
+            f.write(json.dumps(stacker_hpo.best_params, indent=4))
 
     def output(self):
-        return luigi.LocalTarget(self.full_path_to_file)
+        return luigi.LocalTarget(os.path.join(self.project_location,
+                                              self.stacking_output_dir,
+                                              self.stacker_hpo_results_file))
 
 
-class RunStackerPrediction(luigi.Task):
-
-    # stacking_output_dir = config.get_string('stacker.full_path_output')
-    # full_path_to_file   = os.path.normpath(os.path.join(project_location, stacking_output_dir,
-    #                                                    'stacker_with_results.pickle'))
+class RunSingleStacker(luigi.Task):
+    project_location = luigi.Parameter()  # type: str
+    config_directory = luigi.Parameter()  # type: str
+    config_file = luigi.Parameter()  # type: str
+    stacker_model = luigi.Parameter()  # type: str
+    run_stacker_hpo = luigi.BoolParameter()  # type: bool
+    run_bagging = luigi.BoolParameter()  # type: bool
+    fg_output_dir = luigi.Parameter()  # type: str
+    stacking_output_dir = luigi.Parameter()  # type: str
+    output_filename = 'oof_data_info.txt'
 
     def requires(self):
-        return {'stacker': InitializeStacker(),
-                'hpo': RunStackerHPO()}
+        requirements = {'stacker': self.clone(InitializeStacker)}
+        if self.run_stacker_hpo:
+            requirements['stacker_hpo'] = self.clone(RunStackerHPO)
+        return requirements
 
     def run(self):
         # Load initialized stacker
         stacker = pickle.load(open(self.input()['stacker'].path, "rb"))
 
-        # Load set of stacker's best parameters from hyper-parameters optimization procedure
-        with open(self.input()['hpo'].path, 'r') as f:
-            best_params = json.load(f)
+        if self.run_stacker_hpo:
+            # Load set of stacker's best parameters from hyper-parameters optimization procedure
+            with open(self.input()['stacker_hpo'].path, 'r') as f:
+                best_params = json.load(f)
 
-        # Re-initialize stacker with optimal parameters
-        stacker.model.reinit_model_with_new_params(best_params)
+            # Re-initialize stacker with optimal parameters
+            stacker.model.reinit_model_with_new_params(best_params)
 
         # Run CV and prediction of test data set
         stacker.run_cv_and_prediction()
@@ -500,9 +549,6 @@ class RunStackerPrediction(luigi.Task):
         stacker.save_oof_results()
         stacker.save_submission_results()
 
-        # Plot features importance
-        # stacker.plot_features_importance(n_features=10, save=True)
-
         # Plot confusion matrix
         # TODO: think how to pass class_names and labels_mapper differently
         # Class names for report & confusion matrix plot
@@ -510,12 +556,44 @@ class RunStackerPrediction(luigi.Task):
         labels_mapper = lambda x: 1 if x > 0.5 else 0  # for confusion matrix plot
         stacker.plot_confusion_matrix(class_names, labels_mapper, normalize=True, save=True)
 
-        print('\nSaving %s\n' % self.full_path_to_file)
-        with open(self.full_path_to_file, 'wb') as f:
-            pickle.dump(stacker, f)
+        # Prepare output file for ensembling
+        solution_id = generate_single_model_solution_id_key(stacker.model_name)
+        files = [stacker.FILENAME_TRAIN_OOF_RESULTS, stacker.FILENAME_TEST_RESULTS]
+        if stacker.bagged_oof_preds is not None:
+            files.extend([stacker.FILENAME_TRAIN_OOF_RESULTS_BAGGED, stacker.FILENAME_TEST_RESULTS_BAGGED])
+        output = {
+            solution_id:
+                {
+                    'path': os.path.join(self.project_location, self.stacking_output_dir),
+                    'files': files
+                }
+        }
+        full_path_to_file = os.path.join(self.project_location, self.stacking_output_dir, self.output_filename)
+        print('\nSaving %s\n' % full_path_to_file)
+        with open(full_path_to_file, 'w') as f:
+            f.write(json.dumps(output, indent=4))
 
     def output(self):
-        return luigi.LocalTarget(self.full_path_to_file)
+        return luigi.LocalTarget(os.path.join(self.project_location, self.stacking_output_dir, self.output_filename))
+
+
+class BuildSolution(luigi.WrapperTask):
+    project_location = luigi.Parameter()  # type: str
+    config_directory = luigi.Parameter()  # type: str
+    config_file = luigi.Parameter()  # type: str
+
+    def requires(self):
+        # Run single model predictions
+        yield MakeSingleModelsPredictions(self.project_location, self.config_directory, self.config_file)
+
+        # Run stacking if requested in config
+        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        run_stacking = config.get_bool('modeling_settings.run_stacking')
+        if run_stacking:
+            config_handler = ConfigFileHandler(self.project_location, self.config_directory, self.config_file)
+            collection_stacking_input_pars = config_handler.pipeline_parameters_for_stacked_solutions()
+            for stacking_input_pars in collection_stacking_input_pars:
+                yield RunSingleStacker(**stacking_input_pars)
 
 
 if __name__ == '__main__':
@@ -523,18 +601,14 @@ if __name__ == '__main__':
     project_location = r'C:\Kaggle\home_credit_default_risk'  # os.getcwd()
     config_directory = 'configs'
     config_file = 'solution.conf'
-    print('Location of project: {0}'.format(project_location))
-
-    # stacker_model = config.get_string('stacker.meta_model')
-    # stacker_run_hpo = config.get_bool('stacker.%s.run_hpo' % stacker_model)  # if True -> run HPO of stacker
 
     # Run pipeline this way
     luigi.build([BuildSolution(project_location, config_directory, config_file)], local_scheduler=False)
 
     # Or this way
-    # luigi.run(main_task_cls=BuildSolution,
-    #           cmdline_args=["--BuildSolution-project-location=C:\Kaggle\home_credit_default_risk",
-    #                         "--BuildSolution-config-directory=configs",
-    #                         "--BuildSolution-config-file=solution.conf",
+    # luigi.run(main_task_cls=MakeSingleModelsPredictions,
+    #           cmdline_args=["--MakeSingleModelsPredictions-project-location=C:\Kaggle\home_credit_default_risk",
+    #                         "--MakeSingleModelsPredictions-config-directory=configs",
+    #                         "--MakeSingleModelsPredictions-config-file=solution.conf",
     #                         "--workers=1"],
     #           local_scheduler=False)
