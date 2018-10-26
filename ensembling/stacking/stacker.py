@@ -7,19 +7,19 @@ from modeling.prediction import BaseEstimator
 
 class Stacker(BaseEstimator):
 
-    def __init__(self, oof_input_files, train_df, test_df, target_column, index_column, stacker_model,
-                 predict_probability, class_label, eval_metric, metrics_scorer, metrics_decimals=6, target_decimals=6,
-                 cols_to_exclude=[], num_folds=5, stratified=False, kfolds_shuffle=True, cv_verbosity=1000,
-                 bagging=False, data_split_seed=789987, model_seeds_list=[27], predict_test=True, project_location='',
-                 output_dirname=''):
+    def __init__(self, oof_input_files, stack_bagged_results, train_df, test_df, target_column, index_column,
+                 stacker_model, predict_probability, class_label, eval_metric, metrics_scorer, metrics_decimals=6,
+                 target_decimals=6, cols_to_exclude=[], num_folds=5, stratified=False, kfolds_shuffle=True,
+                 cv_verbosity=1000, bagging=False, data_split_seed=789987, model_seeds_list=[27], predict_test=True,
+                 project_location='', output_dirname=''):
 
         # Full path to solution directory
         path_output_dir = os.path.normpath(os.path.join(project_location, output_dirname))
 
         self.ensembler = Ensembler()
         self.train_oof, self.test_oof = \
-            self.ensembler.load_oof_target_and_test_data(oof_input_files, project_location, train_df, test_df,
-                                                         target_column, index_column, target_decimals)
+            self.ensembler.load_oof_target_and_test_data(oof_input_files, stack_bagged_results, train_df, test_df,
+                                                         target_column, index_column, target_decimals, project_location)
 
         super(Stacker, self).__init__(
             self.train_oof, self.test_oof, target_column, index_column, stacker_model, predict_probability, class_label,
