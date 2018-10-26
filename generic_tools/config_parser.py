@@ -143,7 +143,7 @@ class ConfigFileHandler(object):
                                                      self.SUBDIR_BAGGING_ON if run_bagging else self.SUBDIR_BAGGING_OFF)
         return single_model_solution_output_dir, single_model_results_dir_path
 
-    def _check_run_settings(self, model):
+    def _check_single_model_solution_settings(self, model):
         config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
         run_feature_selection = config.get_bool('modeling_settings.%s.run_fs' % model)
         run_hpo = config.get_bool('modeling_settings.%s.run_hpo' % model)
@@ -164,14 +164,14 @@ class ConfigFileHandler(object):
             'hpo_output_dir': self._get_hpo_output_dir(model, run_feature_selection, run_hpo)[1],
             'solution_output_dir': self._get_solution_output_dir(model, run_feature_selection, run_hpo, run_bagging)[1]}
 
-    def prepare_input_parameters_for_luigi_pipeline(self):  # type: () -> list
+    def pipeline_parameters_for_single_models_solutions(self):  # type: () -> list
         config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
         base_models = config.get('modeling_settings.models')
 
         if isinstance(base_models, list):
             luigi_pipeline_input_parameters = []
             for model in base_models:
-                run_feature_selection, run_hpo, run_bagging = self._check_run_settings(model)
+                run_feature_selection, run_hpo, run_bagging = self._check_single_model_solution_settings(model)
                 input_parameters = self._prepare_single_model_input_parameters_for_luigi(model,
                                                                                          run_feature_selection,
                                                                                          run_hpo,
@@ -180,7 +180,7 @@ class ConfigFileHandler(object):
             return luigi_pipeline_input_parameters
 
         elif isinstance(base_models, basestring):
-            run_feature_selection, run_hpo, run_bagging = self._check_run_settings(base_models)
+            run_feature_selection, run_hpo, run_bagging = self._check_single_model_solution_settings(base_models)
             input_parameters = self._prepare_single_model_input_parameters_for_luigi(base_models,
                                                                                      run_feature_selection,
                                                                                      run_hpo,
@@ -189,3 +189,61 @@ class ConfigFileHandler(object):
         else:
             raise TypeError("modeling_settings.models in config file should be either list or string. "
                             "Instead got %s" % type(base_models))
+
+    def _get_stacked_solution_output_dir(self, stacker_model, run_stacker_hpo, run_bagging):
+        config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        project_structure = dict(config.get_config('project_structure'))
+
+        if run_stacker_hpo:
+            hpo_method = config.get_string('stacker.%s.hpo_method' % stacker_model)
+            hpo_name_dir = config.get_string('hp_optimization.name_hpo_dir')
+            stacker_output_dir = os.path.join(stacker_model, '_'.join([hpo_method, hpo_name_dir]))
+        else:
+            stacker_output_dir = os.path.join(stacker_model, self.SUBDIR_NO_HYPER_PARAMS_OPTIM)
+
+        stacker_results_dir_path = os.path.join(project_structure['ENSEMBLE_DIR'],
+                                                project_structure['STACKER_SUBDIR'],
+                                                stacker_output_dir,
+                                                self.SUBDIR_BAGGING_ON if run_bagging else self.SUBDIR_BAGGING_OFF)
+        return stacker_output_dir, stacker_results_dir_path
+
+    def _check_stacker_settings(self, stacker_model):
+        config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        run_hpo = config.get_bool('stacker.%s.run_hpo' % stacker_model)
+        run_bagging = config.get_bool('stacker.%s.run_bagging' % stacker_model)
+        return run_hpo, run_bagging
+
+    def _prepare_stacker_input_parameters_for_luigi(self, stacker_model, run_stacker_hpo, run_bagging):
+        return {
+            'project_location': self.project_location,
+            'config_directory': self.config_directory,
+            'config_file': self.config_file,
+            'stacker_model': stacker_model,
+            'run_stacker_hpo': run_stacker_hpo,
+            'run_bagging': run_bagging,
+            'fg_output_dir': os.path.normpath(r'features_generation\features_dataset_001'),
+            'stacking_output_dir': self._get_stacked_solution_output_dir(stacker_model, run_stacker_hpo, run_bagging)[1]}
+
+    def pipeline_parameters_for_stacked_solutions(self):
+        config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        stacker_models = config.get('stacker.meta_models')
+
+        if isinstance(stacker_models, list):
+            luigi_pipeline_input_parameters = []
+            for model in stacker_models:
+                run_hpo, run_bagging = self._check_stacker_settings(model)
+                input_parameters = self._prepare_stacker_input_parameters_for_luigi(model,
+                                                                                    run_hpo,
+                                                                                    run_bagging)
+                luigi_pipeline_input_parameters.append(input_parameters)
+            return luigi_pipeline_input_parameters
+
+        elif isinstance(stacker_models, basestring):
+            run_hpo, run_bagging = self._check_stacker_settings(stacker_models)
+            input_parameters = self._prepare_stacker_input_parameters_for_luigi(stacker_models,
+                                                                                run_hpo,
+                                                                                run_bagging)
+            return [input_parameters]
+        else:
+            raise TypeError("stacker.meta_models in config file should be either list or string. "
+                            "Instead got %s" % type(stacker_models))
