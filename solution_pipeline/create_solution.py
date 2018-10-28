@@ -22,6 +22,8 @@ warnings.filterwarnings("ignore")
 
 class TrainDataIngestion(luigi.Task):
     project_location = luigi.Parameter()  # type: str
+    config_directory = luigi.Parameter()  # type: str
+    config_file = luigi.Parameter()  # type: str
     fg_output_dir = luigi.Parameter()  # type: str
 
     def run(self):
@@ -31,21 +33,22 @@ class TrainDataIngestion(luigi.Task):
         # Settings for debug
         debug = config.get_bool('modeling_settings.debug')
         num_rows = config.get_int('modeling_settings.num_rows')
+        train_file = config.get_string('features_generation.train_file')
+        test_file = config.get_string('features_generation.test_file')
 
         # Load train and test data set from feature generation pool and downcast data types
-        full_path_to_file = os.path.normpath(os.path.join(self.project_location, self.fg_output_dir, 'train.csv'))
-        train_data = downcast_datatypes(pd.read_csv(full_path_to_file, nrows=num_rows if debug else None)) \
+        train_full_path = os.path.join(self.project_location, self.fg_output_dir, train_file)
+        train_data = downcast_datatypes(pd.read_csv(train_full_path, nrows=num_rows if debug else None)) \
             .reset_index(drop=True)
-
-        full_path_to_file = os.path.normpath(os.path.join(self.project_location, self.fg_output_dir, 'test.csv'))
-        test_data = downcast_datatypes(pd.read_csv(full_path_to_file, nrows=num_rows if debug else None)) \
-            .reset_index(drop=True)
-
         print('Train DF shape: {0}\n'.format(train_data.shape, train_data.info()))
+
+        test_full_path = os.path.join(self.project_location, self.fg_output_dir, test_file)
+        test_data = downcast_datatypes(pd.read_csv(test_full_path, nrows=num_rows if debug else None)) \
+            .reset_index(drop=True)
         print('Test DF shape: {0}'.format(test_data.shape))
 
-        new_train_name = os.path.normpath(os.path.join(self.project_location, self.fg_output_dir, 'train_new.csv'))
-        new_test_name = os.path.normpath(os.path.join(self.project_location, self.fg_output_dir, 'test_new.csv'))
+        new_train_name = os.path.join(self.project_location, self.fg_output_dir, 'train_new.csv')
+        new_test_name = os.path.join(self.project_location, self.fg_output_dir, 'test_new.csv')
         print('\nSaving %s\n' % new_train_name)
         print('\nSaving %s\n' % new_test_name)
 
@@ -53,12 +56,8 @@ class TrainDataIngestion(luigi.Task):
         test_data.to_csv(new_test_name, index=False)
 
     def output(self):
-        return {'train_data': luigi.LocalTarget(os.path.normpath(os.path.join(self.project_location,
-                                                                              self.fg_output_dir,
-                                                                              'train_new.csv'))),
-                'test_data': luigi.LocalTarget(os.path.normpath(os.path.join(self.project_location,
-                                                                             self.fg_output_dir,
-                                                                             'test_new.csv')))}
+        return {'train_data': luigi.LocalTarget(os.path.join(self.project_location, self.fg_output_dir, 'train_new.csv')),
+                'test_data': luigi.LocalTarget(os.path.join(self.project_location, self.fg_output_dir, 'test_new.csv'))}
 
 
 @requires(TrainDataIngestion)
@@ -81,9 +80,12 @@ class FeatureSelection(luigi.Task):
         # Categorical features for lgbm in feature_selection process
         categorical_feats = [f for f in train_data.columns if train_data[f].dtype == 'object']
         print('Number of categorical features: {0}'.format(len(categorical_feats)))
-        for f_ in categorical_feats:
-            train_data[f_], _ = pd.factorize(train_data[f_])
-            train_data[f_] = train_data[f_].astype('category')
+        for cat_feat in categorical_feats:
+            train_data[cat_feat], _ = pd.factorize(train_data[cat_feat])
+            train_data[cat_feat] = train_data[cat_feat].astype('category')
+
+        # TODO: how to improve this situation: if cat_features=None, an automatic algo will be used to find cat_features
+        # If cat_features = categorical_feats -> categorical feature are only those with dtype = 'object'
         cat_features = categorical_feats  # None
 
         # Extracting settings from config
@@ -98,7 +100,7 @@ class FeatureSelection(luigi.Task):
                                      'thresholds' % self.feats_select_method)
         n_thresholds = config.get_int('features_selection.%s.eval_feats_removal_impact_on_cv_score.'
                                       'n_thresholds' % self.feats_select_method)
-        eval_metric = config.get_string('modeling_settings.cv_params.eval_metric')
+        eval_metric = config.get_string('modeling_settings.lightgbm.eval_metric')  # feature selector is lightgbm-based
         metrics_scorer = get_metrics_scorer(config.get('modeling_settings.cv_params.metrics_scorer'))
         metrics_decimals = config.get_int('modeling_settings.cv_params.metrics_decimals')
         num_folds = config.get_int('modeling_settings.cv_params.num_folds')
@@ -149,16 +151,13 @@ class FeatureSelection(luigi.Task):
                                                           cv_std_asc_rank=False)
         opt_feats = features_selection.get_list_of_features(importance='gain_score', thresh=opt_thres)
 
-        full_path_to_file = os.path.normpath(os.path.join(self.project_location,
-                                                          self.fs_output_dir,
-                                                          self.fs_results_file))
+        full_path_to_file = os.path.join(self.project_location, self.fs_output_dir, self.fs_results_file)
         print('\nSaving %s\n' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
             f.write(json.dumps(opt_feats, indent=4))
 
     def output(self):
-        return luigi.LocalTarget(os.path.normpath(os.path.join(
-            self.project_location, self.fs_output_dir, self.fs_results_file)))
+        return luigi.LocalTarget(os.path.join(self.project_location, self.fs_output_dir, self.fs_results_file))
 
 
 class InitializeSingleModelPredictor(luigi.Task):
@@ -210,7 +209,7 @@ class InitializeSingleModelPredictor(luigi.Task):
         cols_to_exclude = config.get_list('modeling_settings.cols_to_exclude')
         bagging = config.get_bool('modeling_settings.%s.run_bagging' % self.model)
         predict_test = config.get_bool('modeling_settings.predict_test')
-        eval_metric = config.get_string('modeling_settings.cv_params.eval_metric')
+        eval_metric = config.get_string('modeling_settings.%s.eval_metric' % self.model)
         metrics_scorer = get_metrics_scorer(config.get('modeling_settings.cv_params.metrics_scorer'))
         metrics_decimals = config.get_int('modeling_settings.cv_params.metrics_decimals')
         target_decimals = config.get_int('modeling_settings.cv_params.target_decimals')
@@ -218,7 +217,7 @@ class InitializeSingleModelPredictor(luigi.Task):
         stratified = config.get_bool('modeling_settings.cv_params.stratified')
         kfolds_shuffle = config.get_bool('modeling_settings.cv_params.kfolds_shuffle')
         cv_verbosity = config.get_int('modeling_settings.cv_params.cv_verbosity')
-        data_split_seed = config.get_int('modeling_settings.cv_params.data_split_seed')
+        data_split_seed = config.get_int('modeling_settings.data_split_seed')
         model_seeds_list = config.get_list('modeling_settings.model_seeds_list')
 
         # Initialize single model predictor
@@ -289,17 +288,17 @@ class RunSingleModelHPO(luigi.Task):
 
 
 class RunSingleModelPrediction(luigi.Task):
-    project_location = luigi.Parameter()  # absolute path to project's main directory
-    config_directory = luigi.Parameter()  # name of config sub-directory in project directory
-    config_file = luigi.Parameter()  # name of config file in the config sub-directory
-    model = luigi.Parameter()  # name of estimator model
-    run_feature_selection = luigi.BoolParameter()  # if True -> run feature selection
-    run_hpo = luigi.BoolParameter()  # if True -> run hyper-parameters optimization
-    run_bagging = luigi.BoolParameter()  # if True -> run bagging
-    fg_output_dir = luigi.Parameter()  # feature generation directory (to be used as input for train data ingestion)
-    fs_output_dir = luigi.Parameter()  # feature selection directory (where results of feature selection to be saved)
-    hpo_output_dir = luigi.Parameter()  # hyper-parameters optimization directory (where results of hpo to be saved)
-    solution_output_dir = luigi.Parameter()  # output directory where results of a single model prediction to be saved
+    project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
+    config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
+    config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
+    model = luigi.Parameter()  # type: str # name of estimator model
+    run_feature_selection = luigi.BoolParameter()  # type: bool # if True -> run feature selection
+    run_hpo = luigi.BoolParameter()  # type: bool # if True -> run hyper-parameters optimization
+    run_bagging = luigi.BoolParameter()  # type: bool # if True -> run bagging
+    fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
+    fs_output_dir = luigi.Parameter()  # type: str # feat. selection dir (where results of feature select. to be saved)
+    hpo_output_dir = luigi.Parameter()  # type: str # hyper-parameters opt. dir (where results of hpo to be saved)
+    solution_output_dir = luigi.Parameter()  # type: str # output dir where results of single model prediction is saved
     output_filename = 'oof_data_info.txt'
 
     def requires(self):
@@ -311,6 +310,9 @@ class RunSingleModelPrediction(luigi.Task):
     def run(self):
         # Load initialized single model predictor
         predictor = pickle.load(open(self.input()['predictor'].path, "rb"))
+
+        # Parsing config (actually it is cached)
+        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
 
         if self.run_hpo:
             # Load set of single model's best parameters from hyper-parameters optimization procedure
@@ -326,16 +328,17 @@ class RunSingleModelPrediction(luigi.Task):
         # Plot cv results at different seeds
         predictor.plot_cv_results_vs_used_seeds(save=True)
 
-        # TODO: think how to pass class_names and labels_mapper differently
-        # Class names for report & confusion matrix plot
-        class_names = ['0', '1']
-        labels_mapper = lambda x: 1 if x > 0.5 else 0  # for confusion matrix plot
-
         # Plot confusion matrix
-        predictor.plot_confusion_matrix(class_names, labels_mapper, normalize=True, save=True)
+        plot_cm = config.get_bool('modeling_settings.plot_confusion_matrix')
+        if plot_cm:
+            class_names = config.get('modeling_settings.confusion_matrix_labels', default=None)
+            class_names = np.array(class_names) if class_names is not None else None
+            labels_mapper = config.get('modeling_settings.labels_mapper', default=None)
+            labels_mapper = eval(labels_mapper) if labels_mapper is not None else None
+            predictor.plot_confusion_matrix(class_names, labels_mapper, normalize=True, save=True)
 
         # Plot features importance
-        predictor.plot_features_importance(n_features=40, save=True)
+        predictor.plot_features_importance(n_features=7, save=True)
 
         # Save results
         predictor.save_oof_results()
@@ -435,7 +438,7 @@ class InitializeStacker(luigi.Task):
         kfolds_shuffle = config.get_bool('modeling_settings.cv_params.kfolds_shuffle')
         cv_verbosity = config.get_int('modeling_settings.cv_params.cv_verbosity')
         stacker_bagging = config.get_bool('stacker.%s.run_bagging' % self.stacker_model)
-        data_split_seed = config.get_int('modeling_settings.cv_params.data_split_seed')
+        data_split_seed = config.get_int('modeling_settings.data_split_seed')
         model_seeds_list = config.get_list('modeling_settings.model_seeds_list')
 
         # TODO: to add this logic
@@ -534,6 +537,9 @@ class RunSingleStacker(luigi.Task):
         # Load initialized stacker
         stacker = pickle.load(open(self.input()['stacker'].path, "rb"))
 
+        # Parsing config (actually it is cached)
+        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+
         if self.run_stacker_hpo:
             # Load set of stacker's best parameters from hyper-parameters optimization procedure
             with open(self.input()['stacker_hpo'].path, 'r') as f:
@@ -550,11 +556,13 @@ class RunSingleStacker(luigi.Task):
         stacker.save_submission_results()
 
         # Plot confusion matrix
-        # TODO: think how to pass class_names and labels_mapper differently
-        # Class names for report & confusion matrix plot
-        class_names = ['0', '1']
-        labels_mapper = lambda x: 1 if x > 0.5 else 0  # for confusion matrix plot
-        stacker.plot_confusion_matrix(class_names, labels_mapper, normalize=True, save=True)
+        plot_cm = config.get_bool('modeling_settings.plot_confusion_matrix')
+        if plot_cm:
+            class_names = config.get('modeling_settings.confusion_matrix_labels', default=None)
+            class_names = np.array(class_names) if class_names is not None else None
+            labels_mapper = config.get('modeling_settings.labels_mapper', default=None)
+            labels_mapper = eval(labels_mapper) if labels_mapper is not None else None
+            stacker.plot_confusion_matrix(class_names, labels_mapper, normalize=True, save=True)
 
         # Prepare output file for ensembling
         solution_id = generate_single_model_solution_id_key(stacker.model_name)
@@ -598,7 +606,8 @@ class BuildSolution(luigi.WrapperTask):
 
 if __name__ == '__main__':
     # Location of the project and config file
-    project_location = r'C:\Kaggle\home_credit_default_risk'  # os.getcwd()
+    # project_location = 'C:\Kaggle\home_credit_default_risk'  # or e.g. os.getcwd()
+    project_location = 'c:\Kaggle\FastMLFramework\examples\classification\multiclass\iris'
     config_directory = 'configs'
     config_file = 'solution.conf'
 
