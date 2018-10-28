@@ -21,7 +21,7 @@ class ConfigFileHandler(object):
         :param config_directory:
         :param config_file:
         """
-        self.project_location = project_location
+        self.project_location = os.path.normpath(project_location)
         self.config_directory = config_directory
         self.config_file = config_file
 
