@@ -606,8 +606,9 @@ class BuildSolution(luigi.WrapperTask):
 
 if __name__ == '__main__':
     # Location of the project and config file
-    # project_location = 'C:\Kaggle\home_credit_default_risk'  # or e.g. os.getcwd()
     project_location = 'c:\Kaggle\FastMLFramework\examples\classification\multiclass\iris'
+    # project_location = 'c:\Kaggle\home_credit_default_risk'  # or e.g. os.getcwd()
+
     config_directory = 'configs'
     config_file = 'solution.conf'
 
@@ -615,9 +616,9 @@ if __name__ == '__main__':
     luigi.build([BuildSolution(project_location, config_directory, config_file)], local_scheduler=False)
 
     # Or this way
-    # luigi.run(main_task_cls=MakeSingleModelsPredictions,
-    #           cmdline_args=["--MakeSingleModelsPredictions-project-location=C:\Kaggle\home_credit_default_risk",
-    #                         "--MakeSingleModelsPredictions-config-directory=configs",
-    #                         "--MakeSingleModelsPredictions-config-file=solution.conf",
+    # luigi.run(main_task_cls=BuildSolution,
+    #           cmdline_args=["--BuildSolution-project-location=C:\Kaggle\home_credit_default_risk",
+    #                         "--BuildSolution-config-directory=configs",
+    #                         "--BuildSolution-config-file=solution.conf",
     #                         "--workers=1"],
     #           local_scheduler=False)
