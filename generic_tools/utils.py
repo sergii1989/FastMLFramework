@@ -1,9 +1,4 @@
 import os
-import re
-import json
-import requests
-import warnings
-import ipykernel
 import numpy as np
 import pandas as pd
 
@@ -11,18 +6,7 @@ from time import time
 from functools import wraps
 from sklearn import metrics
 from datetime import datetime
-from requests.compat import urljoin
 from contextlib import contextmanager
-
-
-# TODO: Think whether to keep this functionality and get_notebook_name() method
-try:
-    from notebook.notebookapp import list_running_servers
-except ImportError:
-    from IPython.utils.shimmodule import ShimWarning
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=ShimWarning)
-        from IPython.html.notebookapp import list_running_servers
 
 
 @contextmanager
@@ -160,17 +144,3 @@ def generate_single_model_solution_id_key(model_name):  # type: (str) -> str
     """
     np.random.seed()
     return '_'.join([model_name, ("%04d" % np.random.randint(9999))])
-
-
-def get_notebook_name():
-    """
-    Return the name of jupyter notebook.
-    """
-    kernel_id = re.search('kernel-(.*).json', ipykernel.connect.get_connection_file()).group(1)
-    servers = list_running_servers()
-    for ss in servers:
-        response = requests.get(urljoin(ss['url'], 'api/sessions'), params={'token': ss.get('token', '')})
-        for nn in json.loads(response.text):
-            if nn['kernel']['id'] == kernel_id:
-                relative_path = nn['notebook']['path']
-                return relative_path
