@@ -3,6 +3,7 @@ import gc
 import pandas as pd
 
 from pandas import testing as pdt
+from modeling.prediction import Predictor
 
 
 class Ensembler(object):
@@ -26,7 +27,7 @@ class Ensembler(object):
         if 'train_OOF' in filename:
             assert target_column in meta_data, ('Please add {0} column to the {1}'.format(target_column, filename))
             pdt.assert_series_equal(meta_data[target_column], model_data[target_column])
-        if index_column is not None and index_column != '':
+        if Predictor.verify_index_column_is_defined(index_column):
             assert index_column in meta_data, ('Please add {0} column to the {1}'.format(index_column, filename))
             pdt.assert_series_equal(meta_data[index_column], model_data[index_column])
 
@@ -39,7 +40,7 @@ class Ensembler(object):
             df = df.astype(int)
 
         # Add index column to the beginning of DF if index column is valid
-        if index_column is not None and index_column != '':
+        if Predictor.verify_index_column_is_defined(index_column):
             index_values = main_df[index_column].values
             df.insert(loc=0, column=index_column, value=index_values)
 
