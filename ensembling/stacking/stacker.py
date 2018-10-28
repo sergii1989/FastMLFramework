@@ -7,19 +7,19 @@ from modeling.prediction import BaseEstimator
 
 class Stacker(BaseEstimator):
 
-    def __init__(self, oof_input_files, train_df, test_df, target_column, index_column, stacker_model,
-                 predict_probability, class_label, eval_metric, metrics_scorer, metrics_decimals=6, target_decimals=6,
-                 cols_to_exclude=[], num_folds=5, stratified=False, kfolds_shuffle=True, cv_verbosity=1000,
-                 bagging=False, data_split_seed=789987, model_seeds_list=[27], predict_test=True, project_location='',
-                 output_dirname=''):
+    def __init__(self, oof_input_files, stack_bagged_results, train_df, test_df, target_column, index_column,
+                 stacker_model, predict_probability, class_label, eval_metric, metrics_scorer, metrics_decimals=6,
+                 target_decimals=6, cols_to_exclude=[], num_folds=5, stratified=False, kfolds_shuffle=True,
+                 cv_verbosity=1000, bagging=False, data_split_seed=789987, model_seeds_list=[27], predict_test=True,
+                 project_location='', output_dirname=''):
 
         # Full path to solution directory
         path_output_dir = os.path.normpath(os.path.join(project_location, output_dirname))
 
         self.ensembler = Ensembler()
         self.train_oof, self.test_oof = \
-            self.ensembler.load_oof_target_and_test_data(oof_input_files, project_location, train_df, test_df,
-                                                         target_column, index_column, target_decimals)
+            self.ensembler.load_oof_target_and_test_data(oof_input_files, stack_bagged_results, train_df, test_df,
+                                                         target_column, index_column, target_decimals, project_location)
 
         super(Stacker, self).__init__(
             self.train_oof, self.test_oof, target_column, index_column, stacker_model, predict_probability, class_label,
@@ -73,14 +73,15 @@ def run_stacker_kaggle_example(stacker_model='logistic_regression', debug=True):
     output_dirname = ''  # 'solution'
     target_column = 'TARGET'
     index_column = 'SK_ID_CURR'
-    metrics_scorer = roc_auc_score
-    metrics_decimals = 4
-    target_decimals = 2
+    stacker_metrics_scorer = roc_auc_score
+    stacker_metrics_decimals = 4
+    stacker_target_decimals = 2
     num_folds = 5
     stratified = True
     kfolds_shuffle = True
     cv_verbosity = 1000
-    bagging = False
+    stack_bagged_results = True
+    stacker_bagging = False
     predict_test = True
     data_split_seed = 789987
     model_seeds_list = [27]
@@ -88,7 +89,7 @@ def run_stacker_kaggle_example(stacker_model='logistic_regression', debug=True):
 
     if stacker_model is 'lightgbm':
         predict_probability = True  # if True -> use estimator.predict_proba(), otherwise -> estimator.predict()
-        eval_metric = 'auc'
+        stacker_eval_metric = 'auc'
         params = {
             'boosting_type': 'gbdt',  # gbdt, gbrt, rf, random_forest, dart, goss
             'objective': 'binary',
@@ -108,7 +109,7 @@ def run_stacker_kaggle_example(stacker_model='logistic_regression', debug=True):
         }
     elif stacker_model is 'logistic_regression':
         predict_probability = True  # if True -> use estimator.predict_proba(), otherwise -> estimator.predict()
-        eval_metric = 'auc'
+        stacker_eval_metric = 'auc'
         params = {
             'penalty': 'l1',  # norm used in the penalization ('l1' or 'l2'), default 'l2'
             'tol': 0.00001,  # tolerance for stopping criteria (default 0.0001)
@@ -124,7 +125,7 @@ def run_stacker_kaggle_example(stacker_model='logistic_regression', debug=True):
     else:
         # Linear Regression
         predict_probability = False  # if True -> use estimator.predict_proba(), otherwise -> estimator.predict()
-        eval_metric = 'rmse'
+        stacker_eval_metric = 'rmse'
         params = {
             'fit_intercept': True,  # constant bias to be added to the decision function, default: True
             'normalize': False,  # If True, regressors will be normalized by subtr. the mean and dividing by l2-norm.
@@ -134,12 +135,14 @@ def run_stacker_kaggle_example(stacker_model='logistic_regression', debug=True):
     stacker_wrapped = get_wrapped_estimator(stacker_model, params)
 
     stacker = Stacker(
-        oof_input_files=oof_input_files, train_df=train_data, test_df=test_data, target_column=target_column,
-        index_column=index_column, stacker_model=stacker_wrapped, predict_probability=predict_probability,
-        class_label=class_label, eval_metric=eval_metric, metrics_scorer=metrics_scorer,
-        metrics_decimals=metrics_decimals, target_decimals=target_decimals, cols_to_exclude=cols_to_exclude,
+        oof_input_files=oof_input_files, train_df=train_data, test_df=test_data,
+        target_column=target_column, index_column=index_column, cols_to_exclude=cols_to_exclude,
+        stacker_model=stacker_wrapped, stack_bagged_results=stack_bagged_results, bagging=stacker_bagging,
+        predict_probability=predict_probability, class_label=class_label,
+        eval_metric=stacker_eval_metric, metrics_scorer=stacker_metrics_scorer,
+        metrics_decimals=stacker_metrics_decimals, target_decimals=stacker_target_decimals,
         num_folds=num_folds, stratified=stratified, kfolds_shuffle=kfolds_shuffle, cv_verbosity=cv_verbosity,
-        bagging=bagging, predict_test=predict_test, data_split_seed=data_split_seed, model_seeds_list=model_seeds_list,
+        data_split_seed=data_split_seed, model_seeds_list=model_seeds_list,
         project_location=project_location, output_dirname=output_dirname
     )
     stacker.run_cv_and_prediction()

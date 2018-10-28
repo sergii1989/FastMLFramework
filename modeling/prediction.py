@@ -16,8 +16,15 @@ from sklearn.metrics import confusion_matrix, classification_report
 
 
 class BaseEstimator(object):
+    FIGNAME_FEAT_IMPORT = 'features_importance.csv'
     FIGNAME_CONFUSION_MATRIX = 'confusion_matrix.png'
-    FIGNAME_CV_RESULTS_VERSUS_SEEDS = 'cv_results_vs_seeds.png'
+    FIGNAME_CV_RESULTS_VERSUS_SEEDS = 'cv_results.png'
+    FILENAME_CV_RESULTS = 'cv_results.csv'
+    FILENAME_FEATS_IMPORT = 'features_importance.png'
+    FILENAME_TRAIN_OOF_RESULTS = 'train_OOF.csv'
+    FILENAME_TRAIN_OOF_RESULTS_BAGGED = 'train_OOF_bagged.csv'
+    FILENAME_TEST_RESULTS = 'test.csv'
+    FILENAME_TEST_RESULTS_BAGGED = 'test_bagged.csv'
 
     def __init__(self, train_df, test_df, target_column, index_column, model, predict_probability, class_label,
                  eval_metric, metrics_scorer, metrics_decimals=6, target_decimals=6, cols_to_exclude=[],
@@ -75,7 +82,7 @@ class BaseEstimator(object):
         self.model = model  # type: ModelWrapper
         self.model_name = model.get_name()  # type: str
         self.predict_probability = predict_probability  # type: bool
-        self.class_label = class_label
+        self.class_label = class_label if predict_probability else None
 
         # Settings for CV and test prediction
         self.num_folds = num_folds  # type: int
@@ -108,13 +115,17 @@ class BaseEstimator(object):
         self.feature_importance = None  # type: pd.DataFrame
         self.shap_values = None  # type: pd.DataFrame
 
-    def _index_column_is_defined(self):  # type: (None) -> bool
+        # TODO: to add a variable defining whether evaluation metrics should be minimized / maximized
+        # self.cv_maximize = True
+
+    @staticmethod
+    def verify_index_column_is_defined(index_column):
         """
-        This method returns True if index column is defined in the Predictor class and is not equal to ''.
+        This method returns True if index column is defined in the config file and is not equal to '' or None.
         Note that index column is frequently used when preparing out-of-fold and test predictions.
         :return: True or False
         """
-        return self.index_column is not None and self.index_column != ''
+        return index_column is not None and index_column != '' and index_column != "''"
 
     def _verify_input_data_is_correct(self):
         """
@@ -122,12 +133,12 @@ class BaseEstimator(object):
         :return: None
         """
         assert self.target_column in self.train_df, \
-            'Please add {target} column to the train_oof dataframe'.format(target=self.target_column)
+            'Please add {target} column to the train dataframe'.format(target=self.target_column)
 
-        if self._index_column_is_defined():
-            assert self.index_column in self.train_df.columns, ('Please add {index} column to the train_oof '
+        if self.verify_index_column_is_defined(self.index_column):
+            assert self.index_column in self.train_df.columns, ('Please add {index} column to the train '
                                                                 'dataframe'.format(index=self.index_column))
-            assert self.index_column in self.test_df.columns, ('Please add {index} column to the test_oof '
+            assert self.index_column in self.test_df.columns, ('Please add {index} column to the test '
                                                                'dataframe'.format(index=self.index_column))
 
         unique_target_classes = self.train_df[self.target_column].unique().tolist()
@@ -155,7 +166,7 @@ class BaseEstimator(object):
         :return: single pandas DF
         """
         df = pd.concat(list_bagged_df, axis=1)
-        if self._index_column_is_defined():
+        if self.verify_index_column_is_defined(self.index_column):
             index_values = self.train_df[self.index_column].values if is_oof_prediction \
                 else self.test_df[self.index_column].values
             df.insert(loc=0, column=self.index_column, value=index_values)
@@ -176,16 +187,12 @@ class BaseEstimator(object):
         df = pd.DataFrame()
         target_col = self.target_column + '_OOF' if is_oof_prediction else self.target_column
 
-        if self._index_column_is_defined():
+        if self.verify_index_column_is_defined(self.index_column):
             index_values = self.train_df[self.index_column].values if is_oof_prediction \
                 else self.test_df[self.index_column].values
             df[self.index_column] = index_values
             df[target_col] = bagged_df.loc[:, ~bagged_df.columns.isin([self.index_column, self.target_column])]\
                 .mean(axis=1).round(self.target_decimals)
-
-            # Add column with real target values to OOF dataframe
-            if is_oof_prediction:
-                df[self.target_column] = self.train_df[self.target_column].values
         else:
             df[target_col] = bagged_df.loc[:, bagged_df.columns != self.target_column]\
                 .mean(axis=1).round(self.target_decimals)
@@ -193,6 +200,10 @@ class BaseEstimator(object):
         # Convert to int if target rounding precision is 0 decimals
         if self.target_decimals == 0:
             df[target_col] = df[target_col].astype(int)
+
+        # Add column with real target values to OOF dataframe
+        if is_oof_prediction:
+            df[self.target_column] = self.train_df[self.target_column].values
         return df
 
     def _prepare_single_seed_results(self, preds, is_oof_prediction):  # type: (np.ndarray, bool) -> pd.DataFrame
@@ -205,19 +216,19 @@ class BaseEstimator(object):
         df = pd.DataFrame()
         target_col = self.target_column + '_OOF' if is_oof_prediction else self.target_column
 
-        if self._index_column_is_defined():
+        if self.verify_index_column_is_defined(self.index_column):
             index_values = self.train_df[self.index_column].values if is_oof_prediction \
                 else self.test_df[self.index_column].values
             df[self.index_column] = index_values
         df[target_col] = np.round(preds, self.target_decimals)
 
-        # Add column with real target values to OOF dataframe
-        if is_oof_prediction:
-            df[self.target_column] = self.train_df[self.target_column].values
-
         # Convert to int if target rounding precision is 0 decimals
         if self.target_decimals == 0:
             df[target_col] = df[target_col].astype(int)
+
+        # Add column with real target values to OOF dataframe
+        if is_oof_prediction:
+            df[self.target_column] = self.train_df[self.target_column].values
         return df
 
     def _get_feature_importances_in_fold(self, feats, n_fold):  # type: (list, int) -> pd.DataFrame
@@ -280,9 +291,23 @@ class BaseEstimator(object):
         # This expression is needed to be able pass explicitly cv_verbosity=0 when running hyperparameters optimization
         cv_verbosity = cv_verbosity if cv_verbosity is not None else self.cv_verbosity
 
-        target = self.target_column
-        feats = [f for f in self.train_df.columns if f not in set(self.cols_to_exclude).union(
-            {self.target_column, self.index_column})]
+        if self.__class__.__name__ == 'Stacker':
+            # Since the names of the train OOF prediction columns for the Stacking process are composed as
+            # self.model_name + unique_id_key + self.target_column + '_OOF' whereas the test OOF prediction
+            # columns names are self.model_name + unique_id_key + self.target_column, it is then important to
+            # remove the '_OOF' suffix from the train OOF column names so to have the same notation of columns
+            # in both train and test data sets
+            feats_names_mapper = {f: f.split('_OOF')[0] if self.target_column + '_OOF' in f else f
+                                  for f in self.train_df.columns}
+            self.train_df.rename(columns=feats_names_mapper, inplace=True)
+
+        # Selecting features for model training and test prediction
+        if self.verify_index_column_is_defined(self.index_column):
+            feats = [f for f in self.train_df.columns if f not in set(self.cols_to_exclude).union(
+                {self.target_column, self.index_column})]
+        else:
+            feats = [f for f in self.train_df.columns if f not in set(self.cols_to_exclude).union(
+                {self.target_column})]
 
         shap_values_df = pd.DataFrame()
         feature_importance_df = pd.DataFrame()
@@ -309,9 +334,9 @@ class BaseEstimator(object):
         sub_preds = [] if predict_test else None
 
         oof_eval_results = []
-        for n_fold, (train_idx, valid_idx) in enumerate(folds.split(self.train_df[feats], self.train_df[target])):
-            train_x, train_y = self.train_df[feats].iloc[train_idx], self.train_df[target].iloc[train_idx]
-            valid_x, valid_y = self.train_df[feats].iloc[valid_idx], self.train_df[target].iloc[valid_idx]
+        for n_fold, (train_idx, valid_idx) in enumerate(folds.split(self.train_df[feats], self.train_df[self.target_column])):
+            train_x, train_y = self.train_df[feats].iloc[train_idx], self.train_df[self.target_column].iloc[train_idx]
+            valid_x, valid_y = self.train_df[feats].iloc[valid_idx], self.train_df[self.target_column].iloc[valid_idx]
 
             self.model.fit_estimator(train_x, train_y, valid_x, valid_y, eval_metric=self.eval_metric,
                                      cv_verbosity=cv_verbosity)
@@ -358,7 +383,7 @@ class BaseEstimator(object):
             print('CV: Fold {0} {1} : {2}\n'.format(n_fold + 1, self.metrics_scorer.func_name.upper(), oof_eval_result))
 
         # CV score and STD of CV score over folds for a given seed
-        cv_score = round(self.metrics_scorer(self.train_df[target], oof_preds), self.metrics_decimals)
+        cv_score = round(self.metrics_scorer(self.train_df[self.target_column], oof_preds), self.metrics_decimals)
         cv_std = round(float(np.std(oof_eval_results)), self.metrics_decimals)
         print('CV: list of OOF {0}: {1}'.format(self.metrics_scorer.func_name.upper(), oof_eval_results))
         print('CV {0}: {1} +/- {2}'.format(self.metrics_scorer.func_name.upper(), cv_score, cv_std))
@@ -397,7 +422,6 @@ class BaseEstimator(object):
                     self.run_cv_one_seed(seed_val, self.predict_test)
 
                 # Convert to int if target rounding precision is 0 decimals
-
                 oof_preds = pd.Series(oof_preds, name='seed_%s' % str(i + 1)).round(self.target_decimals)
                 sub_preds = pd.Series(sub_preds, name='seed_%s' % str(i + 1)).round(self.target_decimals)
 
@@ -445,8 +469,13 @@ class BaseEstimator(object):
                 zip(self.model_seeds_list, cv_score_bagged, cv_std_bagged, oof_eval_results_bagged),
                 columns=['seed', 'cv_mean_score', 'cv_std', 'cv_score_per_each_fold']
             )
-            self.feature_importance = pd.concat(feature_importance_bagged).reset_index(drop=True)
-            self.shap_values = pd.concat(shap_values_bagged).reset_index(drop=True)
+
+            if not all(map(lambda x: x is None, feature_importance_bagged)):
+                self.feature_importance = pd.concat(feature_importance_bagged).reset_index(drop=True)
+
+            if not all(map(lambda x: x is None, shap_values_bagged)):
+                self.shap_values = pd.concat(shap_values_bagged).reset_index(drop=True)
+
             del oof_pred_bagged, sub_preds_bagged; gc.collect()
 
         else:
@@ -465,8 +494,13 @@ class BaseEstimator(object):
             # std of CV score as well as list of CV values (in all folds).
             self.oof_eval_results = pd.DataFrame([self.model_seeds_list[0], cv_score, cv_std, oof_eval_results],
                                                  index=['seed', 'cv_mean_score', 'cv_std', 'cv_score_per_each_fold']).T
-            self.feature_importance = feature_importance_df
-            self.shap_values = shap_values_df
+
+            if feature_importance_df is not None:
+                self.feature_importance = feature_importance_df
+
+            if shap_values_df is not None:
+                self.shap_values = shap_values_df
+
             del oof_preds, sub_preds; gc.collect()
 
         # Saving final cv score and std
@@ -477,7 +511,8 @@ class BaseEstimator(object):
         """
         This function prints and plots the confusion matrix. Normalization can be applied by setting normalize=True.
         :param class_names: list of strings defining unique classes names
-        :param labels_mapper:
+        :param labels_mapper: mapper to convert target classes probabilities back to the categorical labels
+                              It should be used exclusively when predict_probability=True.
         :param normalize: if True -> normalizes results in confusion matrix (shows units instead of counting values)
         :param cmap: color map
         :param save: if True -> results will be saved to disk
@@ -485,8 +520,24 @@ class BaseEstimator(object):
         """
         fig, ax = plt.subplots()
         true_labels = self.train_df[self.target_column].values.tolist()
-        predicted_labels = map(labels_mapper, self.oof_preds[self.target_column + '_OOF'])
-        cm = confusion_matrix(true_labels, predicted_labels)
+
+        if self.predict_probability:
+            # If predict_probability -> True, one should use mapper to convert probabilities back to categorical labels
+            if labels_mapper is not None:
+                predicted_labels = map(labels_mapper, self.oof_preds[self.target_column + '_OOF'])
+            else:
+                raise Exception('For a classification task with the predict_probability=True, one should provide '
+                                'labels_mapper function to convert predicted probabilities back to categorical labels')
+        else:
+            # If predict_probability -> False, model output is categorical labels -> no labels_mapper is needed
+            predicted_labels = self.oof_preds[self.target_column + '_OOF']
+
+        # Handle situation when class_names are not provided
+        if class_names is None:
+            from sklearn.utils.multiclass import unique_labels
+            class_names = unique_labels(true_labels, predicted_labels)
+
+        cm = confusion_matrix(y_true=true_labels, y_pred=predicted_labels, labels=class_names)
 
         if normalize:
             cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
@@ -495,6 +546,10 @@ class BaseEstimator(object):
             print('Confusion matrix, without normalization')
 
         print('{0}\n'.format(cm))
+
+        if class_names.dtype.kind not in {'U', 'S'}:
+            class_names = class_names.astype(str)
+
         plt.imshow(cm, interpolation='nearest', cmap=cmap)
         ax.set_title('Normalized confusion matrix' if normalize else 'Confusion matrix')
         plt.colorbar(ax=ax)
@@ -548,6 +603,10 @@ class BaseEstimator(object):
         :param save: if True -> results will be saved to disk
         :return: plot of features importance
         """
+        # TODO: think how to improve logic for plot_features_importance if feature_importance is None
+        if self.feature_importance is None:
+            return
+
         features_importance = self.feature_importance.copy()
         self.verify_number_of_features_is_ok(features_importance, n_features)
 
@@ -563,11 +622,11 @@ class BaseEstimator(object):
         fig.subplots_adjust(right=0.8)
 
         if save:
-            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'feat_import']) + '.png')
+            full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_FEATS_IMPORT)
             print('\nSaving features importance graph into %s' % full_path_to_file)
             fig.savefig(full_path_to_file)
 
-            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'feat_import']) + '.csv')
+            full_path_to_file = os.path.join(self.path_output_dir, 'features_importance.csv')
             print('\nSaving {0} features into {1}'.format(self.model_name.upper(), full_path_to_file))
             features_importance = features_importance[["feature", "importance"]].groupby(
                 "feature").mean().sort_values(by="importance", ascending=False).reset_index()
@@ -583,6 +642,9 @@ class BaseEstimator(object):
         :param save: if True -> results will be saved to disk
         :return: plot of shap values (mean absolute computed over all folds/seeds) for each feature
         """
+        # TODO: think how to improve logic for plot_shap_values if shap_values is None
+        if self.shap_values is None:
+            return
 
         # TODO: think how to visualize shap values in case of multi-class classification task
         # Possible example is here: https://github.com/slundberg/shap (see multi-class SVM example)
@@ -653,32 +715,32 @@ class BaseEstimator(object):
 
     def save_oof_results(self):
         float_format = '%.{0}f'.format(str(self.target_decimals)) if self.target_decimals > 0 else None
-
-        full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'OOF']) + '.csv')
+        full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_TRAIN_OOF_RESULTS)
         print('\nSaving elaborated OOF predictions into %s' % full_path_to_file)
         self.oof_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
-        full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'CV']) + '.csv')
+        float_format = '%.{0}f'.format(str(self.metrics_decimals)) if self.metrics_decimals > 0 else None
+        full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_CV_RESULTS)
         print('\nSaving CV results into %s' % full_path_to_file)
         self.oof_eval_results.to_csv(full_path_to_file, index=False, float_format=float_format)
 
         if self.bagged_oof_preds is not None:
-            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'bagged_OOF']) + '.csv')
+            float_format = '%.{0}f'.format(str(self.target_decimals)) if self.target_decimals > 0 else None
+            full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_TRAIN_OOF_RESULTS_BAGGED)
             print('\nSaving OOF predictions for each seed into %s' % full_path_to_file)
             self.bagged_oof_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
     def save_submission_results(self):
         float_format = '%.{0}f'.format(str(self.target_decimals)) if self.target_decimals > 0 else None
-
         if self.sub_preds is None:
             raise ValueError('Submission file is empty. Please set flag predict_test = True in run_cv_and_prediction() '
                              'to generate submission file.')
-        full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'SUBM']) + '.csv')
+        full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_TEST_RESULTS)
         print('\nSaving submission predictions into %s' % full_path_to_file)
         self.sub_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
         if self.bagged_sub_preds is not None:
-            full_path_to_file = os.path.join(self.path_output_dir, '_'.join([self.model_name, 'bagged_SUBM']) + '.csv')
+            full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_TEST_RESULTS_BAGGED)
             print('\nSaving submission predictions for each seed into %s' % full_path_to_file)
             self.bagged_sub_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 

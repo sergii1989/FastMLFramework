@@ -246,7 +246,13 @@ class SklearnWrapper(ModelWrapper):
         'max_iter': lambda x: int(round(x, 0)),
 
         # ExtraTreesClassifier
+        'n_estimators': lambda x: int(round(x, 0)),
         'max_depth': lambda x: int(round(x, 0)),
+        'max_features': lambda x: round(max(min(x, 1), 0), 2),
+        'max_leaf_nodes': lambda x: int(round(x, 0)),
+        'min_samples_split': lambda x: int(round(x, 0)),
+        'min_samples_leaf': lambda x: int(round(x, 0)),
+        # 'min_impurity_decrease'
     }
 
     def __init__(self, model, params=None, seed=27, name=None):
@@ -387,7 +393,7 @@ def get_wrapped_estimator(model, model_init_params):
         return XGBWrapper(model=XGBClassifier, params=model_init_params)
     elif model == 'et':
         from sklearn.ensemble import ExtraTreesClassifier
-        SklearnWrapper(model=ExtraTreesClassifier, params=model_init_params, name='et')
+        return SklearnWrapper(model=ExtraTreesClassifier, params=model_init_params, name='et')
     elif model == 'logistic_regression':
         from sklearn.linear_model import LogisticRegression
         return SklearnWrapper(model=LogisticRegression, params=model_init_params, name='logreg')

@@ -1,26 +1,12 @@
 import os
-import re
-import json
-import requests
-import warnings
-import ipykernel
 import numpy as np
+import pandas as pd
 
 from time import time
-from typing import Any
 from functools import wraps
 from sklearn import metrics
 from datetime import datetime
-from requests.compat import urljoin
 from contextlib import contextmanager
-
-try:
-    from notebook.notebookapp import list_running_servers
-except ImportError:
-    from IPython.utils.shimmodule import ShimWarning
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=ShimWarning)
-        from IPython.html.notebookapp import list_running_servers
 
 
 @contextmanager
@@ -52,6 +38,10 @@ def timing(func):
 
 
 def get_current_timestamp():
+    """
+    This method returns current timestamp
+    :return:
+    """
     return datetime.now().strftime('%Y-%m-%d_%H-%M')
 
 
@@ -84,7 +74,7 @@ def merge_two_dicts(x, y):  # type: (dict, dict) -> dict
     return z
 
 
-def get_binning_list(val_min, val_max, bin_size=None, n_bins=10):  # type: (Any, Any, Any) -> list
+def get_binning_list(val_min, val_max, bin_size=None, n_bins=10):
     """
     Function to construct list of bins using start/end points of the range and bin size.
     If size of bin (step) is not provided -> compute it based on n_bins (default=10)
@@ -103,7 +93,8 @@ def get_binning_list(val_min, val_max, bin_size=None, n_bins=10):  # type: (Any,
     return shrink
 
 
-def auto_selector_of_categorical_features(df, cols_exclude=[], int_threshold=10):
+def auto_selector_of_categorical_features(df, cols_exclude=[],
+                                          int_threshold=10):  # type: (pd.DataFrame, list, int) -> list
     """
     This method is used for selecting categorical features in a pandas DF. It uses features labeled as 'category'
     and 'object', but also 'int8' data types with additional filter applied on max and min values (int_threshold).
@@ -111,7 +102,8 @@ def auto_selector_of_categorical_features(df, cols_exclude=[], int_threshold=10)
     :param df: pandas DF with the dataset
     :param cols_exclude: columns to be excluded from a DF (e.g. target column)
     :param int_threshold: this threshold is used to limit number of int8-type numerical features to be interpreted
-                          as categorical
+                          as categorical. For instance, if there is a numeric feature with unique integer values ranged
+                          from 0 to 8 and int_threshold=9 -> this column will be considered as categorical
     :return: sorted list of categorical features
     """
     df_temp = df.loc[:, ~df.columns.isin(cols_exclude)]
@@ -124,28 +116,31 @@ def auto_selector_of_categorical_features(df, cols_exclude=[], int_threshold=10)
     return sorted(set(cat_object_cols).union(set(int8_cat_cols)))
 
 
-def check_file_exists(filename, silent=True):
-    if not os.path.exists(filename):
-        if not silent: print('{} does not exist'.format(filename))
-        return False
-    return True
-
-
-def create_output_dir(path_output_dir):
+def create_output_dir(path_output_dir, silent=False):  # type: (str, bool) -> None
+    """
+    This method creates directory if it not existed at the moment of request
+    :param path_output_dir: absolute path to a file / directory
+    :param silent: if True -> do not print the message that directory is created
+    :return: None
+    """
     if not os.path.exists(path_output_dir):
-        print('Output directory {} is created'.format(path_output_dir))
         os.makedirs(path_output_dir)
+        if not silent:
+            print('Output directory {} is created'.format(path_output_dir))
 
 
-def get_notebook_name():
+def generate_single_model_solution_id_key(model_name):  # type: (str) -> str
     """
-    Return the name of jupyter notebook.
+    This method is used to generate a unique id key for single model solution. It is needed in the case if one wants to
+    use the out-of-fold results (OOF) from a single model predictions in the sacking or blending process. It is hard
+    to keep long names of the files, thus it deems reasonable to generate a unique id key that can point to the
+    original file name. For instance:
+        File train_OOF.csv in
+            single_model_solution/lightgbm/features_dataset_001/target_permutation_fs_001/bayes_hpo_001/bagging_on
+                will be assigned to unique id key: lgbm_7649
+                    and stored in the oof_data_info.txt file located in the same directory.
+    :param model_name: name of the model (e.g. 'lgb', 'xgb', etc.)
+    :return: unique id key
     """
-    kernel_id = re.search('kernel-(.*).json', ipykernel.connect.get_connection_file()).group(1)
-    servers = list_running_servers()
-    for ss in servers:
-        response = requests.get(urljoin(ss['url'], 'api/sessions'), params={'token': ss.get('token', '')})
-        for nn in json.loads(response.text):
-            if nn['kernel']['id'] == kernel_id:
-                relative_path = nn['notebook']['path']
-                return relative_path
+    np.random.seed()
+    return '_'.join([model_name, ("%04d" % np.random.randint(9999))])

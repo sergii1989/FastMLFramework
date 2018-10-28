@@ -64,14 +64,14 @@ class HyperParamsOptimization(object):
 
     def save_optimized_hp(self):
         """
-        This method saves Bayes Optimized hyperparameters to the disc.
+        This method saves optimized hyperparameters to the disc.
         :return: None
         """
         filename = '_'.join([self.filename, self.predictor.model_name, str(self.best_score)]) + '.txt'
         full_path_to_file = os.path.join(self.path_output_dir, filename)
         print('\nSaving optimized hyperparameters into %s' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
-            f.write(json.dumps(self.best_params))
+            f.write(json.dumps(self.best_params, indent=4))
 
     def read_optimized_hp(self, path_to_save_data, filename):  # type: (str, str) -> None
         """
@@ -93,8 +93,8 @@ class HyperParamsOptimization(object):
 
 
 class BayesHyperParamsOptimization(HyperParamsOptimization):
-    FILENAME = 'bayes_opt_hp'
-    HPO_DF_NAME = 'bayes_hpo_all_runs_results.csv'
+    FILENAME_HPO_RESULTS = 'bayes_opt_hp'
+    FILENAME_HPO_HISTORY = 'hpo_history'
 
     def __init__(self, predictor, hp_optimization_space, init_points=10, n_iter=15, seed_val=27,
                  project_location='', output_dirname=''):
@@ -109,7 +109,7 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         :param output_dirname: name of directory to save results of hyper parameters optimization
         """
         super(BayesHyperParamsOptimization, self).__init__(predictor, seed_val, project_location,
-                                                           output_dirname, self.FILENAME)
+                                                           output_dirname, self.FILENAME_HPO_RESULTS)
         self.hp_optimization_space = hp_optimization_space
         self.init_points = init_points
         self.n_iter = n_iter
@@ -154,13 +154,14 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         cols = score_cols + [col for col in self.hpo_cv_df if col not in score_cols]
         self.hpo_cv_df = self.hpo_cv_df[cols]
 
-    def save_all_hp_results(self):
+    def save_hpo_history(self):
         """
         This method persists hyperparameters optimization history to the disk
         :return: None
         """
-        full_path_to_file = os.path.join(self.path_output_dir, self.HPO_DF_NAME)
-        print('\nSaving all hp results into %s' % full_path_to_file)
+        filename = '_'.join([self.FILENAME_HPO_HISTORY, 'max_cv', str(self.best_score)]) + '.csv'
+        full_path_to_file = os.path.join(self.path_output_dir, filename)
+        print('\nSaving hpo history into %s' % full_path_to_file)
         self.hpo_cv_df.to_csv(full_path_to_file, index=False)
 
 

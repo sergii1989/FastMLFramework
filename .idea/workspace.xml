@@ -1,45 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="f445f148-be77-4f8b-81ff-ecf6f9ca60fc" name="Default" comment="" />
+    <list default="true" id="f445f148-be77-4f8b-81ff-ecf6f9ca60fc" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/solution_pipeline/create_solution.py" beforeDir="false" afterPath="$PROJECT_DIR$/solution_pipeline/create_solution.py" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
-    <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FUSProjectUsageTrigger">
+    <session id="1802728238">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.open.time.3" value="1" />
+          <entry key="project.opened" value="1" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.edit">
+        <counts>
+          <entry key="py" value="2339" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.edit">
+        <counts>
+          <entry key="Python" value="2339" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.open">
+        <counts>
+          <entry key="py" value="1" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open">
+        <counts>
+          <entry key="Python" value="1" />
+        </counts>
+      </usages-collector>
+    </session>
+  </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="stacker.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ensembling/stacking/stacker.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="132">
-              <caret line="138" column="31" selection-start-line="138" selection-start-column="31" selection-end-line="138" selection-end-column="31" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="utils.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1020">
-              <caret line="63" column="46" lean-forward="true" selection-start-line="63" selection-start-column="46" selection-end-line="63" selection-end-column="46" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="create_solution.py" pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/solution_pipeline/create_solution.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="304">
-              <caret line="521" column="80" lean-forward="true" selection-start-line="480" selection-end-line="521" selection-end-column="80" />
+            <state relative-caret-position="282">
+              <caret line="615" column="52" lean-forward="true" selection-start-line="615" selection-start-column="52" selection-end-line="615" selection-end-column="52" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -47,11 +54,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="config_parser.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/generic_tools/config_parser.py">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="725">
-              <caret line="52" column="11" lean-forward="true" selection-start-line="52" selection-start-column="11" selection-end-line="52" selection-end-column="11" />
+            <state relative-caret-position="156">
+              <caret line="95" column="59" selection-start-line="95" selection-start-column="59" selection-end-line="95" selection-end-column="59" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -59,23 +66,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="feature_selection.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/modeling/feature_selection.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="39">
-              <caret line="56" column="6" selection-start-line="56" selection-start-column="6" selection-end-line="56" selection-end-column="6" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="prediction.py" pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="345">
-              <caret line="355" column="55" selection-start-line="355" selection-start-column="41" selection-end-line="355" selection-end-column="55" />
+            <state relative-caret-position="-192">
+              <caret line="410" column="59" selection-start-line="410" selection-start-column="59" selection-end-line="410" selection-end-column="59" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -83,11 +78,43 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="model_wrappers.py" pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="85">
+              <caret line="5" column="26" selection-start-line="5" selection-start-column="26" selection-end-line="5" selection-end-column="26" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/bayes_opt/bayesian_optimization.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-255">
+              <folding>
+                <element signature="e#0#37#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ensembling/ensembler.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="156">
+              <caret line="70" column="47" selection-start-line="70" selection-start-column="47" selection-end-line="70" selection-end-column="47" />
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="168">
-              <caret line="379" lean-forward="true" selection-start-line="379" selection-end-line="379" />
+            <state relative-caret-position="156">
+              <caret line="215" column="141" selection-start-line="215" selection-start-column="141" selection-end-line="215" selection-end-column="141" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -95,14 +122,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="hyper_parameters_optimization.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/examples/classification/multiclass/iris/configs/solution.conf">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2650">
-              <caret line="171" lean-forward="true" selection-start-line="171" selection-end-line="171" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="229">
+              <caret line="232" column="79" selection-start-line="232" selection-start-column="79" selection-end-line="232" selection-end-column="79" />
             </state>
           </provider>
         </entry>
@@ -118,53 +142,38 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>downcast_datatypes</find>
-      <find>Ensembler</find>
-      <find>timing</find>
-      <find>param clas</find>
-      <find>stack_input</find>
-      <find>oof_input_files</find>
-      <find>load_hp_optimization_classload_hp_optimization_class</find>
-      <find>features_selection_input_dir</find>
-      <find>hpo_input_dir</find>
-      <find>feats_generation_output_dir</find>
-      <find>modeling_settings_output_dir</find>
-      <find>a path to directory</find>
-      <find>This method returns</find>
-      <find>get_wrapped_estimator</find>
-      <find>load_</find>
-      <find>ResultsLocationManager</find>
-      <find>class_names</find>
-      <find>stacker_model</find>
-      <find>stacker_model = self.config.get_string('stacker.meta_model')</find>
-      <find>type:</find>
-      <find>metric</find>
-      <find>reinit_model_with_new_params</find>
-      <find>run_hp</find>
-      <find>metri</find>
-      <find>encoding</find>
-      <find>class_index</find>
-      <find>parse</find>
-      <find>metrics_scorer</find>
-      <find>load_feature_selector_class</find>
-      <find>classifier</find>
+      <find>initi</find>
+      <find>init_params</find>
+      <find>class</find>
+      <find>down</find>
+      <find>class_la</find>
+      <find>creat</find>
+      <find>json.dumps(</find>
+      <find>np.random.s</find>
+      <find>stack_bagged_results</find>
+      <find>self.p</find>
+      <find>json.d</find>
+      <find>js</find>
+      <find>json.</find>
+      <find>json.du</find>
+      <find>json</find>
+      <find>string</find>
+      <find>bases</find>
+      <find>class_label</find>
+      <find>isins</find>
+      <find>eval</find>
+      <find>predict_probability</find>
+      <find>ensemb</find>
+      <find>create_output_dir</find>
+      <find>project_location</find>
+      <find>path_output_dir</find>
+      <find>opt_history_max_cv</find>
+      <find>opt_his</find>
+      <find>Output directory</find>
+      <find>stacker_wi</find>
+      <find>generate_single_model_solution_id_key</find>
     </findStrings>
     <replaceStrings>
-      <replace>':</replace>
-      <replace>run_cv_and_prediction_iris</replace>
-      <replace>HYPERPARAMS_OPTIM_SUBDIR</replace>
-      <replace>FEATURE_SELECTION_SUBDIR</replace>
-      <replace>BLENDING_RESULTS_SUBDIR</replace>
-      <replace>SOLUTION_SUBDIR</replace>
-      <replace>SOLUTION_DIR</replace>
-      <replace>HYPERPARAMS_OPTIM_DIR</replace>
-      <replace>FEATURE_SELECTION_DIR</replace>
-      <replace>output_dirname</replace>
-      <replace>save_weights</replace>
-      <replace>lightgbm</replace>
-      <replace>xgboost</replace>
-      <replace>estimator</replace>
-      <replace>':</replace>
       <replace>oof_input_files</replace>
       <replace>_verify_oof_input_data_completeness</replace>
       <replace>_concatenate_oof_results</replace>
@@ -179,7 +188,22 @@
       <replace>feats_generation_results_dir_path</replace>
       <replace>single_model_solution_output_dir</replace>
       <replace>a path to sub-directory</replace>
+      <replace>SUBDIR_NO_HYPER_PARAMS_OPTIM</replace>
+      <replace>FILENAME_CV_RESULTS</replace>
+      <replace>self.FILENAME_FEATS_IMPORT</replace>
+      <replace>self.FILENAME_TRAIN_OOF_RESULTS</replace>
+      <replace>self.FILENAME_TRAIN_OOF_RESULTS_BAGGED</replace>
+      <replace>self.FILENAME_TEST_RESULTS</replace>
+      <replace>FILENAME_CV_RESULTS_VS_FEATS_SCORE_THRESH</replace>
+      <replace>FILENAME_FEATS_SCORE</replace>
+      <replace>config</replace>
+      <replace>fg_output_dir</replace>
+      <replace>MakeSingleModelsPredictions</replace>
       <replace>class_label</replace>
+      <replace>self.DIR_NO_HYPER_PARAMS_OPTIM</replace>
+      <replace>self.FILENAME_TEST_RESULTS_BAGGED</replace>
+      <replace>_check_single_model_solution_settings</replace>
+      <replace>FILENAME_HPO_HISTORY</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -198,16 +222,16 @@
         <option value="$PROJECT_DIR$/modeling/cross_validation.py" />
         <option value="$PROJECT_DIR$/../copy/FastMLFramework/ensembling/stacking/stacker.py" />
         <option value="$PROJECT_DIR$/ensembling/stacker.py" />
-        <option value="$PROJECT_DIR$/ensembling/ensembler.py" />
         <option value="$PROJECT_DIR$/ensembling/blending/blender.py" />
-        <option value="$PROJECT_DIR$/modeling/prediction.py" />
         <option value="$PROJECT_DIR$/modeling/model_wrappers.py" />
         <option value="$PROJECT_DIR$/modeling/feature_selection.py" />
-        <option value="$PROJECT_DIR$/modeling/hyper_parameters_optimization.py" />
         <option value="$PROJECT_DIR$/generic_tools/config_parser.py" />
         <option value="$PROJECT_DIR$/ensembling/stacking/stacker.py" />
-        <option value="$PROJECT_DIR$/solution_pipeline/create_solution.py" />
+        <option value="$PROJECT_DIR$/ensembling/ensembler.py" />
+        <option value="$PROJECT_DIR$/modeling/hyper_parameters_optimization.py" />
+        <option value="$PROJECT_DIR$/modeling/prediction.py" />
         <option value="$PROJECT_DIR$/generic_tools/utils.py" />
+        <option value="$PROJECT_DIR$/solution_pipeline/create_solution.py" />
       </list>
     </option>
   </component>
@@ -256,6 +280,41 @@
               <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
               <item name="ensembling" type="462c0819:PsiDirectoryNode" />
               <item name="stacking" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
+              <item name="examples" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
+              <item name="examples" type="462c0819:PsiDirectoryNode" />
+              <item name="classification" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
+              <item name="examples" type="462c0819:PsiDirectoryNode" />
+              <item name="classification" type="462c0819:PsiDirectoryNode" />
+              <item name="multiclass" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
+              <item name="examples" type="462c0819:PsiDirectoryNode" />
+              <item name="classification" type="462c0819:PsiDirectoryNode" />
+              <item name="multiclass" type="462c0819:PsiDirectoryNode" />
+              <item name="iris" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
+              <item name="examples" type="462c0819:PsiDirectoryNode" />
+              <item name="classification" type="462c0819:PsiDirectoryNode" />
+              <item name="multiclass" type="462c0819:PsiDirectoryNode" />
+              <item name="iris" type="462c0819:PsiDirectoryNode" />
+              <item name="configs" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
@@ -338,6 +397,9 @@
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
     </configuration>
     <configuration name="create_solution" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="FastMLFramework" />
@@ -356,6 +418,9 @@
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
     </configuration>
     <configuration name="feature_selection" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="FastMLFramework" />
@@ -374,6 +439,9 @@
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
     </configuration>
     <configuration name="prediction" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="FastMLFramework" />
@@ -392,6 +460,9 @@
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
     </configuration>
     <configuration name="stacker" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="FastMLFramework" />
@@ -410,6 +481,9 @@
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
     </configuration>
     <list>
       <item itemvalue="Python.blender" />
@@ -445,23 +519,23 @@
     <frame x="3832" y="-8" width="1616" height="835" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" x="3852" y="94" width="324" height="726" id="Project" order="2" sideWeight="0.5257937" side_tool="true" visible="true" weight="0.1925" />
+      <window_info id="Favorites" order="0" side_tool="true" />
+      <window_info x="3941" y="222" width="324" height="466" id="Structure" order="1" sideWeight="0.47420636" side_tool="true" visible="true" weight="0.19201522" />
+      <window_info content_ui="combo" x="3852" y="94" width="324" height="726" id="Project" order="2" sideWeight="0.5257937" side_tool="true" weight="0.13814956" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.730625" weight="0.32786885" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.6175" visible="true" weight="0.25925925" />
+      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.828125" weight="0.35754985" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.15" side_tool="true" weight="0.3264463" />
-      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.730625" weight="0.32786885" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.6175" visible="true" weight="0.30578512" />
       <window_info anchor="bottom" id="Version Control" order="8" weight="0.3278237" />
       <window_info anchor="bottom" id="Python Console" order="9" />
-      <window_info x="3941" y="222" width="324" height="466" id="Structure" order="1" sideWeight="0.47420636" visible="true" weight="0.1925" />
       <window_info anchor="bottom" id="Terminal" order="10" />
-      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.828125" weight="0.35812673" />
-      <window_info id="Favorites" order="0" side_tool="true" />
-      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
-      <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
     </layout>
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -501,32 +575,40 @@
           <line>174</line>
           <option name="timeStamp" value="64" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/solution_pipeline/create_solution.py</url>
+          <line>534</line>
+          <option name="timeStamp" value="95" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/solution_pipeline/create_solution.py</url>
+          <line>408</line>
+          <option name="timeStamp" value="103" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/solution_pipeline/create_solution.py</url>
+          <line>504</line>
+          <option name="timeStamp" value="110" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py</url>
+          <line>161</line>
+          <option name="timeStamp" value="123" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py</url>
+          <line>69</line>
+          <option name="timeStamp" value="124" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py</url>
+          <line>22</line>
+          <option name="timeStamp" value="125" />
+        </line-breakpoint>
       </breakpoints>
-      <option name="time" value="66" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://C:/DCM/Work/dcm-intuition/integration/broker/flextrade/services/securities.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="627">
-          <caret line="86" column="26" selection-start-line="86" selection-start-column="8" selection-end-line="86" selection-end-column="26" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://C:/DCM/Work/dcm-intuition/strategies/cointegration/flextrade_security_master.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1717">
-          <caret line="19" column="30" selection-start-line="19" selection-start-column="30" selection-end-line="19" selection-end-column="30" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../kaggle_home_credit_default_risk/models/gp_model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="291">
-          <caret line="1907" column="13" lean-forward="true" selection-start-line="1907" selection-start-column="13" selection-end-line="1907" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ensembling/blending/blending.py" />
     <entry file="file://C:/DCM/Work/dcm-intuition/strategies/cointegration/commonStatTools.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -614,13 +696,6 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/../LuigiPipeLine/luigi.py" />
     <entry file="file://$PROJECT_DIR$/data_provider/data_ingestion.py" />
-    <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="102">
-          <caret line="6" column="21" lean-forward="true" selection-end-line="682" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/data_processing/preprocessing.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="102">
@@ -696,9 +771,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="152">
           <caret line="117" column="4" selection-start-line="117" selection-start-column="4" selection-end-line="117" selection-end-column="4" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -713,43 +785,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="147">
           <caret line="42" selection-start-line="42" selection-end-line="42" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/bayes_opt/bayesian_optimization.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="13" column="35" selection-start-line="13" selection-start-column="35" selection-end-line="13" selection-end-column="52" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="202">
-          <caret line="214" column="24" lean-forward="true" selection-start-line="214" selection-start-column="24" selection-end-line="214" selection-end-column="24" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ensembling/ensembler.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="141">
-          <caret line="12" column="39" selection-start-line="12" selection-start-column="24" selection-end-line="12" selection-end-column="39" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="168">
-          <caret line="379" lean-forward="true" selection-start-line="379" selection-end-line="379" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -785,9 +820,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="10370">
           <caret line="628" column="71" selection-start-line="628" selection-start-column="66" selection-end-line="628" selection-end-column="71" />
-          <folding>
-            <element signature="e#813#844#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -798,16 +830,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ensembling/stacking/stacker.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="132">
-          <caret line="138" column="31" selection-start-line="138" selection-start-column="31" selection-end-line="138" selection-end-column="31" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/pyhocon/config_parser.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="138">
@@ -815,50 +837,81 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/generic_tools/config_parser.py">
+    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/luigi/task.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="725">
-          <caret line="52" column="11" lean-forward="true" selection-start-line="52" selection-start-column="11" selection-end-line="52" selection-end-column="11" />
+        <state relative-caret-position="118">
+          <caret line="601" selection-start-line="601" selection-end-line="601" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/bayes_opt/target_space.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="159">
+          <caret line="140" selection-start-line="140" selection-end-line="140" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/bayes_opt/bayesian_optimization.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-255">
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#37#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
+    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/luigi/worker.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="355" column="55" selection-start-line="355" selection-start-column="41" selection-end-line="355" selection-end-column="55" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="128">
+          <caret line="194" selection-start-line="194" selection-end-line="194" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/modeling/feature_selection.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="39">
-          <caret line="56" column="6" selection-start-line="56" selection-start-column="6" selection-end-line="56" selection-end-column="6" />
+        <state relative-caret-position="952">
+          <caret line="68" column="62" selection-start-line="68" selection-start-column="62" selection-end-line="68" selection-end-column="62" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ensembling/stacking/stacker.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="19" selection-start-line="19" selection-end-line="19" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1088">
+          <caret line="72" column="46" selection-start-line="72" selection-start-column="46" selection-end-line="72" selection-end-column="46" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/generic_tools/config_parser.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="320">
+          <caret line="117" column="86" selection-start-line="117" selection-start-column="44" selection-end-line="117" selection-end-column="86" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2650">
-          <caret line="171" lean-forward="true" selection-start-line="171" selection-end-line="171" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="85">
+          <caret line="5" column="26" selection-start-line="5" selection-start-column="26" selection-end-line="5" selection-end-column="26" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
+    <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1020">
-          <caret line="63" column="46" lean-forward="true" selection-start-line="63" selection-start-column="46" selection-end-line="63" selection-end-column="46" />
+        <state relative-caret-position="-192">
+          <caret line="410" column="59" selection-start-line="410" selection-start-column="59" selection-end-line="410" selection-end-column="59" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
@@ -867,8 +920,38 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/solution_pipeline/create_solution.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="304">
-          <caret line="521" column="80" lean-forward="true" selection-start-line="480" selection-end-line="521" selection-end-column="80" />
+        <state relative-caret-position="282">
+          <caret line="615" column="52" lean-forward="true" selection-start-line="615" selection-start-column="52" selection-end-line="615" selection-end-column="52" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="156">
+          <caret line="215" column="141" selection-start-line="215" selection-start-column="141" selection-end-line="215" selection-end-column="141" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ensembling/ensembler.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="156">
+          <caret line="70" column="47" selection-start-line="70" selection-start-column="47" selection-end-line="70" selection-end-column="47" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="156">
+          <caret line="95" column="59" selection-start-line="95" selection-start-column="59" selection-end-line="95" selection-end-column="59" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
