@@ -190,6 +190,12 @@ class ConfigFileHandler(object):
             raise TypeError("modeling_settings.models in config file should be either list or string. "
                             "Instead got %s" % type(base_models))
 
+    def _get_features_input_dir_for_stacking(self):
+        config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        project_structure = dict(config.get_config('project_structure'))
+        feats_generation_dir_for_stacker = config.get_string("modeling_settings.name_feats_generation_dir_for_stacker")
+        return os.path.join(project_structure['FEATURE_GENERATION_DIR'], feats_generation_dir_for_stacker)
+
     def _get_stacked_solution_output_dir(self, stacker_model, run_stacker_hpo, run_bagging):
         config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
         project_structure = dict(config.get_config('project_structure'))
@@ -221,7 +227,7 @@ class ConfigFileHandler(object):
             'stacker_model': stacker_model,
             'run_stacker_hpo': run_stacker_hpo,
             'run_bagging': run_bagging,
-            'fg_output_dir': os.path.normpath(r'features_generation\features_dataset_001'),
+            'fg_output_dir': self._get_features_input_dir_for_stacking(),
             'stacking_output_dir': self._get_stacked_solution_output_dir(stacker_model, run_stacker_hpo, run_bagging)[1]}
 
     def pipeline_parameters_for_stacked_solutions(self):
