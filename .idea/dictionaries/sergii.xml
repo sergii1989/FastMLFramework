@@ -32,6 +32,7 @@
       <w>gbtree</w>
       <w>getcwd</w>
       <w>goss</w>
+      <w>graphviz</w>
       <w>gridspec</w>
       <w>heatmap</w>
       <w>hpos</w>
@@ -51,6 +52,7 @@
       <w>linreg</w>
       <w>logloss</w>
       <w>logreg</w>
+      <w>matplotlib</w>
       <w>merror</w>
       <w>mlogloss</w>
       <w>multiclass</w>
@@ -60,6 +62,7 @@
       <w>ntop</w>
       <w>optim</w>
       <w>optimizator</w>
+      <w>pdpbox</w>
       <w>pred</w>
       <w>preds</w>
       <w>proba</w>
@@ -67,6 +70,9 @@
       <w>regressors</w>
       <w>reinit</w>
       <w>rmse</w>
+      <w>scikit</w>
+      <w>scipy</w>
+      <w>seaborn</w>
       <w>shap</w>
       <w>sklearn</w>
       <w>softprob</w>
