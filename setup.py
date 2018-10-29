@@ -1,6 +1,4 @@
-import pip
 from setuptools import setup
-from setuptools.command.install import install
 
 requirements = [
     "pip==18.1",
@@ -21,35 +19,6 @@ requirements = [
 ]
 
 
-class OverrideInstallCommand(install):
-    def run(self):
-
-        # Install all requirements
-        failed = []
-        for req in requirements:
-            if hasattr(pip, 'main'):
-                if pip.main(['install', req]) == 1:
-                    failed.append(req)
-            else:
-                if pip._internal.main(['install', req]) == 1:
-                    failed.append(req)
-
-        if len(failed) > 0:
-            print("")
-            print("Error installing the following packages:")
-            print(str(failed))
-            print("Please install them manually")
-            print("")
-            raise OSError("Aborting")
-
-        # install FastMLFramework
-        install.run(self)
-
-
-with open('README.md') as readme_file:
-    readme = readme_file.read()
-
-
 setup(
     name='FastMLFramework',
     version='0.1.1',
@@ -61,9 +30,6 @@ setup(
     author_email='sergii.lutsanych@gmail.com',
     description='FastML allows construction of ML end-to-end solutions in systematic, organized, fault-tolerant, and '
                 'semi-automatic manner leveraging power of luigi pipelines',
-    long_description=readme,
-    cmdclass={'install': OverrideInstallCommand},
     install_requires=requirements,
-    zip_safe=False,
     keywords='auto-ml ML pipeline luigi features selection stacking blending hyper-parameters optimization',
 )
