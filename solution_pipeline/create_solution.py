@@ -37,12 +37,12 @@ class TrainDataIngestion(luigi.Task):
         test_file = config.get_string('features_generation.test_file')
 
         # Load train and test data set from feature generation pool and downcast data types
-        train_full_path = os.path.join(self.project_location, self.fg_output_dir, train_file)
+        train_full_path = os.path.normpath(os.path.join(self.project_location, self.fg_output_dir, train_file))
         train_data = downcast_datatypes(pd.read_csv(train_full_path, nrows=num_rows if debug else None)) \
             .reset_index(drop=True)
         print('Train DF shape: {0}\n'.format(train_data.shape, train_data.info()))
 
-        test_full_path = os.path.join(self.project_location, self.fg_output_dir, test_file)
+        test_full_path = os.path.normpath(os.path.join(self.project_location, self.fg_output_dir, test_file))
         test_data = downcast_datatypes(pd.read_csv(test_full_path, nrows=num_rows if debug else None)) \
             .reset_index(drop=True)
         print('Test DF shape: {0}'.format(test_data.shape))
@@ -611,9 +611,12 @@ if __name__ == '__main__':
 
     config_directory = 'configs'
     config_file = 'solution.conf'
+    local_scheduler = True  # set True if run on google collab, etc. [no localhost]
+                            # set False if run locally -> then run in terminal .luigid -> go to http://localhost:8082
+                            # and see the dependencies and pipeline execution flow
 
     # Run pipeline this way
-    luigi.build([BuildSolution(project_location, config_directory, config_file)], local_scheduler=False)
+    luigi.build([BuildSolution(project_location, config_directory, config_file)], local_scheduler=local_scheduler)
 
     # Or this way
     # luigi.run(main_task_cls=BuildSolution,
@@ -621,4 +624,4 @@ if __name__ == '__main__':
     #                         "--BuildSolution-config-directory=configs",
     #                         "--BuildSolution-config-file=solution.conf",
     #                         "--workers=1"],
-    #           local_scheduler=False)
+    #           local_scheduler=local_scheduler)
