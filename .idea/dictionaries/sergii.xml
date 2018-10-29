@@ -32,6 +32,7 @@
       <w>gbrt</w>
       <w>gbtree</w>
       <w>getcwd</w>
+      <w>gini</w>
       <w>goss</w>
       <w>graphviz</w>
       <w>gridspec</w>
@@ -53,6 +54,7 @@
       <w>linreg</w>
       <w>logloss</w>
       <w>logreg</w>
+      <w>lossguide</w>
       <w>matplotlib</w>
       <w>merror</w>
       <w>mlogloss</w>
