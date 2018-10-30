@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 import pandas as pd
 
@@ -45,6 +46,28 @@ def get_current_timestamp():
     return datetime.now().strftime('%Y-%m-%d_%H-%M')
 
 
+def _convert_metrics_scorer_to_str(metrics_scorer):
+    """
+    This method is work around to guarantee compatibility between python2/3. The issue is that in Python 3
+    isinstance(variable, unicode) throws an error since unicode is not treated as str type
+    :param metrics_scorer: name of metrics scorer in sklearn.metrics (basestring-type)
+    :return: str
+    """
+    if sys.version_info.major == 2:
+        if isinstance(metrics_scorer, unicode):  # noqa
+            metrics_scorer = metrics_scorer.encode()  # since parsing of pyhocon config returns unicode
+            return metrics_scorer
+        else:
+            raise TypeError('Type of metrics_scorer should be either str or unicode. '
+                            'Instead received {0}.'.format(type(metrics_scorer)))
+    elif sys.version_info.major == 3:
+        if isinstance(metrics_scorer, str):
+            return metrics_scorer
+        else:
+            raise TypeError('Type of metrics_scorer should be either str or unicode. '
+                            'Instead received {0}.'.format(type(metrics_scorer)))
+
+
 def get_metrics_scorer(metrics_scorer):  # type: (str) -> metrics
     """
     This method returns sklearn's metrics scorer function to the given string name
@@ -53,9 +76,7 @@ def get_metrics_scorer(metrics_scorer):  # type: (str) -> metrics
                            http://scikit-learn.org/stable/modules/classes.html#module-sklearn.metricsname
     :return: sklearn's metrics scorer function
     """
-    if isinstance(metrics_scorer, unicode):
-        metrics_scorer = metrics_scorer.encode()  # since parsing of pyhocon config returns unicode
-
+    metrics_scorer = _convert_metrics_scorer_to_str(metrics_scorer)
     scorer = __import__('sklearn.metrics', globals(), locals(), [metrics_scorer], 0)
     try:
         return getattr(scorer, metrics_scorer)
