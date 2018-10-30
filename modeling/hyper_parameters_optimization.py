@@ -127,7 +127,7 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         _, _, _, _, _, cv_score, cv_std = self.predictor.run_cv_one_seed(seed_val=self.seed_val, predict_test=False,
                                                                          cv_verbosity=0)
         # Store all used hyperparameters with the corresponding CV results in a pandas DF
-        hpo_space_df = pd.DataFrame(index=hp_optimization_space.keys(), data=hp_optimization_space.values()).T
+        hpo_space_df = pd.DataFrame.from_dict(hp_optimization_space, orient='index').T
         hpo_space_df.insert(loc=0, column='cv_score', value=cv_score)
         hpo_space_df.insert(loc=1, column='cv_std', value=cv_std)
         self.hpo_cv_df = pd.concat([self.hpo_cv_df, hpo_space_df], axis=0, ignore_index=True)
