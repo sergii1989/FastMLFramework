@@ -380,13 +380,13 @@ class BaseEstimator(object):
 
             oof_eval_result = round(self.metrics_scorer(valid_y, oof_preds[valid_idx]), self.metrics_decimals)
             oof_eval_results.append(oof_eval_result)
-            print('CV: Fold {0} {1} : {2}\n'.format(n_fold + 1, self.metrics_scorer.func_name.upper(), oof_eval_result))
+            print('CV: Fold {0} {1} : {2}\n'.format(n_fold + 1, self.metrics_scorer.__name__.upper(), oof_eval_result))
 
         # CV score and STD of CV score over folds for a given seed
         cv_score = round(self.metrics_scorer(self.train_df[self.target_column], oof_preds), self.metrics_decimals)
         cv_std = round(float(np.std(oof_eval_results)), self.metrics_decimals)
-        print('CV: list of OOF {0}: {1}'.format(self.metrics_scorer.func_name.upper(), oof_eval_results))
-        print('CV {0}: {1} +/- {2}'.format(self.metrics_scorer.func_name.upper(), cv_score, cv_std))
+        print('CV: list of OOF {0}: {1}'.format(self.metrics_scorer.__name__.upper(), oof_eval_results))
+        print('CV {0}: {1} +/- {2}'.format(self.metrics_scorer.__name__.upper(), cv_score, cv_std))
 
         if predict_test:
             # If the task is to predict a probability of the classes, use np.mean() on top of the results predicted with
@@ -461,7 +461,7 @@ class BaseEstimator(object):
                 self.train_df[self.target_column], oof_preds[self.target_column + '_OOF']), self.metrics_decimals
             )
             cv_std = round(float(np.std(cv_score_bagged)), self.metrics_decimals)
-            print('\nCV: bagged {0} score {1} +/- {2}\n'.format(self.metrics_scorer.func_name.upper(), cv_score, cv_std))
+            print('\nCV: bagged {0} score {1} +/- {2}\n'.format(self.metrics_scorer.__name__.upper(), cv_score, cv_std))
 
             # The DF below contains seed number used in the CV run, cv_score averaged over all folds (see above),
             # std of CV score as well as list of CV values (in all folds).
@@ -925,7 +925,7 @@ def run_cv_and_prediction_iris(model='lightgbm'):
 
     test_accuracy = round(metrics_scorer(predictor.test_df[target_column], predictor.sub_preds[target_column]),
                           metrics_decimals)
-    print ('\nTest: {0}={1}\n'.format(metrics_scorer.func_name.upper(), test_accuracy))
+    print ('\nTest: {0}={1}\n'.format(metrics_scorer.__name__.upper(), test_accuracy))
 
 
 def run_cv_and_prediction_kaggle(model='lightgbm', debug=False):
