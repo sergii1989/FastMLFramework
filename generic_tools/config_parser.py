@@ -2,7 +2,7 @@ import os
 
 from pyhocon import ConfigFactory
 from pyhocon.config_tree import ConfigTree
-from functools32 import lru_cache
+from cachetools import cached, LRUCache
 
 
 class ConfigFileHandler(object):
@@ -26,7 +26,7 @@ class ConfigFileHandler(object):
         self.config_file = config_file
 
     @staticmethod
-    @lru_cache(2)
+    @cached(LRUCache(maxsize=2))
     def parse_config_file(project_location, config_directory, config_file):  # type: (str, str, str) -> ConfigTree
         """
         This method returns parsed configuration file with all settings for running the pipeline
