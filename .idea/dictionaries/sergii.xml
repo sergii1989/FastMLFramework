@@ -8,6 +8,7 @@
       <w>boxcox</w>
       <w>bylevel</w>
       <w>bytree</w>
+      <w>cachetools</w>
       <w>cmap</w>
       <w>collab</w>
       <w>colsample</w>
@@ -55,6 +56,7 @@
       <w>logloss</w>
       <w>logreg</w>
       <w>lossguide</w>
+      <w>lutsanych</w>
       <w>matplotlib</w>
       <w>merror</w>
       <w>mlogloss</w>
@@ -76,6 +78,7 @@
       <w>scikit</w>
       <w>scipy</w>
       <w>seaborn</w>
+      <w>sergii</w>
       <w>shap</w>
       <w>sklearn</w>
       <w>softprob</w>
