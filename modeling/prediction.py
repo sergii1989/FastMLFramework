@@ -581,18 +581,21 @@ class BaseEstimator(object):
             fig.savefig(full_path_to_file)
 
     @staticmethod
-    def verify_number_of_features_is_ok(df, n_features):  # type: (pd.DataFrame, int) -> None
+    def verify_number_of_features_is_ok(df, n_features):  # type: (pd.DataFrame, int) -> int
         """
         This method verifies that number of features requested to plot is below of the max number of
         unique features in the data set
         :param df: pandas DF containing feature importances / shap values
         :param n_features: number of features requested to plot
-        :return: None
+        :return: adjusted number of features <= total number of unique features
         """
         n_max_feats = len(df['feature'].unique())
         if n_features > n_max_feats:
-            raise ValueError("Number of features that are requested to plot {0} should be less than or equal to the "
-                             "total number of features in the data set: {1}".format(n_features, n_max_feats))
+            # TODO: to add the following to as a warning to the log
+            print ("Number of features that are requested to plot {0} should be less than or equal to the "
+                   "total number of features in the data set: {1}".format(n_features, n_max_feats))
+            n_features = n_max_feats
+        return n_features
 
     def plot_features_importance(self, n_features=20, figsize_x=10, figsize_y=10, save=False):
         """
@@ -608,7 +611,7 @@ class BaseEstimator(object):
             return
 
         features_importance = self.feature_importance.copy()
-        self.verify_number_of_features_is_ok(features_importance, n_features)
+        n_features = self.verify_number_of_features_is_ok(features_importance, n_features)
 
         cols = features_importance[["feature", "importance"]].groupby("feature").mean().sort_values(
             by="importance", ascending=False)[:n_features].index
@@ -649,7 +652,7 @@ class BaseEstimator(object):
         # TODO: think how to visualize shap values in case of multi-class classification task
         # Possible example is here: https://github.com/slundberg/shap (see multi-class SVM example)
         shap_values = self.shap_values.copy()
-        self.verify_number_of_features_is_ok(shap_values, n_features)
+        n_features = self.verify_number_of_features_is_ok(shap_values, n_features)
 
         cols = shap_values[["feature", "shap_value"]].groupby("feature").mean().sort_values(
             by="shap_value", ascending=False)[:n_features].index
