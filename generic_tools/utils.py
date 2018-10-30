@@ -53,7 +53,9 @@ def get_metrics_scorer(metrics_scorer):  # type: (str) -> metrics
                            http://scikit-learn.org/stable/modules/classes.html#module-sklearn.metricsname
     :return: sklearn's metrics scorer function
     """
-    metrics_scorer = metrics_scorer.encode()  # since parsing of pyhocon config returns utf8-encoded string
+    if isinstance(metrics_scorer, unicode):
+        metrics_scorer = metrics_scorer.encode()  # since parsing of pyhocon config returns unicode
+
     scorer = __import__('sklearn.metrics', globals(), locals(), [metrics_scorer], 0)
     try:
         return getattr(scorer, metrics_scorer)
