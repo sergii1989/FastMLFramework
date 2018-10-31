@@ -3,6 +3,7 @@ import gc
 import pandas as pd
 
 from pandas import testing as pdt
+from future.utils import iteritems
 from modeling.prediction import Predictor
 
 
@@ -57,7 +58,7 @@ class Ensembler(object):
 
         list_train_oof_df = []
         list_test_preds_df = []
-        for results_suffix, solution_details in oof_input_files.iteritems():
+        for results_suffix, solution_details in iteritems(oof_input_files):
             if stack_bagged_results:
                 oof_files = filter(lambda x: 'bagged' in x, solution_details['files'])
             else:

@@ -10,6 +10,7 @@ import matplotlib.gridspec as gridspec
 
 from sklearn import metrics
 from collections import namedtuple
+from builtins import zip, range
 from generic_tools.utils import timer, timing, auto_selector_of_categorical_features, create_output_dir
 warnings.simplefilter('ignore', UserWarning)
 

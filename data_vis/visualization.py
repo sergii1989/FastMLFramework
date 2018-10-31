@@ -4,6 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from typing import Any
+from builtins import map
 from data_processing.preprocessing import missing_data, compute_skew_kurtosis
 from generic_tools.utils import get_binning_list
 

@@ -7,6 +7,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+from builtins import map, zip, range
 from scipy import stats
 from sklearn import metrics
 from modeling.model_wrappers import ModelWrapper
@@ -465,8 +466,9 @@ class BaseEstimator(object):
 
             # The DF below contains seed number used in the CV run, cv_score averaged over all folds (see above),
             # std of CV score as well as list of CV values (in all folds).
+
             self.oof_eval_results = pd.DataFrame(
-                zip(self.model_seeds_list, cv_score_bagged, cv_std_bagged, oof_eval_results_bagged),
+                list(zip(self.model_seeds_list, cv_score_bagged, cv_std_bagged, oof_eval_results_bagged)),
                 columns=['seed', 'cv_mean_score', 'cv_std', 'cv_score_per_each_fold']
             )
 

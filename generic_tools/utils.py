@@ -7,6 +7,7 @@ from time import time
 from functools import wraps
 from sklearn import metrics
 from datetime import datetime
+from builtins import range, map
 from contextlib import contextmanager
 
 
