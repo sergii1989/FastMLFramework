@@ -66,7 +66,13 @@ class Ensembler(object):
                 oof_files = list(filter(lambda x: 'bagged' not in x, solution_details['files']))
 
             for filename in oof_files:
-                full_path = os.path.normpath(os.path.join(project_location, solution_details['path'], filename))
+                # Composing absolute path to a single OOF results file
+                if project_location in solution_details['path']:
+                    full_path = os.path.normpath(os.path.join(solution_details['path'], filename))
+                else:
+                    full_path = os.path.normpath(os.path.join(project_location, solution_details['path'], filename))
+
+                # Reading OOF predictions
                 if 'train_OOF' in filename:
                     df = pd.read_csv(full_path)
                     self._verify_consistency_of_input_data(df, train_df, target_column, index_column, filename)
