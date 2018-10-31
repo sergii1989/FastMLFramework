@@ -4,7 +4,7 @@ import pandas as pd
 
 from pandas import testing as pdt
 from builtins import filter
-from future.utils import iteritems
+from future.utils import iteritems, itervalues
 from modeling.prediction import Predictor
 
 
@@ -12,7 +12,7 @@ class Ensembler(object):
 
     @staticmethod
     def _verify_oof_input_data_completeness(oof_input_files):
-        for solution in oof_input_files.values():
+        for solution in itervalues(oof_input_files):
             assert len(solution['files']) >= 2, (
                     "There should be at least two input files: one containing 'train_OOF' in the file name and"
                     " the other 'test'. Instead got: %s" % solution['files'])
