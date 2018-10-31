@@ -14,7 +14,7 @@ requirements = [
     "pdpbox==0.2.0",
     "pyhocon==0.3.47",
     "cachetools==2.1.0",
-    "future==0.17.1",
+    "future==0.16.0",
     "seaborn",
     "luigi",
     "bayesian-optimization"
