@@ -3,6 +3,7 @@ import gc
 import pandas as pd
 
 from pandas import testing as pdt
+from builtins import filter
 from future.utils import iteritems
 from modeling.prediction import Predictor
 
@@ -60,9 +61,9 @@ class Ensembler(object):
         list_test_preds_df = []
         for results_suffix, solution_details in iteritems(oof_input_files):
             if stack_bagged_results:
-                oof_files = filter(lambda x: 'bagged' in x, solution_details['files'])
+                oof_files = list(filter(lambda x: 'bagged' in x, solution_details['files']))
             else:
-                oof_files = filter(lambda x: 'bagged' not in x, solution_details['files'])
+                oof_files = list(filter(lambda x: 'bagged' not in x, solution_details['files']))
 
             for filename in oof_files:
                 full_path = os.path.normpath(os.path.join(project_location, solution_details['path'], filename))
