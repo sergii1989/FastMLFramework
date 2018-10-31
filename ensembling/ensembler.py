@@ -16,10 +16,10 @@ class Ensembler(object):
             assert len(solution['files']) >= 2, (
                     "There should be at least two input files: one containing 'train_OOF' in the file name and"
                     " the other 'test'. Instead got: %s" % solution['files'])
-            assert len(filter(lambda x: 'train_OOF' in x, solution['files'])) >= 1, (
+            assert len(list(filter(lambda x: 'train_OOF' in x, solution['files']))) >= 1, (
                 "There should be at least one input file containing train out-of-fold predictions for each "
                 "provided path (i.e. file containing 'train_OOF' in the name)")
-            assert len(filter(lambda x: 'test' in x, solution['files'])) >= 1, (
+            assert len(list(filter(lambda x: 'test' in x, solution['files']))) >= 1, (
                 "There should be at least one input file containing test predictions for each "
                 "provided path (i.e. file containing 'test' in the name)")
 
