@@ -1,4 +1,5 @@
 import os
+import logging
 import warnings
 import pandas as pd
 import numpy.testing as npt
@@ -6,20 +7,26 @@ import numpy.testing as npt
 from collections import OrderedDict
 from bayes_opt import BayesianOptimization
 from ensembling.ensembler import Ensembler
+from generic_tools.loggers import configure_logging
 from generic_tools.utils import timing, create_output_dir
 
 warnings.filterwarnings("ignore")
 
+configure_logging()
+_logger = logging.getLogger("ensembling.blender")
+
 
 class Blender(object):
 
-    def __init__(self, oof_input_files, train_df, test_df, target_column, index_column, metrics_scorer,
-                 metrics_decimals=6, target_decimals=6, project_location='', output_dirname=''):
+    def __init__(self, oof_input_files, blend_bagged_results, train_df, test_df, target_column, index_column,
+                 metrics_scorer, metrics_decimals=6, target_decimals=6, project_location='', output_dirname=''):
         """
         This is a base class for blending models prediction. The blender is trained on out-of-fold predictions (OOF)
         of the 1st (or 2nd) level models and applied to test submissions. The blender is optimized in a way to maximize
         evaluation metrics.
         :param oof_input_files: dict with locations and names of train and test OOF data sets (to be used in blending)
+        :param blend_bagged_results: if True and -> blender will use raw OOF predictions obtained for each seed by the
+                                     selected models (and not the mean prediction over all seeds per model)
         :param train_df: pandas DF with train data set
         :param test_df: pandas DF with test data set
         :param target_column: target column (to be predicted)
@@ -33,8 +40,8 @@ class Blender(object):
 
         self.ensembler = Ensembler()
         self.train_oof, self.test_oof = \
-            self.ensembler.load_oof_target_and_test_data(oof_input_files, project_location, train_df, test_df,
-                                                         target_column, index_column, target_decimals)
+            self.ensembler.load_oof_target_and_test_data(oof_input_files, blend_bagged_results, train_df, test_df,
+                                                         target_column, index_column, target_decimals, project_location)
 
         self.target_column = target_column
         self.index_column = index_column
@@ -57,14 +64,16 @@ class Blender(object):
 
 class BayesOptimizationBlender(Blender):
 
-    def __init__(self, oof_input_files, train_df, test_df, target_column, index_column, metrics_scorer,
-                 metrics_decimals=6, target_decimals=6, init_points=10, n_iter=15, seed_val=27,
+    def __init__(self, oof_input_files, blend_bagged_results, train_df, test_df, target_column, index_column,
+                 metrics_scorer, metrics_decimals=6, target_decimals=6, init_points=10, n_iter=15, seed_val=27,
                  project_location='', output_dirname=''):
         """
         This class implements blender based on Bayes Optimization procedure. It is trained on out-of-fold predictions
         of the 1st (or 2nd) level models and applied to test submissions. The blender is optimized in a way to maximize
         evaluation metrics.
         :param oof_input_files: dict with locations and names of train and test OOF data sets (to be used in blending)
+        :param blend_bagged_results: if True and -> blender will use raw OOF predictions obtained for each seed by the
+                                     selected models (and not the mean prediction over all seeds per model)
         :param train_df: pandas DF with train data set
         :param test_df: pandas DF with test data set
         :param target_column: target column (to be predicted)
@@ -80,7 +89,7 @@ class BayesOptimizationBlender(Blender):
         """
 
         super(BayesOptimizationBlender, self).__init__(
-            oof_input_files, train_df, test_df, target_column, index_column, metrics_scorer,
+            oof_input_files, blend_bagged_results, train_df, test_df, target_column, index_column, metrics_scorer,
             metrics_decimals, target_decimals, project_location, output_dirname
         )
 
@@ -94,7 +103,7 @@ class BayesOptimizationBlender(Blender):
         self.test_file_blended = None  # type: pd.DataFrame
 
     @staticmethod
-    def _normalize_weights(best_params, precision=3):  # type: (dict) -> dict
+    def _normalize_weights(best_params, precision=3):  # type: (dict, int) -> dict
         """
         This method normalizes raw weights from the Bayes Optimization process. The sum of all weights should be 1.
         :param best_params: raw weights from Bayes Optimization process
@@ -135,7 +144,7 @@ class BayesOptimizationBlender(Blender):
         :return: None
         """
 
-        print('\nRunning Bayes Optimization...')
+        _logger.info('Running Bayes Optimization...')
         feats = [f for f in self.train_oof.columns if f not in (self.target_column, self.index_column)]
         params = OrderedDict((c, (0, 1)) for c in self.train_oof[feats])
         bo = BayesianOptimization(self.evaluate_results, params, random_state=self.seed_val)
@@ -145,8 +154,8 @@ class BayesOptimizationBlender(Blender):
         best_params = bo.res['max']['max_params']
         best_score = round(bo.res['max']['max_val'], self.metrics_decimals)
         optimal_weights = self._normalize_weights(best_params)
-        print('\n'.join(['', '=' * 70, '\nMax score: {0}'.format(best_score)]))
-        print('Optimal weights:\n{0}'.format(optimal_weights))
+        _logger.info('\n'.join(['', '=' * 70, '\nMax score: {0}'.format(best_score)]))
+        _logger.info('Optimal weights:\n{0}'.format(optimal_weights))
 
         # Blending train results with optimal weights and verifying the consistency of max score
         prediction_train = self.train_oof[optimal_weights.keys()].mul(optimal_weights.values()).sum(axis=1)
@@ -183,7 +192,7 @@ class BayesOptimizationBlender(Blender):
         """
         filename = "_".join(['blender_optimal_weights', str(self.blended_train_score)]) + '.csv'
         output_figname = os.path.join(self.path_output_dir, filename)
-        print('\nSaving optimal weights DF into %s' % output_figname)
+        _logger.info('Saving optimal weights DF into %s' % output_figname)
         self.optimal_weights_df.to_csv(output_figname)
 
 
@@ -224,6 +233,7 @@ def run_blender_kaggle_example(debug=True):
         }
     }
 
+    blend_bagged_results = True
     project_location = 'c:\Kaggle\home_credit_default_risk'  # ''
     output_dirname = ''  # 'solution'
     target_column = 'TARGET'
@@ -236,6 +246,7 @@ def run_blender_kaggle_example(debug=True):
     seed_val = 27
 
     bayes_blender = BayesOptimizationBlender(oof_input_files=oof_input_files,
+                                             blend_bagged_results=blend_bagged_results,
                                              train_df=train_data,
                                              test_df=test_data,
                                              target_column=target_column,
