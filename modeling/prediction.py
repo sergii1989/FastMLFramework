@@ -7,9 +7,10 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from builtins import map, zip, range
 from scipy import stats
+from shutil import copyfile
 from sklearn import metrics
+from builtins import map, zip, range
 from modeling.model_wrappers import ModelWrapper
 from sklearn.model_selection import KFold, StratifiedKFold
 from generic_tools.utils import timing, create_output_dir
@@ -750,6 +751,23 @@ class BaseEstimator(object):
             full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_TEST_RESULTS_BAGGED)
             print('\nSaving submission predictions for each seed into %s' % full_path_to_file)
             self.bagged_sub_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
+
+    def save_config(self, project_location, config_directory, config_file):
+        """
+        This method saves a copy of a config file to the output directory. This helps to identify which configs were
+        used to get results stored in the results directory, therefore enhancing traceability of experiments.
+        :param project_location: absolute path to project's main directory
+        :param config_directory: name of config sub-directory in project directory
+        :param config_file: name of config file in the config sub-directory
+        :return: None
+        """
+        src_config = os.path.normpath(os.path.join(project_location, config_directory, config_file))
+        if os.path.exists(src_config):
+            dst_config = os.path.join(self.path_output_dir, config_file)
+            print('\nCopying  {0}  into {1}'.format(src_config, dst_config))
+            copyfile(src_config, dst_config)
+        else:
+            raise IOError('No config file found in: %s' % src_config)
 
 
 class Predictor(BaseEstimator):
