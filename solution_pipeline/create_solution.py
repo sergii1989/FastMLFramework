@@ -21,10 +21,10 @@ warnings.filterwarnings("ignore")
 
 
 class TrainDataIngestion(luigi.Task):
-    project_location = luigi.Parameter()  # type: str
-    config_directory = luigi.Parameter()  # type: str
-    config_file = luigi.Parameter()  # type: str
-    fg_output_dir = luigi.Parameter()  # type: str
+    project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
+    config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
+    config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
+    fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
 
     def run(self):
         # Parsing config (actually it is cached)
@@ -62,12 +62,12 @@ class TrainDataIngestion(luigi.Task):
 
 @requires(TrainDataIngestion)
 class FeatureSelection(luigi.Task):
-    project_location = luigi.Parameter()  # type: str
-    config_directory = luigi.Parameter()  # type: str
-    config_file = luigi.Parameter()  # type: str
-    fg_output_dir = luigi.Parameter()  # type: str
-    fs_output_dir = luigi.Parameter()  # type: str
-    feats_select_method = luigi.Parameter()  # type: str
+    project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
+    config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
+    config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
+    fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
+    fs_output_dir = luigi.Parameter()  # type: str # feat. selection dir (where results of feature select. to be saved)
+    feats_select_method = luigi.Parameter()  # type: str # # feat. selection method name
     fs_results_file = 'optimal_features.txt'
 
     def run(self):
@@ -161,14 +161,14 @@ class FeatureSelection(luigi.Task):
 
 
 class InitializeSingleModelPredictor(luigi.Task):
-    project_location = luigi.Parameter()  # type: str
-    config_directory = luigi.Parameter()  # type: str
-    config_file = luigi.Parameter()  # type: str
-    model = luigi.Parameter()  # type: str
-    run_feature_selection = luigi.BoolParameter()  # type: bool
-    fg_output_dir = luigi.Parameter()  # type: str
-    fs_output_dir = luigi.Parameter()  # type: str
-    solution_output_dir = luigi.Parameter()  # type: str
+    project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
+    config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
+    config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
+    model = luigi.Parameter()  # type: str # name of estimator model
+    run_feature_selection = luigi.BoolParameter()  # type: bool # if True -> run feature selection
+    fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
+    fs_output_dir = luigi.Parameter()  # type: str # feat. selection dir (where results of feature select. to be saved)
+    solution_output_dir = luigi.Parameter()  # type: str # output dir where results of single model prediction is saved
     output_pickle_file = 'predictor_initialized.pickle'
 
     def requires(self):
@@ -245,8 +245,8 @@ class InitializeSingleModelPredictor(luigi.Task):
 
 @requires(InitializeSingleModelPredictor)
 class RunSingleModelHPO(luigi.Task):
-    model = luigi.Parameter()  # type: str
-    hpo_output_dir = luigi.Parameter()  # type: str
+    model = luigi.Parameter()  # type: str # name of estimator model
+    hpo_output_dir = luigi.Parameter()  # type: str # hyper-parameters opt. dir (where results of hpo to be saved)
     hpo_results_file = 'optimized_hp.txt'
 
     def run(self):
@@ -340,9 +340,10 @@ class RunSingleModelPrediction(luigi.Task):
         # Plot features importance
         predictor.plot_features_importance(n_features=7, save=True)
 
-        # Save results
+        # Save results and a copy of the config file
         predictor.save_oof_results()
         predictor.save_submission_results()
+        predictor.save_config(self.project_location, self.config_directory, self.config_file)
 
         # Prepare output file for ensembling
         solution_id = generate_single_model_solution_id_key(predictor.model_name)
@@ -366,9 +367,9 @@ class RunSingleModelPrediction(luigi.Task):
 
 
 class MakeSingleModelsPredictions(luigi.Task):
-    project_location = luigi.Parameter()  # type: str
-    config_directory = luigi.Parameter()  # type: str
-    config_file = luigi.Parameter()  # type: str
+    project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
+    config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
+    config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
     output_filename = 'oof_data_info.txt'
 
     def requires(self):
@@ -395,12 +396,12 @@ class MakeSingleModelsPredictions(luigi.Task):
 
 
 class InitializeStacker(luigi.Task):
-    project_location = luigi.Parameter()  # type: str
-    stacker_model = luigi.Parameter()  # type: str
-    stacking_output_dir = luigi.Parameter()  # type: str
-    fg_output_dir = luigi.Parameter()  # type: str
-    config_directory = luigi.Parameter()  # type: str
-    config_file = luigi.Parameter()  # type: str
+    project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
+    stacker_model = luigi.Parameter()  # type: str # name of stacker estimator model
+    stacking_output_dir = luigi.Parameter()  # type: str # output dir where results of stacking is saved
+    fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
+    config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
+    config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
     output_pickle_file = 'stacker_initialized.pickle'
 
     def requires(self):
@@ -470,9 +471,9 @@ class InitializeStacker(luigi.Task):
 
 @requires(InitializeStacker)
 class RunStackerHPO(luigi.Task):
-    project_location = luigi.Parameter()  # type: str
-    stacker_model = luigi.Parameter()  # type: str
-    stacking_output_dir = luigi.Parameter()  # type: str
+    project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
+    stacker_model = luigi.Parameter()  # type: str # name of stacker estimator model
+    stacking_output_dir = luigi.Parameter()  # type: str # output dir where results of stacking is saved
     stacker_hpo_results_file = 'stacker_optimized_hp.txt'
 
     def run(self):
@@ -517,14 +518,14 @@ class RunStackerHPO(luigi.Task):
 
 
 class RunSingleStacker(luigi.Task):
-    project_location = luigi.Parameter()  # type: str
-    config_directory = luigi.Parameter()  # type: str
-    config_file = luigi.Parameter()  # type: str
-    stacker_model = luigi.Parameter()  # type: str
-    run_stacker_hpo = luigi.BoolParameter()  # type: bool
-    run_bagging = luigi.BoolParameter()  # type: bool
-    fg_output_dir = luigi.Parameter()  # type: str
-    stacking_output_dir = luigi.Parameter()  # type: str
+    project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
+    config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
+    config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
+    stacker_model = luigi.Parameter()  # type: str # name of stacker estimator model
+    run_stacker_hpo = luigi.BoolParameter()  # type: bool # if True -> run stacking
+    run_bagging = luigi.BoolParameter()  # type: bool # if True -> run bagging
+    fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
+    stacking_output_dir = luigi.Parameter()  # type: str # output dir where results of stacking is saved
     output_filename = 'oof_data_info.txt'
 
     def requires(self):
@@ -551,9 +552,10 @@ class RunSingleStacker(luigi.Task):
         # Run CV and prediction of test data set
         stacker.run_cv_and_prediction()
 
-        # Save results
+        # Save results and a copy of the config file
         stacker.save_oof_results()
         stacker.save_submission_results()
+        stacker.save_config(self.project_location, self.config_directory, self.config_file)
 
         # Plot confusion matrix
         plot_cm = config.get_bool('modeling_settings.plot_confusion_matrix')
@@ -586,9 +588,9 @@ class RunSingleStacker(luigi.Task):
 
 
 class BuildSolution(luigi.WrapperTask):
-    project_location = luigi.Parameter()  # type: str
-    config_directory = luigi.Parameter()  # type: str
-    config_file = luigi.Parameter()  # type: str
+    project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
+    config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
+    config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
 
     def requires(self):
         # Run single model predictions
@@ -606,8 +608,9 @@ class BuildSolution(luigi.WrapperTask):
 
 if __name__ == '__main__':
     # Location of the project and config file
-    project_location = 'c:\Kaggle\FastMLFramework\examples\classification\multiclass\iris'
-    # project_location = 'c:\Kaggle\home_credit_default_risk'  # or e.g. os.getcwd()
+    # project_location = r'c:\Kaggle\FastMLFramework\examples\classification\multiclass\iris'
+    project_location = r'c:\Kaggle\FastMLFramework\examples\classification\binary\credit_scoring'
+    # project_location = r'c:\Kaggle\home_credit_default_risk'  # or e.g. os.getcwd()
 
     config_directory = 'configs'
     config_file = 'solution.conf'
