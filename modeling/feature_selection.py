@@ -289,7 +289,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
             temp = []
             for i, threshold in enumerate(thresholds):
                 with timer(
-                        '\n%s: %s %4d / %4d. Threshold: %3d' % (importance_type, self.run_lgbm_cv.__name__, i + 1,
+                        '%s: %s %4d / %4d. Threshold: %3d' % (importance_type, self.run_lgbm_cv.__name__, i + 1,
                                                                 len(thresholds), threshold)):
                     train_features = self.get_list_of_features(importance=importance, thresh=threshold)
                     result = self.run_lgbm_cv(train_features)
