@@ -108,7 +108,7 @@ def plot_numerical_feature_vs_target(
         list_df.append((temp_df.groupby(pd.cut(temp_df, shrink, right=False)).count()).rename(str(target_val)))
 
     fig, ax = plt.subplots(figsize=(figsize_x, figsize_y))
-    pd.concat(list_df, axis=1, names=map(lambda x: x.name, list_df)).plot.bar(stacked=True, ax=ax)
+    pd.concat(list_df, axis=1, names=list(map(lambda x: x.name, list_df))).plot.bar(stacked=True, ax=ax)
     ax.set_ylabel('Number of {0} in the range'.format(feature), size=12)
     ax.set_title("Train: {0} VS {1}".format(feature, target), size=13)
     plt.setp(ax.get_xticklabels(), rotation=label_rotation, size=11)
