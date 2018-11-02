@@ -1,8 +1,13 @@
 import os
+import logging
 import pandas as pd
 
 from ensembling.ensembler import Ensembler
 from modeling.prediction import BaseEstimator
+from generic_tools.loggers import configure_logging
+
+configure_logging()
+_logger = logging.getLogger("ensembling.stacker")
 
 
 class Stacker(BaseEstimator):
@@ -82,7 +87,6 @@ def run_stacker_kaggle_example(stacker_model='logistic_regression', debug=True):
     cv_verbosity = 1000
     stack_bagged_results = True
     stacker_bagging = False
-    predict_test = True
     data_split_seed = 789987
     model_seeds_list = [27]
     cols_to_exclude = ['TARGET', 'SK_ID_CURR']
@@ -128,7 +132,7 @@ def run_stacker_kaggle_example(stacker_model='logistic_regression', debug=True):
         stacker_eval_metric = 'rmse'
         params = {
             'fit_intercept': True,  # constant bias to be added to the decision function, default: True
-            'normalize': False,  # If True, regressors will be normalized by subtr. the mean and dividing by l2-norm.
+            'normalize': False,  # If True, regressors will be normalized by subtract. the mean and dividing by l2-norm.
             'n_jobs': -1
         }
 

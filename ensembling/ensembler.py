@@ -1,11 +1,16 @@
 import os
 import gc
+import logging
 import pandas as pd
 
-from pandas import testing as pdt
 from builtins import filter
-from future.utils import iteritems, itervalues
+from pandas import testing as pdt
 from modeling.prediction import Predictor
+from future.utils import iteritems, itervalues
+from generic_tools.loggers import configure_logging
+
+configure_logging()
+_logger = logging.getLogger("ensembling")
 
 
 class Ensembler(object):
@@ -52,7 +57,7 @@ class Ensembler(object):
 
         return df
 
-    def load_oof_target_and_test_data(self, oof_input_files, stack_bagged_results, train_df, test_df,
+    def load_oof_target_and_test_data(self, oof_input_files, use_bagged_results, train_df, test_df,
                                       target_column, index_column, target_decimals, project_location):
 
         self._verify_oof_input_data_completeness(oof_input_files)
@@ -60,7 +65,7 @@ class Ensembler(object):
         list_train_oof_df = []
         list_test_preds_df = []
         for results_suffix, solution_details in iteritems(oof_input_files):
-            if stack_bagged_results:
+            if use_bagged_results:
                 oof_files = list(filter(lambda x: 'bagged' in x, solution_details['files']))
             else:
                 oof_files = list(filter(lambda x: 'bagged' not in x, solution_details['files']))
@@ -86,7 +91,8 @@ class Ensembler(object):
                     df.columns = ['_'.join([results_suffix, col]) for col in df.columns]
                     list_test_preds_df.append(df)
                 else:
-                    raise ValueError("File '%s' does not contains 'train_OOF' or 'test' in name." % filename)
+                    _logger.error("File '%s' does not contain 'train_OOF' or 'test' in name." % filename)
+                    return
 
         oof_train_df = self._join_oof_results(train_df, index_column, target_column, list_train_oof_df, target_decimals)
         oof_test_df = self._join_oof_results(test_df, index_column, target_column, list_test_preds_df, target_decimals)

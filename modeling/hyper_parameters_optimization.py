@@ -1,11 +1,16 @@
 import os
 import json
+import logging
 import numpy as np
 import pandas as pd
 
 from bayes_opt import BayesianOptimization
 from modeling.prediction import Predictor
+from generic_tools.loggers import configure_logging
 from generic_tools.utils import timing, create_output_dir
+
+configure_logging()
+_logger = logging.getLogger("hp_optimization")
 
 
 class HyperParamsOptimization(object):
@@ -69,7 +74,7 @@ class HyperParamsOptimization(object):
         """
         filename = '_'.join([self.filename, self.predictor.model_name, str(self.best_score)]) + '.txt'
         full_path_to_file = os.path.join(self.path_output_dir, filename)
-        print('\nSaving optimized hyperparameters into %s' % full_path_to_file)
+        _logger.info('Saving optimized hyperparameters into %s' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
             f.write(json.dumps(self.best_params, indent=4))
 
@@ -86,10 +91,10 @@ class HyperParamsOptimization(object):
                                  .format(self.predictor.model_name, filename))
 
         output_figname = os.path.join(path_to_save_data, filename)
-        print('\nReading optimized hyperparameters from %s...' % output_figname)
+        _logger.info('Reading optimized hyperparameters from %s...' % output_figname)
         with open(output_figname, 'r') as f:
             self.best_params = json.load(f)
-        print('\nNew best_params attribute contains:\n{0}'.format(self.best_params))
+        _logger.info('New best_params attribute contains:\n{0}'.format(self.best_params))
 
 
 class BayesHyperParamsOptimization(HyperParamsOptimization):
@@ -146,8 +151,8 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         best_params = self._adjust_hyperparameters_datatypes(bo.res['max']['max_params'])
         self.best_params = self._complete_missing_hyperparameters_from_init_params(best_params)
         self.best_score = round(bo.res['max']['max_val'], self.predictor.metrics_decimals)
-        print('\n'.join(['', '=' * 70, '\nMax CV score: {0}'.format(self.best_score)]))
-        print('Optimal parameters:\n{0}'.format(self.best_params))
+        _logger.info('Max CV score: {0}'.format(self.best_score))
+        _logger.info('Optimal parameters:\n{0}'.format(self.best_params))
 
         # Re-order columns in DF with the results of all hpo runs
         score_cols = ['cv_score', 'cv_std']
@@ -161,7 +166,7 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         """
         filename = '_'.join([self.FILENAME_HPO_HISTORY, 'max_cv', str(self.best_score)]) + '.csv'
         full_path_to_file = os.path.join(self.path_output_dir, filename)
-        print('\nSaving hpo history into %s' % full_path_to_file)
+        _logger.info('Saving hpo history into %s' % full_path_to_file)
         self.hpo_cv_df.to_csv(full_path_to_file, index=False)
 
 
