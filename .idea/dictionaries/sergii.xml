@@ -3,6 +3,7 @@
     <words>
       <w>algo</w>
       <w>annot</w>
+      <w>asctime</w>
       <w>automat</w>
       <w>barplot</w>
       <w>boruta</w>
@@ -53,6 +54,7 @@
       <w>kfolds</w>
       <w>kurtosis</w>
       <w>lbfgs</w>
+      <w>levelname</w>
       <w>lgbm</w>
       <w>liblinear</w>
       <w>lightgbm</w>
@@ -65,6 +67,7 @@
       <w>matplotlib</w>
       <w>merror</w>
       <w>mlogloss</w>
+      <w>msecs</w>
       <w>multiclass</w>
       <w>multinomial</w>
       <w>ndarray</w>
