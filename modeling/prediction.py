@@ -523,16 +523,18 @@ class BaseEstimator(object):
         fig, ax = plt.subplots()
         true_labels = self.train_df[self.target_column].values.tolist()
 
-        if self.predict_probability:
-            # If predict_probability -> True, one should use mapper to convert probabilities back to categorical labels
+        if self.predict_probability or self.model.estimator.__class__.__name__ == 'LinearRegression':
+            # If predict_probability -> True, one should use mapper to convert probabilities back to categorical labels.
+            # Also, if used estimator is Linear Regression, one should apply mapper regardless of the value of the
+            # self.predict_probability since the model returns always a non-categorical predictions.
             if labels_mapper is not None:
-                predicted_labels = map(labels_mapper, self.oof_preds[self.target_column + '_OOF'])
+                predicted_labels = list(map(labels_mapper, self.oof_preds[self.target_column + '_OOF']))
             else:
                 raise Exception('For a classification task with the predict_probability=True, one should provide '
                                 'labels_mapper function to convert predicted probabilities back to categorical labels')
         else:
             # If predict_probability -> False, model output is categorical labels -> no labels_mapper is needed
-            predicted_labels = self.oof_preds[self.target_column + '_OOF']
+            predicted_labels = self.oof_preds[self.target_column + '_OOF'].values.tolist()
 
         # Handle situation when class_names are not provided
         if class_names is None:
@@ -698,7 +700,7 @@ class BaseEstimator(object):
         x = range(self.oof_eval_results.shape[0])
         y = self.oof_eval_results['cv_mean_score']
         yerr = self.oof_eval_results['cv_std']
-        annotation = map(lambda n_seed: 'seed_%s' % n_seed, self.oof_eval_results['seed'].astype(str).values)
+        annotation = list(map(lambda n_seed: 'seed_%s' % n_seed, self.oof_eval_results['seed'].astype(str).values))
 
         # Plot CV score with std error bars
         ax.errorbar(x=x, y=y, yerr=yerr, fmt='-o')
