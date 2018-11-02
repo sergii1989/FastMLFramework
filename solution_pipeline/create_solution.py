@@ -2,6 +2,7 @@ import os
 import json
 import luigi
 import pickle
+import logging
 import warnings
 import numpy as np
 import pandas as pd
@@ -9,6 +10,7 @@ import pandas as pd
 from luigi.util import requires
 from modeling.prediction import Predictor
 from ensembling.stacking.stacker import Stacker
+from generic_tools.loggers import configure_logging
 from modeling.model_wrappers import get_wrapped_estimator
 from modeling.feature_selection import load_feature_selector_class
 from modeling.hyper_parameters_optimization import load_hp_optimization_class
@@ -16,8 +18,14 @@ from data_processing.preprocessing import downcast_datatypes
 from generic_tools.config_parser import ConfigFileHandler
 from generic_tools.utils import (get_metrics_scorer, generate_single_model_solution_id_key,
                                  merge_two_dicts, create_output_dir)
-
 warnings.filterwarnings("ignore")
+
+# Setting up logging interface of luigi
+luigi.interface.setup_interface_logging(level_name='INFO')
+
+# Setting up logging interface of FastML Framework
+configure_logging()
+_logger = logging.getLogger("solution_pipeline")
 
 
 class TrainDataIngestion(luigi.Task):
@@ -40,17 +48,17 @@ class TrainDataIngestion(luigi.Task):
         train_full_path = os.path.normpath(os.path.join(self.project_location, self.fg_output_dir, train_file))
         train_data = downcast_datatypes(pd.read_csv(train_full_path, nrows=num_rows if debug else None)) \
             .reset_index(drop=True)
-        print('Train DF shape: {0}\n'.format(train_data.shape, train_data.info()))
+        _logger.info('Train DF shape: {0}'.format(train_data.shape, train_data.info()))
 
         test_full_path = os.path.normpath(os.path.join(self.project_location, self.fg_output_dir, test_file))
         test_data = downcast_datatypes(pd.read_csv(test_full_path, nrows=num_rows if debug else None)) \
             .reset_index(drop=True)
-        print('Test DF shape: {0}'.format(test_data.shape))
+        _logger.info('Test DF shape: {0}'.format(test_data.shape))
 
         new_train_name = os.path.join(self.project_location, self.fg_output_dir, 'train_new.csv')
         new_test_name = os.path.join(self.project_location, self.fg_output_dir, 'test_new.csv')
-        print('\nSaving %s\n' % new_train_name)
-        print('\nSaving %s\n' % new_test_name)
+        _logger.info('Saving %s' % new_train_name)
+        _logger.info('Saving %s' % new_test_name)
 
         train_data.to_csv(new_train_name, index=False)
         test_data.to_csv(new_test_name, index=False)
@@ -79,7 +87,7 @@ class FeatureSelection(luigi.Task):
 
         # Categorical features for lgbm in feature_selection process
         categorical_feats = [f for f in train_data.columns if train_data[f].dtype == 'object']
-        print('Number of categorical features: {0}'.format(len(categorical_feats)))
+        _logger.info('Number of categorical features: {0}'.format(len(categorical_feats)))
         for cat_feat in categorical_feats:
             train_data[cat_feat], _ = pd.factorize(train_data[cat_feat])
             train_data[cat_feat] = train_data[cat_feat].astype('category')
@@ -152,7 +160,7 @@ class FeatureSelection(luigi.Task):
         opt_feats = features_selection.get_list_of_features(importance='gain_score', thresh=opt_thres)
 
         full_path_to_file = os.path.join(self.project_location, self.fs_output_dir, self.fs_results_file)
-        print('\nSaving %s\n' % full_path_to_file)
+        _logger.info('Saving %s' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
             f.write(json.dumps(opt_feats, indent=4))
 
@@ -235,7 +243,7 @@ class InitializeSingleModelPredictor(luigi.Task):
         )
 
         full_path_to_file = os.path.join(self.project_location, self.solution_output_dir, self.output_pickle_file)
-        print('\nSaving %s\n' % full_path_to_file)
+        _logger.info('Saving %s' % full_path_to_file)
         with open(full_path_to_file, 'wb') as f:
             pickle.dump(predictor, f)
 
@@ -279,7 +287,7 @@ class RunSingleModelHPO(luigi.Task):
         hpo.save_hpo_history()
 
         full_path_to_file = os.path.join(self.project_location, self.hpo_output_dir, self.hpo_results_file)
-        print('\nSaving %s\n' % full_path_to_file)
+        _logger.info('Saving %s' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
             f.write(json.dumps(hpo.best_params, indent=4))
 
@@ -358,7 +366,7 @@ class RunSingleModelPrediction(luigi.Task):
                 }
         }
         full_path_to_file = os.path.join(self.project_location, self.solution_output_dir, self.output_filename)
-        print('\nSaving %s\n' % full_path_to_file)
+        _logger.info('Saving %s' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
             f.write(json.dumps(output, indent=4))
 
@@ -387,7 +395,7 @@ class MakeSingleModelsPredictions(luigi.Task):
         # TODO: to refactor this part
         create_output_dir(os.path.join(self.project_location, 'results_ensembling'))
         full_path_to_file = os.path.join(self.project_location, 'results_ensembling', self.output_filename)
-        print('\nSaving %s\n' % full_path_to_file)
+        _logger.info('Saving %s' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
             f.write(json.dumps(oof_input_files, indent=4))
 
@@ -461,7 +469,7 @@ class InitializeStacker(luigi.Task):
         )
 
         full_path_to_file = os.path.join(self.project_location, self.stacking_output_dir, self.output_pickle_file)
-        print('\nSaving %s\n' % full_path_to_file)
+        _logger.info('Saving %s' % full_path_to_file)
         with open(full_path_to_file, 'wb') as f:
             pickle.dump(stacker, f)
 
@@ -507,7 +515,7 @@ class RunStackerHPO(luigi.Task):
         stacker_hpo.save_hpo_history()
 
         full_path_to_file = os.path.join(self.project_location, self.stacking_output_dir, self.stacker_hpo_results_file)
-        print('\nSaving %s\n' % full_path_to_file)
+        _logger.info('Saving %s' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
             f.write(json.dumps(stacker_hpo.best_params, indent=4))
 
@@ -579,7 +587,7 @@ class RunSingleStacker(luigi.Task):
                 }
         }
         full_path_to_file = os.path.join(self.project_location, self.stacking_output_dir, self.output_filename)
-        print('\nSaving %s\n' % full_path_to_file)
+        _logger.info('Saving %s' % full_path_to_file)
         with open(full_path_to_file, 'w') as f:
             f.write(json.dumps(output, indent=4))
 
@@ -608,8 +616,8 @@ class BuildSolution(luigi.WrapperTask):
 
 if __name__ == '__main__':
     # Location of the project and config file
-    # project_location = r'c:\Kaggle\FastMLFramework\examples\classification\multiclass\iris'
-    project_location = r'c:\Kaggle\FastMLFramework\examples\classification\binary\credit_scoring'
+    project_location = r'c:\Kaggle\FastMLFramework\examples\classification\multiclass\iris'
+    # project_location = r'c:\Kaggle\FastMLFramework\examples\classification\binary\credit_scoring'
     # project_location = r'c:\Kaggle\home_credit_default_risk'  # or e.g. os.getcwd()
 
     config_directory = 'configs'
