@@ -3,6 +3,7 @@
     <words>
       <w>algo</w>
       <w>annot</w>
+      <w>automat</w>
       <w>barplot</w>
       <w>boruta</w>
       <w>boxcox</w>
@@ -17,6 +18,7 @@
       <w>dataframe</w>
       <w>dataset</w>
       <w>datatypes</w>
+      <w>depthwise</w>
       <w>dirname</w>
       <w>distplot</w>
       <w>distrib</w>
@@ -29,7 +31,9 @@
       <w>figname</w>
       <w>figsize</w>
       <w>filenames</w>
+      <w>gammma</w>
       <w>gbdt</w>
+      <w>gblinear</w>
       <w>gbrt</w>
       <w>gbtree</w>
       <w>getcwd</w>
@@ -57,6 +61,7 @@
       <w>logreg</w>
       <w>lossguide</w>
       <w>lutsanych</w>
+      <w>mape</w>
       <w>matplotlib</w>
       <w>merror</w>
       <w>mlogloss</w>
@@ -67,9 +72,11 @@
       <w>ntop</w>
       <w>optim</w>
       <w>optimizator</w>
+      <w>overfitting</w>
       <w>pdpbox</w>
       <w>pred</w>
       <w>preds</w>
+      <w>preprocessing</w>
       <w>proba</w>
       <w>pyhocon</w>
       <w>regressors</w>
@@ -81,6 +88,7 @@
       <w>sergii</w>
       <w>shap</w>
       <w>sklearn</w>
+      <w>softmax</w>
       <w>softprob</w>
       <w>sqrt</w>
       <w>stds</w>
@@ -88,6 +96,7 @@
       <w>subm</w>
       <w>targer</w>
       <w>thres</w>
+      <w>tweedie</w>
       <w>vmax</w>
       <w>vmin</w>
       <w>xgboost</w>
