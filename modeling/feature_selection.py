@@ -205,9 +205,9 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
             # Verify is callable and has 2 arguments
             assert callable(scoring_function), \
                 'Provided scoring_function is not callable. It has %s type' % type(scoring_function)
-            assert scoring_function.func_code.co_argcount == 2, \
+            assert scoring_function.__code__.co_argcount == 2, \
                 'Provided scoring_function should have 2 arguments. Instead received %d: %s' % (
-                    scoring_function.func_code.co_argcount, str(scoring_function.func_code.co_varnames))
+                    scoring_function.__code__.co_argcount, str(scoring_function.__code__.co_varnames))
         else:
             # If scoring_function is not defined, make score of the features by using log of mean actual feature
             # importance divided by the 75 percentile of null distribution. 1e-10 is used to avoid division by zero.
@@ -222,11 +222,11 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
                 f_act_imps = self.actual_imp_df.loc[self.actual_imp_df['feature'] == feat, importance].mean()
                 score = scoring_function(f_act_imps, f_null_imps)
                 feature_scores[feat][importance.split('_')[1] + '_score'] = score
-        feature_scores = pd.DataFrame(index=feature_scores.keys(), data=feature_scores.values()).reset_index() \
+        feature_scores = pd.DataFrame.from_dict(feature_scores, orient='index').reset_index()\
             .rename(columns={'index': 'feature'}).sort_values(by=['gain_score', 'split_score', 'feature'])
         self.features_scores_df = feature_scores.reset_index(drop=True)
 
-    def run_lgbm_cv(self, train_features):  # type: (list(str)) -> tuple
+    def run_lgbm_cv(self, train_features):  # type: (list) -> tuple
         """
         This method runs LGBM's in-built CV to investigate the effect of used feature_score threshold (i.e. number of
         features) on CV score.
