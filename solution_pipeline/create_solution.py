@@ -616,8 +616,8 @@ class BuildSolution(luigi.WrapperTask):
 
 if __name__ == '__main__':
     # Location of the project and config file
-    project_location = r'c:\Kaggle\FastMLFramework\examples\classification\multiclass\iris'
-    # project_location = r'c:\Kaggle\FastMLFramework\examples\classification\binary\credit_scoring'
+    # project_location = r'c:\Kaggle\FastMLFramework\examples\classification\multiclass\iris'
+    project_location = r'c:\Kaggle\FastMLFramework\examples\classification\binary\credit_scoring'
     # project_location = r'c:\Kaggle\home_credit_default_risk'  # or e.g. os.getcwd()
 
     config_directory = 'configs'
