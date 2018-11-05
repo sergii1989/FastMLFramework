@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 import numpy as np
 import pandas as pd
 
@@ -7,7 +8,12 @@ from time import time
 from functools import wraps
 from sklearn import metrics
 from datetime import datetime
+from builtins import range, map
 from contextlib import contextmanager
+from generic_tools.loggers import configure_logging
+
+configure_logging()
+_logger = logging.getLogger("utils")
 
 
 @contextmanager
@@ -19,7 +25,7 @@ def timer(text):
     """
     t0 = time()
     yield
-    print("{} - done in {:.0f}s".format(text, time() - t0))
+    _logger.info("{} - done in {:.0f}s".format(text, time() - t0))
 
 
 def timing(func):
@@ -33,7 +39,7 @@ def timing(func):
         ts = time()
         result = func(*args, **kw)
         te = time()
-        print('\n***** \'{0}\' took {1:2.3f} sec\n'.format(func.__name__, te - ts))
+        _logger.info('***** \'{0}\' took {1:2.3f} sec'.format(func.__name__, te - ts))
         return result
     return wrap
 
@@ -54,7 +60,7 @@ def _convert_metrics_scorer_to_str(metrics_scorer):
     :return: str
     """
     if sys.version_info.major == 2:
-        if isinstance(metrics_scorer, unicode):  # noqa
+        if isinstance(metrics_scorer, unicode):
             metrics_scorer = metrics_scorer.encode()  # since parsing of pyhocon config returns unicode
             return metrics_scorer
         else:
@@ -81,8 +87,8 @@ def get_metrics_scorer(metrics_scorer):  # type: (str) -> metrics
     try:
         return getattr(scorer, metrics_scorer)
     except AttributeError as e:
-        print("Module {0} has no '{1}' score function. Please use in the config file one of the following "
-              "functions:\n\n{2}".format(scorer.__name__, metrics_scorer, scorer.__all__))
+        _logger.error("Module {0} has no '{1}' score function. Please use in the config file one of the following "
+                      "functions:\n\n{2}".format(scorer.__name__, metrics_scorer, scorer.__all__))
 
 
 def merge_two_dicts(x, y):  # type: (dict, dict) -> dict
@@ -149,7 +155,7 @@ def create_output_dir(path_output_dir, silent=False):  # type: (str, bool) -> No
     if not os.path.exists(path_output_dir):
         os.makedirs(path_output_dir)
         if not silent:
-            print('Output directory {} is created'.format(path_output_dir))
+            _logger.info('Output directory {} is created'.format(path_output_dir))
 
 
 def generate_single_model_solution_id_key(model_name):  # type: (str) -> str

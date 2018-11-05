@@ -1,5 +1,6 @@
 import os
 import gc
+import logging
 import warnings
 import numpy as np
 import pandas as pd
@@ -9,9 +10,15 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 from sklearn import metrics
+from builtins import zip, range
 from collections import namedtuple
+from generic_tools.loggers import configure_logging
 from generic_tools.utils import timer, timing, auto_selector_of_categorical_features, create_output_dir
+
 warnings.simplefilter('ignore', UserWarning)
+
+configure_logging()
+_logger = logging.getLogger("feature_selection")
 
 
 class FeatureSelector(object):
@@ -50,8 +57,8 @@ class FeatureSelector(object):
         if self.cat_features is None:
             self.cat_features = auto_selector_of_categorical_features(
                 self.train_df, cols_exclude=[self.target_column], int_threshold=self.int_threshold)
-            print('{0} class was initialized with no cat_features. Auto-selector of categorical features is applied: '
-                  '{1} features found'.format(self.__class__.__name__, len(self.cat_features)))
+            _logger.info('{0} class was initialized with no cat_features. Auto-selector of categorical features '
+                         'is applied: {1} features found'.format(self.__class__.__name__, len(self.cat_features)))
 
 
 class FeatureSelectorByTargetPermutation(FeatureSelector):
@@ -144,7 +151,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         dtrain = lgbm.Dataset(data=self.train_df[train_features], label=y, free_raw_data=False,
                               categorical_feature=self.cat_features)
         if verbose:
-            print(
+            _logger.info(
                 'Train LGBM on {0} data set with {1} categorical features. LGBM parameters: {2}. Number of boosting '
                 'rounds: {3}'.format(self.train_df[train_features].shape, self.cat_features,
                                      self.lgbm_params_feats_exploration, num_boost_rounds))
@@ -204,9 +211,9 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
             # Verify is callable and has 2 arguments
             assert callable(scoring_function), \
                 'Provided scoring_function is not callable. It has %s type' % type(scoring_function)
-            assert scoring_function.func_code.co_argcount == 2, \
+            assert scoring_function.__code__.co_argcount == 2, \
                 'Provided scoring_function should have 2 arguments. Instead received %d: %s' % (
-                    scoring_function.func_code.co_argcount, str(scoring_function.func_code.co_varnames))
+                    scoring_function.__code__.co_argcount, str(scoring_function.__code__.co_varnames))
         else:
             # If scoring_function is not defined, make score of the features by using log of mean actual feature
             # importance divided by the 75 percentile of null distribution. 1e-10 is used to avoid division by zero.
@@ -221,11 +228,11 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
                 f_act_imps = self.actual_imp_df.loc[self.actual_imp_df['feature'] == feat, importance].mean()
                 score = scoring_function(f_act_imps, f_null_imps)
                 feature_scores[feat][importance.split('_')[1] + '_score'] = score
-        feature_scores = pd.DataFrame(index=feature_scores.keys(), data=feature_scores.values()).reset_index() \
+        feature_scores = pd.DataFrame.from_dict(feature_scores, orient='index').reset_index()\
             .rename(columns={'index': 'feature'}).sort_values(by=['gain_score', 'split_score', 'feature'])
         self.features_scores_df = feature_scores.reset_index(drop=True)
 
-    def run_lgbm_cv(self, train_features):  # type: (list(str)) -> tuple
+    def run_lgbm_cv(self, train_features):  # type: (list) -> tuple
         """
         This method runs LGBM's in-built CV to investigate the effect of used feature_score threshold (i.e. number of
         features) on CV score.
@@ -282,16 +289,16 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
             temp = []
             for i, threshold in enumerate(thresholds):
                 with timer(
-                        '\n%s: %s %4d / %4d. Threshold: %3d' % (importance_type, self.run_lgbm_cv.__name__, i + 1,
+                        '%s: %s %4d / %4d. Threshold: %3d' % (importance_type, self.run_lgbm_cv.__name__, i + 1,
                                                                 len(thresholds), threshold)):
                     train_features = self.get_list_of_features(importance=importance, thresh=threshold)
                     result = self.run_lgbm_cv(train_features)
                     result = eval_score(*(result + (int(len(train_features)),)))
                     temp.append(result)
 
-                print('  Number of features with score >= %d: %d' % (threshold, len(train_features)))
-                print('  Optimum boost rounds: {}'.format(result.cv_bst_round))
-                print('  Best iteration CV: {0} +/- {1}'.format(result.cv_bst_score, result.cv_std_bst_score))
+                _logger.info('  Number of features with score >= %d: %d' % (threshold, len(train_features)))
+                _logger.info('  Optimum boost rounds: {}'.format(result.cv_bst_round))
+                _logger.info('  Best iteration CV: {0} +/- {1}'.format(result.cv_bst_score, result.cv_std_bst_score))
 
             temp = pd.DataFrame(temp, columns=eval_score._fields)
             temp.insert(loc=0, column='importance', value=importance_type)  # SPLIT - GAIN
@@ -324,7 +331,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         best_thresh_idx = best_thresh_df['total_rank'].argmax()
         best_thresh_results = best_thresh_df.loc[best_thresh_idx, ['cv_bst_score', 'cv_std_bst_score',
                                                                    'n_features']].to_dict()
-        print('Best threshold by {0} is {1}. {2} score: {3} +/- {4}. Total number of features: {5}'.format(
+        _logger.info('Best threshold by {0} is {1}. {2} score: {3} +/- {4}. Total number of features: {5}'.format(
             best_thresh_idx[1], best_thresh_idx[0], self.eval_metric.upper(), best_thresh_results['cv_bst_score'],
             best_thresh_results['cv_std_bst_score'], best_thresh_results['n_features']))
 
@@ -380,8 +387,8 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         if save:
             full_path_to_file = os.path.join(self.path_output_dir, "actual_vs_null_import_distrib_"
                                                                    "{0}".format(feature.lower()))
-            print('\nSaving {0} null importance distribution vs actual distribution figure '
-                  'into {1}'.format(feature, full_path_to_file))
+            _logger.info('Saving {0} null importance distribution vs actual distribution figure '
+                         'into {1}'.format(feature, full_path_to_file))
             plt.savefig(full_path_to_file)
 
     def feature_score_comparing_to_importance(self, ntop_feats=100, figsize_x=16, figsize_y=16, save=False):
@@ -407,7 +414,8 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
 
         if save:
             full_path_to_file = os.path.join(self.path_output_dir, self.FIGNAME_FEATS_SCORE_VS_IMPORTANCE)
-            print('\nSaving {0} top features score vs importance figure into {1}'.format(ntop_feats, full_path_to_file))
+            _logger.info('Saving {0} top features score vs importance figure '
+                         'into {1}'.format(ntop_feats, full_path_to_file))
             plt.savefig(full_path_to_file)
 
     def plot_cv_results_vs_feature_threshold(self, figsize_x=14, figsize_y=4, annot_offset_x=3,
@@ -448,7 +456,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
 
         if save:
             full_path_to_file = os.path.join(self.path_output_dir, self.FIGNAME_CV_VERSUS_FEATURES_SCORE_THRESHOLD)
-            print('\nSaving CV results vs feature score threshold figure into %s' % full_path_to_file)
+            _logger.info('Saving CV results vs feature score threshold figure into %s' % full_path_to_file)
             plt.savefig(full_path_to_file)
 
         del df; gc.collect()
@@ -459,7 +467,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         :return: None
         """
         full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_FEATS_SCORE)
-        print('\nSaving feature scores DF into %s' % full_path_to_file)
+        _logger.info('Saving feature scores DF into %s' % full_path_to_file)
         self.features_scores_df.to_csv(full_path_to_file, index=False)
 
     def save_cv_results_vs_feats_score_thresh(self):
@@ -468,7 +476,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
         :return: None
         """
         full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_CV_RESULTS_VS_FEATS_SCORE_THRESH)
-        print('\nSaving DF with CV results at various features scores thresholds into %s' % full_path_to_file)
+        _logger.info('Saving DF with CV results at various features scores thresholds into %s' % full_path_to_file)
         self.cv_results_vs_thresh_df.reset_index().to_csv(full_path_to_file, index=False)
 
 

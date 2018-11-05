@@ -1,6 +1,7 @@
 import os
 import gc
 import shap
+import logging
 import itertools
 import numpy as np
 import pandas as pd
@@ -8,11 +9,17 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from scipy import stats
+from shutil import copyfile
 from sklearn import metrics
+from builtins import map, zip, range
 from modeling.model_wrappers import ModelWrapper
+from generic_tools.loggers import configure_logging
 from sklearn.model_selection import KFold, StratifiedKFold
 from generic_tools.utils import timing, create_output_dir
 from sklearn.metrics import confusion_matrix, classification_report
+
+configure_logging()
+_logger = logging.getLogger("prediction")
 
 
 class BaseEstimator(object):
@@ -312,7 +319,7 @@ class BaseEstimator(object):
         shap_values_df = pd.DataFrame()
         feature_importance_df = pd.DataFrame()
 
-        print('\nStarting CV with seed {}. Train shape: {}, test shape: {}\n'.format(
+        _logger.info('Starting CV with seed {}. Train shape: {}, test shape: {}'.format(
             seed_val, self.train_df[feats].shape, self.test_df[feats].shape))
 
         np.random.seed(seed_val)  # for reproducibility
@@ -380,13 +387,15 @@ class BaseEstimator(object):
 
             oof_eval_result = round(self.metrics_scorer(valid_y, oof_preds[valid_idx]), self.metrics_decimals)
             oof_eval_results.append(oof_eval_result)
-            print('CV: Fold {0} {1} : {2}\n'.format(n_fold + 1, self.metrics_scorer.__name__.upper(), oof_eval_result))
+            _logger.info('CV: Fold {0} {1} : {2}'.format(n_fold + 1,
+                                                         self.metrics_scorer.__name__.upper(),
+                                                         oof_eval_result))
 
         # CV score and STD of CV score over folds for a given seed
         cv_score = round(self.metrics_scorer(self.train_df[self.target_column], oof_preds), self.metrics_decimals)
         cv_std = round(float(np.std(oof_eval_results)), self.metrics_decimals)
-        print('CV: list of OOF {0}: {1}'.format(self.metrics_scorer.__name__.upper(), oof_eval_results))
-        print('CV {0}: {1} +/- {2}'.format(self.metrics_scorer.__name__.upper(), cv_score, cv_std))
+        _logger.info('CV: list of OOF {0}: {1}'.format(self.metrics_scorer.__name__.upper(), oof_eval_results))
+        _logger.info('CV {0}: {1} +/- {2}'.format(self.metrics_scorer.__name__.upper(), cv_score, cv_std))
 
         if predict_test:
             # If the task is to predict a probability of the classes, use np.mean() on top of the results predicted with
@@ -461,12 +470,15 @@ class BaseEstimator(object):
                 self.train_df[self.target_column], oof_preds[self.target_column + '_OOF']), self.metrics_decimals
             )
             cv_std = round(float(np.std(cv_score_bagged)), self.metrics_decimals)
-            print('\nCV: bagged {0} score {1} +/- {2}\n'.format(self.metrics_scorer.__name__.upper(), cv_score, cv_std))
+            _logger.info('CV: bagged {0} score {1} +/- {2}'.format(self.metrics_scorer.__name__.upper(),
+                                                                   cv_score,
+                                                                   cv_std))
 
             # The DF below contains seed number used in the CV run, cv_score averaged over all folds (see above),
             # std of CV score as well as list of CV values (in all folds).
+
             self.oof_eval_results = pd.DataFrame(
-                zip(self.model_seeds_list, cv_score_bagged, cv_std_bagged, oof_eval_results_bagged),
+                list(zip(self.model_seeds_list, cv_score_bagged, cv_std_bagged, oof_eval_results_bagged)),
                 columns=['seed', 'cv_mean_score', 'cv_std', 'cv_score_per_each_fold']
             )
 
@@ -521,16 +533,18 @@ class BaseEstimator(object):
         fig, ax = plt.subplots()
         true_labels = self.train_df[self.target_column].values.tolist()
 
-        if self.predict_probability:
-            # If predict_probability -> True, one should use mapper to convert probabilities back to categorical labels
+        if self.predict_probability or self.model.estimator.__class__.__name__ == 'LinearRegression':
+            # If predict_probability -> True, one should use mapper to convert probabilities back to categorical labels.
+            # Also, if used estimator is Linear Regression, one should apply mapper regardless of the value of the
+            # self.predict_probability since the model returns always a non-categorical predictions.
             if labels_mapper is not None:
-                predicted_labels = map(labels_mapper, self.oof_preds[self.target_column + '_OOF'])
+                predicted_labels = list(map(labels_mapper, self.oof_preds[self.target_column + '_OOF']))
             else:
                 raise Exception('For a classification task with the predict_probability=True, one should provide '
                                 'labels_mapper function to convert predicted probabilities back to categorical labels')
         else:
             # If predict_probability -> False, model output is categorical labels -> no labels_mapper is needed
-            predicted_labels = self.oof_preds[self.target_column + '_OOF']
+            predicted_labels = self.oof_preds[self.target_column + '_OOF'].values.tolist()
 
         # Handle situation when class_names are not provided
         if class_names is None:
@@ -541,11 +555,11 @@ class BaseEstimator(object):
 
         if normalize:
             cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-            print('\nNormalized confusion matrix')
+            _logger.info('Normalized confusion matrix')
         else:
-            print('Confusion matrix, without normalization')
+            _logger.info('Confusion matrix, without normalization')
 
-        print('{0}\n'.format(cm))
+        _logger.info('\n{0}'.format(cm))
 
         if class_names.dtype.kind not in {'U', 'S'}:
             class_names = class_names.astype(str)
@@ -572,12 +586,12 @@ class BaseEstimator(object):
         ax.set_xlabel('Predicted label')
         fig.tight_layout()
 
-        print ('Classification report:\n{0}'.format(
+        _logger.info('Classification report:\n{0}'.format(
             classification_report(true_labels, predicted_labels, target_names=class_names)))
 
         if save:
             full_path_to_file = os.path.join(self.path_output_dir, self.FIGNAME_CONFUSION_MATRIX)
-            print('\nSaving confusion matrix graph into %s' % full_path_to_file)
+            _logger.info('Saving confusion matrix graph into %s' % full_path_to_file)
             fig.savefig(full_path_to_file)
 
     @staticmethod
@@ -626,11 +640,11 @@ class BaseEstimator(object):
 
         if save:
             full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_FEATS_IMPORT)
-            print('\nSaving features importance graph into %s' % full_path_to_file)
+            _logger.info('Saving features importance graph into %s' % full_path_to_file)
             fig.savefig(full_path_to_file)
 
             full_path_to_file = os.path.join(self.path_output_dir, 'features_importance.csv')
-            print('\nSaving {0} features into {1}'.format(self.model_name.upper(), full_path_to_file))
+            _logger.info('Saving {0} features into {1}'.format(self.model_name.upper(), full_path_to_file))
             features_importance = features_importance[["feature", "importance"]].groupby(
                 "feature").mean().sort_values(by="importance", ascending=False).reset_index()
             features_importance.to_csv(full_path_to_file, index=False)
@@ -667,12 +681,12 @@ class BaseEstimator(object):
         if save:
             full_path_to_file = os.path.join(self.path_output_dir,
                                              '_'.join([self.model_name, 'feat_shap']) + '.png')
-            print('\nSaving features shap graph into %s' % full_path_to_file)
+            _logger.info('Saving features shap graph into %s' % full_path_to_file)
             fig.savefig(full_path_to_file)
 
             full_path_to_file = os.path.join(self.path_output_dir,
                                              '_'.join([self.model_name, 'feat_shap']) + '.csv')
-            print('\nSaving {0} shap values into {1}'.format(self.model_name.upper(), full_path_to_file))
+            _logger.info('Saving {0} shap values into {1}'.format(self.model_name.upper(), full_path_to_file))
             shap_values = shap_values[["feature", "shap_value"]].groupby(
                 "feature").mean().sort_values(by="shap_value", ascending=False).reset_index()
             shap_values.to_csv(full_path_to_file, index=False)
@@ -696,7 +710,7 @@ class BaseEstimator(object):
         x = range(self.oof_eval_results.shape[0])
         y = self.oof_eval_results['cv_mean_score']
         yerr = self.oof_eval_results['cv_std']
-        annotation = map(lambda n_seed: 'seed_%s' % n_seed, self.oof_eval_results['seed'].astype(str).values)
+        annotation = list(map(lambda n_seed: 'seed_%s' % n_seed, self.oof_eval_results['seed'].astype(str).values))
 
         # Plot CV score with std error bars
         ax.errorbar(x=x, y=y, yerr=yerr, fmt='-o')
@@ -713,24 +727,24 @@ class BaseEstimator(object):
                         textcoords='offset points', rotation=annot_rotation)
         if save:
             full_path_to_file = os.path.join(self.path_output_dir, self.FIGNAME_CV_RESULTS_VERSUS_SEEDS)
-            print('\nSaving CV results vs seeds graph into %s' % full_path_to_file)
+            _logger.info('Saving CV results vs seeds graph into %s' % full_path_to_file)
             fig.savefig(full_path_to_file)
 
     def save_oof_results(self):
         float_format = '%.{0}f'.format(str(self.target_decimals)) if self.target_decimals > 0 else None
         full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_TRAIN_OOF_RESULTS)
-        print('\nSaving elaborated OOF predictions into %s' % full_path_to_file)
+        _logger.info('Saving elaborated OOF predictions into %s' % full_path_to_file)
         self.oof_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
         float_format = '%.{0}f'.format(str(self.metrics_decimals)) if self.metrics_decimals > 0 else None
         full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_CV_RESULTS)
-        print('\nSaving CV results into %s' % full_path_to_file)
+        _logger.info('Saving CV results into %s' % full_path_to_file)
         self.oof_eval_results.to_csv(full_path_to_file, index=False, float_format=float_format)
 
         if self.bagged_oof_preds is not None:
             float_format = '%.{0}f'.format(str(self.target_decimals)) if self.target_decimals > 0 else None
             full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_TRAIN_OOF_RESULTS_BAGGED)
-            print('\nSaving OOF predictions for each seed into %s' % full_path_to_file)
+            _logger.info('Saving OOF predictions for each seed into %s' % full_path_to_file)
             self.bagged_oof_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
     def save_submission_results(self):
@@ -739,13 +753,30 @@ class BaseEstimator(object):
             raise ValueError('Submission file is empty. Please set flag predict_test = True in run_cv_and_prediction() '
                              'to generate submission file.')
         full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_TEST_RESULTS)
-        print('\nSaving submission predictions into %s' % full_path_to_file)
+        _logger.info('Saving submission predictions into %s' % full_path_to_file)
         self.sub_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
 
         if self.bagged_sub_preds is not None:
             full_path_to_file = os.path.join(self.path_output_dir, self.FILENAME_TEST_RESULTS_BAGGED)
-            print('\nSaving submission predictions for each seed into %s' % full_path_to_file)
+            _logger.info('Saving submission predictions for each seed into %s' % full_path_to_file)
             self.bagged_sub_preds.to_csv(full_path_to_file, index=False, float_format=float_format)
+
+    def save_config(self, project_location, config_directory, config_file):
+        """
+        This method saves a copy of a config file to the output directory. This helps to identify which configs were
+        used to get results stored in the results directory, therefore enhancing traceability of experiments.
+        :param project_location: absolute path to project's main directory
+        :param config_directory: name of config sub-directory in project directory
+        :param config_file: name of config file in the config sub-directory
+        :return: None
+        """
+        src_config = os.path.normpath(os.path.join(project_location, config_directory, config_file))
+        if os.path.exists(src_config):
+            dst_config = os.path.join(self.path_output_dir, config_file)
+            _logger.info('Copying  {0}  into {1}'.format(src_config, dst_config))
+            copyfile(src_config, dst_config)
+        else:
+            raise IOError('No config file found in: %s' % src_config)
 
 
 class Predictor(BaseEstimator):
