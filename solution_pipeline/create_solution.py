@@ -268,8 +268,8 @@ class RunSingleModelHPO(luigi.Task):
         hpo_method = config.get_string('modeling_settings.%s.hpo_method' % self.model)
         hp_optimizator = load_hp_optimization_class(hpo_method)
         hpo_seed_val = config.get_int('modeling_settings.hpo_seed_value')
-        init_points = config.get_int('hp_optimization.%s.init_points' % hpo_method)
-        n_iter = config.get_int('hp_optimization.%s.n_iter' % hpo_method)
+        init_points = config.get_int('hp_optimization.%s.hpo_space.single_model_solution.init_points' % hpo_method)
+        n_iter = config.get_int('hp_optimization.%s.hpo_space.single_model_solution.n_iter' % hpo_method)
         hp_optimization_space = dict(config.get_config(
             'hp_optimization.%s.hpo_space.single_model_solution.%s' % (hpo_method, self.model)))
 
@@ -307,7 +307,7 @@ class RunSingleModelPrediction(luigi.Task):
     fs_output_dir = luigi.Parameter()  # type: str # feat. selection dir (where results of feature select. to be saved)
     hpo_output_dir = luigi.Parameter()  # type: str # hyper-parameters opt. dir (where results of hpo to be saved)
     solution_output_dir = luigi.Parameter()  # type: str # output dir where results of single model prediction is saved
-    output_filename = 'oof_data_info.txt'
+    output_filename = 'single_model_oof_data_info.txt'
 
     def requires(self):
         requirements = {'predictor': self.clone(InitializeSingleModelPredictor)}
@@ -378,7 +378,7 @@ class MakeSingleModelsPredictions(luigi.Task):
     project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
     config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
     config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
-    output_filename = 'oof_data_info.txt'
+    output_filename = 'single_models_oof_data_info.txt'
 
     def requires(self):
         config_handler = ConfigFileHandler(self.project_location, self.config_directory, self.config_file)
@@ -413,8 +413,12 @@ class InitializeStacker(luigi.Task):
     output_pickle_file = 'stacker_initialized.pickle'
 
     def requires(self):
-        return {'data': self.clone(TrainDataIngestion),
-                'oof_data_info': self.clone(MakeSingleModelsPredictions)}
+        requirements = {'data': self.clone(TrainDataIngestion)}
+        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        use_provided_oof_input_files = config.get_bool('stacker.use_provided_oof_input_files')
+        if not use_provided_oof_input_files:
+            requirements['single_models_oof_data_info'] = self.clone(MakeSingleModelsPredictions)
+        return requirements
 
     def run(self):
         # Parsing config (actually it is cached)
@@ -424,9 +428,13 @@ class InitializeStacker(luigi.Task):
         train_data = pd.read_csv(self.input()['data']['train_data'].path)
         test_data = pd.read_csv(self.input()['data']['test_data'].path)
 
-        # Load oof data information
-        with open(self.input()['oof_data_info'].path, 'r') as f:
-            oof_input_files = json.load(f)
+        # Load oof data information (either from single models predictions or from the dictionary in the config file)
+        use_provided_oof_input_files = config.get_bool('stacker.use_provided_oof_input_files')
+        if use_provided_oof_input_files:
+            oof_input_files = dict(config.get('stacker.oof_input_files'))
+        else:
+            with open(self.input()['single_models_oof_data_info'].path, 'r') as f:
+                oof_input_files = json.load(f)
 
         # Input settings for Stacker
         target_column = config.get_string('raw_data_settings.target_column')
@@ -497,8 +505,9 @@ class RunStackerHPO(luigi.Task):
         stacker_hpo_space = dict(config.get_config(
             'hp_optimization.%s.hpo_space.stacker_model.%s' % (stacker_hpo_method, self.stacker_model)))
 
-        stacker_hpo_init_points = config.get_int('hp_optimization.%s.init_points' % stacker_hpo_method)
-        stacker_hpo_n_iter = config.get_int('hp_optimization.%s.n_iter' % stacker_hpo_method)
+        stacker_hpo_init_points = config.get_int('hp_optimization.%s.hpo_space.'
+                                                 'stacker_model.init_points' % stacker_hpo_method)
+        stacker_hpo_n_iter = config.get_int('hp_optimization.%s.hpo_space.stacker_model.n_iter' % stacker_hpo_method)
         stacker_hpo_seed_val = config.get_int('modeling_settings.stacker_hpo_seed')
 
         # Initialize hyper-parameter optimizator
@@ -534,7 +543,7 @@ class RunSingleStacker(luigi.Task):
     run_bagging = luigi.BoolParameter()  # type: bool # if True -> run bagging
     fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
     stacking_output_dir = luigi.Parameter()  # type: str # output dir where results of stacking is saved
-    output_filename = 'oof_data_info.txt'
+    output_filename = 'stacker_oof_data_info.txt'
 
     def requires(self):
         requirements = {'stacker': self.clone(InitializeStacker)}
@@ -595,6 +604,35 @@ class RunSingleStacker(luigi.Task):
         return luigi.LocalTarget(os.path.join(self.project_location, self.stacking_output_dir, self.output_filename))
 
 
+class MakeStackingPredictions(luigi.Task):
+    project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
+    config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
+    config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
+    output_filename = 'stacking_models_oof_data_info.txt'
+
+    def requires(self):
+        config_handler = ConfigFileHandler(self.project_location, self.config_directory, self.config_file)
+        collection_stacking_input_pars = config_handler.pipeline_parameters_for_stacked_solutions()
+        for input_parameters in collection_stacking_input_pars:
+            yield RunSingleStacker(**input_parameters)
+
+    def run(self):
+        oof_input_files = {}
+        for input_target in self.input():
+            with open(input_target.path, 'r') as f:
+                oof_input_files = merge_two_dicts(oof_input_files, json.load(f))
+
+        # TODO: to refactor this part
+        create_output_dir(os.path.join(self.project_location, 'results_ensembling'))
+        full_path_to_file = os.path.join(self.project_location, 'results_ensembling', self.output_filename)
+        _logger.info('Saving %s' % full_path_to_file)
+        with open(full_path_to_file, 'w') as f:
+            f.write(json.dumps(oof_input_files, indent=4))
+
+    def output(self):
+        return luigi.LocalTarget(os.path.join(self.project_location, 'results_ensembling', self.output_filename))
+
+
 class BuildSolution(luigi.WrapperTask):
     project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
     config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
@@ -608,10 +646,34 @@ class BuildSolution(luigi.WrapperTask):
         config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
         run_stacking = config.get_bool('modeling_settings.run_stacking')
         if run_stacking:
-            config_handler = ConfigFileHandler(self.project_location, self.config_directory, self.config_file)
-            collection_stacking_input_pars = config_handler.pipeline_parameters_for_stacked_solutions()
-            for stacking_input_pars in collection_stacking_input_pars:
-                yield RunSingleStacker(**stacking_input_pars)
+            yield MakeStackingPredictions(self.project_location, self.config_directory, self.config_file)
+
+
+def run_full_pipeline(project_abs_path, config_dir, config_file_name, local_scheduler_=True):
+    # Run pipeline this way
+    luigi.build([BuildSolution(project_abs_path, config_dir, config_file_name)], local_scheduler=local_scheduler_)
+
+    # Or this way
+    # luigi.run(main_task_cls=BuildSolution,
+    #           cmdline_args=["--BuildSolution-project-location={0}".format(project_abs_path),
+    #                         "--BuildSolution-config-directory={0}".format(config_dir),
+    #                         "--BuildSolution-config-file={0}".format(config_file_name),
+    #                         "--workers=1"],
+    #           local_scheduler=local_scheduler_)
+
+
+def run_stacking_only(project_abs_path, config_dir, config_file_name, local_scheduler_=True):
+    # Run pipeline this way
+    luigi.build([MakeStackingPredictions(project_abs_path, config_dir, config_file_name)],
+                local_scheduler=local_scheduler_)
+
+    # Or this way
+    # luigi.run(main_task_cls=MakeStackingPredictions,
+    #           cmdline_args=["--MakeStackingPredictions-project-location={0}".format(project_abs_path),
+    #                         "--MakeStackingPredictions-config-directory={0}".format(config_dir),
+    #                         "--MakeStackingPredictions-config-file={0}".format(config_file_name),
+    #                         "--workers=1"],
+    #           local_scheduler=local_scheduler_)
 
 
 if __name__ == '__main__':
@@ -626,13 +688,8 @@ if __name__ == '__main__':
                             # set False if run locally -> then run in terminal .luigid -> go to http://localhost:8082
                             # and see the dependencies and pipeline execution flow
 
-    # Run pipeline this way
-    luigi.build([BuildSolution(project_location, config_directory, config_file)], local_scheduler=local_scheduler)
+    # Run all steps of a pipeline
+    run_full_pipeline(project_location, config_directory, config_file, local_scheduler)
 
-    # Or this way
-    # luigi.run(main_task_cls=BuildSolution,
-    #           cmdline_args=["--BuildSolution-project-location=C:\Kaggle\home_credit_default_risk",
-    #                         "--BuildSolution-config-directory=configs",
-    #                         "--BuildSolution-config-file=solution.conf",
-    #                         "--workers=1"],
-    #           local_scheduler=local_scheduler)
+    # Run stacking part of the pipeline
+    # run_stacking_only(project_location, config_directory, config_file, local_scheduler)
