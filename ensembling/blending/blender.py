@@ -127,12 +127,15 @@ class BayesOptimizationBlender(Blender):
         s = sum(params.values())
         for p in params:
             params[p] = params[p] / s
-        test_pred = pd.DataFrame()
 
+        test_pred = pd.DataFrame()
         feats = [f for f in self.train_oof.columns if f not in (self.target_column, self.index_column)]
+
+        # TODO: BayesOptimizationBlender is basically sklearn.ensemble.VotingClassifier with bayes optimized weights
+        # for each class. Need to verify that it works with the multiclass classification
         for f in self.train_oof[feats]:
             test_pred[f] = self.train_oof[f] * params[f]
-        return self.metrics_scorer(self.train_oof[self.target_column], test_pred.mean(axis=1))
+        return self.metrics_scorer(self.train_oof[self.target_column], test_pred.sum(axis=1))
 
     @timing
     def run(self):
@@ -221,15 +224,13 @@ def run_blender_kaggle_example(debug=True):
     print('df_test shape: {0}'.format(test_data.shape))
 
     oof_input_files = {
-        # 'lgbm_fds1_tp__fts_1_bayes_hpos1'
-        'a': {
-            'path': r"single_model_solution\lightgbm\features_dataset_001\target_permutation_fts_001\bayes_hpos_001",
-            'files': ['lgbm_bagged_OOF.csv', 'lgbm_bagged_SUBM.csv'],
+        'lgbm_5249': {
+            'path': 'single_model_solution/lightgbm/features_dataset_001/target_permutation_fs_001/bayes_hpo_001/bagging_on',
+            'files': ['train_OOF.csv', 'test.csv', 'train_OOF_bagged.csv', 'test_bagged.csv']
         },
-        # 'xgb_fds1_tp__fts_1_bayes_hpos1'
-        'b': {
-            'path': r"single_model_solution\xgboost\features_dataset_001\target_permutation_fts_001\bayes_hpos_001",
-            'files': ['xgb_bagged_OOF.csv', 'xgb_bagged_SUBM.csv'],
+        'xgb_2967': {
+            'path': 'single_model_solution/xgboost/features_dataset_001/target_permutation_fs_001/bayes_hpo_001/bagging_on',
+            'files': ['train_OOF.csv', 'test.csv', 'train_OOF_bagged.csv', 'test_bagged.csv']
         }
     }
 
