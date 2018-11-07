@@ -12,9 +12,10 @@ from modeling.prediction import Predictor
 from ensembling.stacking.stacker import Stacker
 from generic_tools.loggers import configure_logging
 from modeling.model_wrappers import get_wrapped_estimator
+from data_processing.preprocessing import downcast_datatypes
+from ensembling.blending.blender import BayesOptimizationBlender
 from modeling.feature_selection import load_feature_selector_class
 from modeling.hyper_parameters_optimization import load_hp_optimization_class
-from data_processing.preprocessing import downcast_datatypes
 from generic_tools.config_parser import ConfigFileHandler
 from generic_tools.utils import (get_metrics_scorer, generate_single_model_solution_id_key,
                                  merge_two_dicts, create_output_dir)
@@ -74,7 +75,7 @@ class FeatureSelection(luigi.Task):
     config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
     config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
     fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
-    fs_output_dir = luigi.Parameter()  # type: str # feat. selection dir (where results of feature select. to be saved)
+    fs_output_dir = luigi.Parameter()  # type: str # feat. selection dir (where results of feature select. are saved)
     feats_select_method = luigi.Parameter()  # type: str # # feat. selection method name
     fs_results_file = 'optimal_features.txt'
 
@@ -175,8 +176,8 @@ class InitializeSingleModelPredictor(luigi.Task):
     model = luigi.Parameter()  # type: str # name of estimator model
     run_feature_selection = luigi.BoolParameter()  # type: bool # if True -> run feature selection
     fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
-    fs_output_dir = luigi.Parameter()  # type: str # feat. selection dir (where results of feature select. to be saved)
-    solution_output_dir = luigi.Parameter()  # type: str # output dir where results of single model prediction is saved
+    fs_output_dir = luigi.Parameter()  # type: str # feat. selection dir (where results of feature select. are saved)
+    solution_output_dir = luigi.Parameter()  # type: str # output dir where results of single model prediction are saved
     output_pickle_file = 'predictor_initialized.pickle'
 
     def requires(self):
@@ -254,7 +255,7 @@ class InitializeSingleModelPredictor(luigi.Task):
 @requires(InitializeSingleModelPredictor)
 class RunSingleModelHPO(luigi.Task):
     model = luigi.Parameter()  # type: str # name of estimator model
-    hpo_output_dir = luigi.Parameter()  # type: str # hyper-parameters opt. dir (where results of hpo to be saved)
+    hpo_output_dir = luigi.Parameter()  # type: str # hyper-parameters opt. dir (where results of hpo are saved)
     hpo_results_file = 'optimized_hp.txt'
 
     def run(self):
@@ -304,9 +305,9 @@ class RunSingleModelPrediction(luigi.Task):
     run_hpo = luigi.BoolParameter()  # type: bool # if True -> run hyper-parameters optimization
     run_bagging = luigi.BoolParameter()  # type: bool # if True -> run bagging
     fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
-    fs_output_dir = luigi.Parameter()  # type: str # feat. selection dir (where results of feature select. to be saved)
-    hpo_output_dir = luigi.Parameter()  # type: str # hyper-parameters opt. dir (where results of hpo to be saved)
-    solution_output_dir = luigi.Parameter()  # type: str # output dir where results of single model prediction is saved
+    fs_output_dir = luigi.Parameter()  # type: str # feat. selection dir (where results of feature select. are saved)
+    hpo_output_dir = luigi.Parameter()  # type: str # hyper-parameters opt. dir (where results of hpo are saved)
+    solution_output_dir = luigi.Parameter()  # type: str # output dir where results of single model prediction are saved
     output_filename = 'single_model_oof_data_info.txt'
 
     def requires(self):
@@ -406,7 +407,7 @@ class MakeSingleModelsPredictions(luigi.Task):
 class InitializeStacker(luigi.Task):
     project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
     stacker_model = luigi.Parameter()  # type: str # name of stacker estimator model
-    stacking_output_dir = luigi.Parameter()  # type: str # output dir where results of stacking is saved
+    stacking_output_dir = luigi.Parameter()  # type: str # output dir where results of stacking are saved
     fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
     config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
     config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
@@ -489,7 +490,7 @@ class InitializeStacker(luigi.Task):
 class RunStackerHPO(luigi.Task):
     project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
     stacker_model = luigi.Parameter()  # type: str # name of stacker estimator model
-    stacking_output_dir = luigi.Parameter()  # type: str # output dir where results of stacking is saved
+    stacking_output_dir = luigi.Parameter()  # type: str # output dir where results of stacking are saved
     stacker_hpo_results_file = 'stacker_optimized_hp.txt'
 
     def run(self):
@@ -542,7 +543,7 @@ class RunSingleStacker(luigi.Task):
     run_stacker_hpo = luigi.BoolParameter()  # type: bool # if True -> run stacking
     run_bagging = luigi.BoolParameter()  # type: bool # if True -> run bagging
     fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
-    stacking_output_dir = luigi.Parameter()  # type: str # output dir where results of stacking is saved
+    stacking_output_dir = luigi.Parameter()  # type: str # output dir where results of stacking are saved
     output_filename = 'stacker_oof_data_info.txt'
 
     def requires(self):
@@ -633,20 +634,179 @@ class MakeStackingPredictions(luigi.Task):
         return luigi.LocalTarget(os.path.join(self.project_location, 'results_ensembling', self.output_filename))
 
 
+class InitializeBlender(luigi.Task):
+    project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
+    blending_method = luigi.Parameter()  # type: str
+    blending_output_dir = luigi.Parameter()  # type: str # output dir where results of blending are saved
+    fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
+    config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
+    config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
+    output_pickle_file = 'blender_initialized.pickle'
+
+    def requires(self):
+        requirements = {'data': self.clone(TrainDataIngestion)}
+        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        use_provided_oof_input_files = config.get_bool('blender.use_provided_oof_input_files')
+        if not use_provided_oof_input_files:
+            blend_stacked_results = config.get_bool('modeling_settings.blend_stacked_results')
+            if blend_stacked_results:
+                requirements['oof_data_info'] = self.clone(MakeStackingPredictions)
+            else:
+                requirements['oof_data_info'] = self.clone(MakeSingleModelsPredictions)
+        return requirements
+
+    def run(self):
+        # Parsing config (actually it is cached)
+        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+
+        # Load train and test data sets
+        train_data = pd.read_csv(self.input()['data']['train_data'].path)
+        test_data = pd.read_csv(self.input()['data']['test_data'].path)
+
+        # Load oof data information (either from single models predictions or from the dictionary in the config file)
+        use_provided_oof_input_files = config.get_bool('blender.use_provided_oof_input_files')
+        if use_provided_oof_input_files:
+            oof_input_files = dict(config.get('blender.oof_input_files'))
+        else:
+            with open(self.input()['oof_data_info'].path, 'r') as f:
+                oof_input_files = json.load(f)
+
+        # Input settings for blender
+        target_column = config.get_string('raw_data_settings.target_column')
+        index_column = config.get_string('raw_data_settings.index_column')
+
+        # Extracting settings from config
+        blend_bagged_results = config.get_bool('modeling_settings.stack_bagged_results')
+        blender_metrics_scorer = get_metrics_scorer(config.get('blender.%s.metrics_scorer' % self.blending_method))
+        blender_metrics_decimals = config.get_int('blender.%s.metrics_decimals' % self.blending_method)
+        blender_target_decimals = config.get_int('blender.%s.target_decimals' % self.blending_method)
+        blender_init_points = config.get_int('blender.%s.init_points' % self.blending_method)
+        blender_n_iter = config.get_int('blender.%s.n_iter' % self.blending_method)
+        blender_seed_val = config.get_int('modeling_settings.blender_seed')
+
+        # Initializing blender
+        bayes_blender = BayesOptimizationBlender(
+            oof_input_files=oof_input_files, train_df=train_data, test_df=test_data,
+            target_column=target_column, index_column=index_column, blend_bagged_results=blend_bagged_results,
+            metrics_scorer=blender_metrics_scorer, metrics_decimals=blender_metrics_decimals,
+            target_decimals=blender_target_decimals, init_points=blender_init_points, n_iter=blender_n_iter,
+            seed_val=blender_seed_val, project_location=project_location, output_dirname=self.blending_output_dir
+        )
+
+        full_path_to_file = os.path.join(self.project_location, self.blending_output_dir, self.output_pickle_file)
+        _logger.info('Saving %s' % full_path_to_file)
+        with open(full_path_to_file, 'wb') as f:
+            pickle.dump(bayes_blender, f)
+
+    def output(self):
+        return luigi.LocalTarget(os.path.join(self.project_location, self.blending_output_dir, self.output_pickle_file))
+
+
+class RunSingleBlender(luigi.Task):
+    project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
+    config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
+    config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
+    blending_method = luigi.Parameter()  # type: str
+    fg_output_dir = luigi.Parameter()  # type: str # feat. generation dir (to be used as input for train data ingestion)
+    blending_output_dir = luigi.Parameter()  # type: str # output dir where results of stacking are saved
+    output_filename = 'blender_oof_data_info.txt'
+
+    def requires(self):
+        return {'blender': self.clone(InitializeBlender)}
+
+    def run(self):
+        # Load initialized blender
+        blender = pickle.load(open(self.input()['blender'].path, "rb"))
+
+        # Parsing config (actually it is cached)
+        # config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+
+        # Run blender and save weights
+        blender.run()
+        blender.save_weights()
+
+        # Save results and a copy of the config file
+        # blender.save_oof_results()
+        # blender.save_submission_results()
+        # blender.save_config(self.project_location, self.config_directory, self.config_file)
+
+        # Plot confusion matrix
+        # plot_cm = config.get_bool('modeling_settings.plot_confusion_matrix')
+        # if plot_cm:
+        #     class_names = config.get('modeling_settings.confusion_matrix_labels', default=None)
+        #     class_names = np.array(class_names) if class_names is not None else None
+        #     labels_mapper = config.get('modeling_settings.labels_mapper', default=None)
+        #     labels_mapper = eval(labels_mapper) if labels_mapper is not None else None
+        #     blender.plot_confusion_matrix(class_names, labels_mapper, normalize=True, save=True)
+
+    #     # Prepare output file for ensembling
+    #     solution_id = generate_single_model_solution_id_key(blender.model_name)
+    #     files = [blender.FILENAME_TRAIN_OOF_RESULTS, blender.FILENAME_TEST_RESULTS]
+    #     output = {
+    #         solution_id:
+    #             {
+    #                 'path': os.path.join(self.project_location, self.blending_output_dir),
+    #                 'files': files
+    #             }
+    #     }
+    #     full_path_to_file = os.path.join(self.project_location, self.blending_output_dir, self.output_filename)
+    #     _logger.info('Saving %s' % full_path_to_file)
+    #     with open(full_path_to_file, 'w') as f:
+    #         f.write(json.dumps(output, indent=4))
+    #
+    # def output(self):
+    #     return luigi.LocalTarget(os.path.join(self.project_location, self.blending_output_dir, self.output_filename))
+
+
+class MakeBlendingPredictions(luigi.Task):
+    project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
+    config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
+    config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
+    output_filename = 'blending_models_oof_data_info.txt'
+
+    def requires(self):
+        config_handler = ConfigFileHandler(self.project_location, self.config_directory, self.config_file)
+        collection_stacking_input_pars = config_handler.pipeline_parameters_for_blending_solutions()
+        for input_parameters in collection_stacking_input_pars:
+            yield RunSingleBlender(**input_parameters)
+
+    def run(self):
+        oof_input_files = {}
+        for input_target in self.input():
+            with open(input_target.path, 'r') as f:
+                oof_input_files = merge_two_dicts(oof_input_files, json.load(f))
+
+        # TODO: to refactor this part
+        create_output_dir(os.path.join(self.project_location, 'results_ensembling'))
+        full_path_to_file = os.path.join(self.project_location, 'results_ensembling', self.output_filename)
+        _logger.info('Saving %s' % full_path_to_file)
+        with open(full_path_to_file, 'w') as f:
+            f.write(json.dumps(oof_input_files, indent=4))
+
+    def output(self):
+        return luigi.LocalTarget(os.path.join(self.project_location, 'results_ensembling', self.output_filename))
+
+
 class BuildSolution(luigi.WrapperTask):
     project_location = luigi.Parameter()  # type: str # absolute path to project's main directory
     config_directory = luigi.Parameter()  # type: str # name of config sub-directory in project directory
     config_file = luigi.Parameter()  # type: str # name of config file in the config sub-directory
 
     def requires(self):
+        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
+
         # Run single model predictions
         yield MakeSingleModelsPredictions(self.project_location, self.config_directory, self.config_file)
 
         # Run stacking if requested in config
-        config = ConfigFileHandler.parse_config_file(self.project_location, self.config_directory, self.config_file)
         run_stacking = config.get_bool('modeling_settings.run_stacking')
         if run_stacking:
             yield MakeStackingPredictions(self.project_location, self.config_directory, self.config_file)
+
+        # Run blending if requested in config
+        run_blending = config.get_bool('modeling_settings.run_blending')
+        if run_blending:
+            yield MakeBlendingPredictions(self.project_location, self.config_directory, self.config_file)
 
 
 def run_full_pipeline(project_abs_path, config_dir, config_file_name, local_scheduler_=True):
@@ -678,8 +838,9 @@ def run_stacking_only(project_abs_path, config_dir, config_file_name, local_sche
 
 if __name__ == '__main__':
     # Location of the project and config file
-    # project_location = r'c:\Kaggle\FastMLFramework\examples\classification\multiclass\iris'
-    project_location = r'c:\Kaggle\FastMLFramework\examples\classification\binary\credit_scoring'
+    project_location = r'c:\Kaggle\FastMLFramework\examples\classification\multiclass\iris'
+    # project_location = r'c:\Kaggle\FastMLFramework\examples\classification\multilabel'
+    # project_location = r'c:\Kaggle\FastMLFramework\examples\classification\binary\credit_scoring'
     # project_location = r'c:\Kaggle\home_credit_default_risk'  # or e.g. os.getcwd()
 
     config_directory = 'configs'
