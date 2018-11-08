@@ -268,12 +268,13 @@ class ConfigFileHandler(object):
         use_provided_oof_input_files = config.get_bool('blender.use_provided_oof_input_files')
 
         if use_provided_oof_input_files:
-            blender_output_dir = '_'.join([blending_method, blender_dir_name, 'external_oof_preds'])
+            blender_output_dir = '_'.join([blender_dir_name, 'external_oof_preds'])
         else:
-            blender_output_dir = '_'.join([blending_method, blender_dir_name, 'pipeline_oof_preds'])
+            blender_output_dir = '_'.join([blender_dir_name, 'pipeline_oof_preds'])
 
         blender_results_dir_path = os.path.join(project_structure['ENSEMBLE_DIR'],
                                                 project_structure['BLENDER_SUBDIR'],
+                                                blending_method,
                                                 blender_output_dir)
         return blender_output_dir, blender_results_dir_path
 
