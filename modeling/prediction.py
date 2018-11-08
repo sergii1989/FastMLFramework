@@ -335,9 +335,19 @@ class BaseEstimator(object):
                           shuffle=self.kfolds_shuffle,
                           random_state=self.data_split_seed)
 
-        # Create arrays and data frames to store results
-        # Note: if predict_test is False -> sub_preds = None
-        oof_preds = np.zeros(self.train_df.shape[0])
+        if self.predict_probability:
+            if self.class_label is None:
+                shape = (self.train_df.shape[0], self.train_df[self.target_column].unique().size)
+            else:
+                if isinstance(self.class_label, list) or isinstance(self.class_label, tuple):
+                    shape = (self.train_df.shape[0], len(self.class_label))
+                else:
+                    shape = self.train_df.shape[0]
+        else:
+            shape = self.train_df.shape[0]
+
+        # Create arrays and data frames to store results. Note: if predict_test is False -> sub_preds = None
+        oof_preds = np.zeros(shape=shape)
         sub_preds = [] if predict_test else None
 
         oof_eval_results = []
