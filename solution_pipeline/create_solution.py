@@ -458,10 +458,10 @@ class InitializeStacker(luigi.Task):
         stacker_bagging = config.get_bool('stacker.%s.run_bagging' % self.stacker_model)
         data_split_seed = config.get_int('modeling_settings.data_split_seed')
         model_seeds_list = config.get_list('modeling_settings.model_seeds_list')
+        stack_bagged_results = config.get_bool('modeling_settings.stack_bagged_results')
 
         # TODO: to add this logic
         # If True -> use raw features additionally to out-of-fold results
-        stack_bagged_results = config.get_bool('modeling_settings.stack_bagged_results')
         stacker_use_raw_features = config.get_bool('stacker.%s.use_raw_features' % self.stacker_model)
 
         # Initializing stacker
@@ -676,7 +676,7 @@ class InitializeBlender(luigi.Task):
         index_column = config.get_string('raw_data_settings.index_column')
 
         # Extracting settings from config
-        blend_bagged_results = config.get_bool('modeling_settings.stack_bagged_results')
+        blend_bagged_results = config.get_bool('modeling_settings.blend_bagged_results')
         blender_metrics_scorer = get_metrics_scorer(config.get('blender.%s.metrics_scorer' % self.blending_method))
         blender_metrics_decimals = config.get_int('blender.%s.metrics_decimals' % self.blending_method)
         blender_target_decimals = config.get_int('blender.%s.target_decimals' % self.blending_method)
@@ -726,9 +726,9 @@ class RunSingleBlender(luigi.Task):
         blender.save_weights()
 
         # Save results and a copy of the config file
-        # blender.save_oof_results()
-        # blender.save_submission_results()
-        # blender.save_config(self.project_location, self.config_directory, self.config_file)
+        blender.save_oof_results()
+        blender.save_submission_results()
+        blender.save_config(self.project_location, self.config_directory, self.config_file)
 
         # Plot confusion matrix
         # plot_cm = config.get_bool('modeling_settings.plot_confusion_matrix')
@@ -739,23 +739,23 @@ class RunSingleBlender(luigi.Task):
         #     labels_mapper = eval(labels_mapper) if labels_mapper is not None else None
         #     blender.plot_confusion_matrix(class_names, labels_mapper, normalize=True, save=True)
 
-    #     # Prepare output file for ensembling
-    #     solution_id = generate_single_model_solution_id_key(blender.model_name)
-    #     files = [blender.FILENAME_TRAIN_OOF_RESULTS, blender.FILENAME_TEST_RESULTS]
-    #     output = {
-    #         solution_id:
-    #             {
-    #                 'path': os.path.join(self.project_location, self.blending_output_dir),
-    #                 'files': files
-    #             }
-    #     }
-    #     full_path_to_file = os.path.join(self.project_location, self.blending_output_dir, self.output_filename)
-    #     _logger.info('Saving %s' % full_path_to_file)
-    #     with open(full_path_to_file, 'w') as f:
-    #         f.write(json.dumps(output, indent=4))
-    #
-    # def output(self):
-    #     return luigi.LocalTarget(os.path.join(self.project_location, self.blending_output_dir, self.output_filename))
+        # Prepare output file for ensembling
+        solution_id = generate_single_model_solution_id_key(blender.BLENDING_METHOD)
+        files = [blender.FILENAME_TRAIN_OOF_RESULTS, blender.FILENAME_TEST_RESULTS]
+        output = {
+            solution_id:
+                {
+                    'path': os.path.join(self.project_location, self.blending_output_dir),
+                    'files': files
+                }
+        }
+        full_path_to_file = os.path.join(self.project_location, self.blending_output_dir, self.output_filename)
+        _logger.info('Saving %s' % full_path_to_file)
+        with open(full_path_to_file, 'w') as f:
+            f.write(json.dumps(output, indent=4))
+
+    def output(self):
+        return luigi.LocalTarget(os.path.join(self.project_location, self.blending_output_dir, self.output_filename))
 
 
 class MakeBlendingPredictions(luigi.Task):
@@ -839,9 +839,9 @@ def run_stacking_only(project_abs_path, config_dir, config_file_name, local_sche
 if __name__ == '__main__':
     # Location of the project and config file
     project_location = r'c:\Kaggle\FastMLFramework\examples\classification\multiclass\iris'
-    # project_location = r'c:\Kaggle\FastMLFramework\examples\classification\multilabel'
     # project_location = r'c:\Kaggle\FastMLFramework\examples\classification\binary\credit_scoring'
-    # project_location = r'c:\Kaggle\home_credit_default_risk'  # or e.g. os.getcwd()
+    # project_location = r'c:\Kaggle\FastMLFramework\examples\classification\multilabel'
+    # project_location = r'c:\Kaggle\home_credit_default_risk'
 
     config_directory = 'configs'
     config_file = 'solution.conf'
