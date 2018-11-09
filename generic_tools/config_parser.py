@@ -1,4 +1,5 @@
 import os
+import six
 
 from pyhocon import ConfigFactory
 from pyhocon.config_tree import ConfigTree
@@ -179,7 +180,7 @@ class ConfigFileHandler(object):
                 luigi_pipeline_input_parameters.append(input_parameters)
             return luigi_pipeline_input_parameters
 
-        elif isinstance(base_models, basestring):
+        elif isinstance(base_models, six.string_types):
             run_feature_selection, run_hpo, run_bagging = self._check_single_model_solution_settings(base_models)
             input_parameters = self._prepare_single_model_input_parameters_for_luigi(base_models,
                                                                                      run_feature_selection,
@@ -251,7 +252,7 @@ class ConfigFileHandler(object):
                 luigi_pipeline_input_parameters.append(input_parameters)
             return luigi_pipeline_input_parameters
 
-        elif isinstance(stacker_models, basestring):
+        elif isinstance(stacker_models, six.string_types):
             run_hpo, run_bagging = self._check_stacker_settings(stacker_models)
             input_parameters = self._prepare_stacker_input_parameters_for_luigi(stacker_models,
                                                                                 run_hpo,

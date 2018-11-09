@@ -449,7 +449,7 @@ class FeatureSelectorByTargetPermutation(FeatureSelector):
             ax[i].set_ylabel('CV {0} score'.format(self.eval_metric), size=12)
 
             # Add annotations with the number of features used per each threshold
-            for xpos, ypos, name in zip(x, y, annotation):
+            for xpos, ypos, name in list(zip(x, y, annotation)):
                 ax[i].annotate(name, (xpos, ypos), xytext=(annot_offset_x, annot_offset_y), va='bottom',
                                textcoords='offset points', rotation=annot_rotation)
             i += 1

@@ -1,4 +1,5 @@
 import gc
+import six
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -50,7 +51,7 @@ def plot_missing_values_stats(df, target_column, grid=(1, 1), figsize_x=7,
     :return: None
     """
 
-    assert isinstance(target_column, basestring), 'Target column should be string. Instead received {0}'\
+    assert isinstance(target_column, six.string_types), 'Target column should be string. Instead received {0}'\
         .format(type(target_column))
 
     train_df = df[df[target_column].notnull()]

@@ -2,9 +2,10 @@ import gc
 import numpy as np
 import pandas as pd
 
+from builtins import map
 from scipy.stats import skew, kurtosis
-from generic_tools.utils import timing, auto_selector_of_categorical_features
 from sklearn.feature_selection import VarianceThreshold
+from generic_tools.utils import timing, auto_selector_of_categorical_features
 
 
 # ======================================================================
@@ -204,7 +205,7 @@ def get_cat_feats_diff_between_train_and_test(df, target_column, cat_features=No
         temp_3['FEATURE'] = feature
         temp_3.set_index(['FEATURE', 'CATEGORY'], drop=True, inplace=True)
         for key, value in temp_3.iterrows():
-            if any(map(lambda x: np.isnan(x), [value['TRAIN'], value['TEST']])):
+            if any(list(map(lambda x: np.isnan(x), [value['TRAIN'], value['TEST']]))):
                 df_cat_feats_diff[key] = value
             if not np.isclose(value['TRAIN'], value['TEST'], rtol=rtol_thresh, atol=atol_thresh):
                 df_cat_feats_diff[key] = value

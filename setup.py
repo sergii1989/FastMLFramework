@@ -15,6 +15,7 @@ requirements = [
     "pyhocon==0.3.47",
     "cachetools==2.1.0",
     "future==0.16.0",
+    "six==1.11.0",
     "seaborn",
     "luigi",
     "bayesian-optimization"

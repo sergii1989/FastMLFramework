@@ -1,5 +1,6 @@
 import os
 import sys
+import six
 import logging
 import numpy as np
 import pandas as pd
@@ -59,19 +60,15 @@ def _convert_metrics_scorer_to_str(metrics_scorer):
     :param metrics_scorer: name of metrics scorer in sklearn.metrics (basestring-type)
     :return: str
     """
-    if sys.version_info.major == 2:
-        if isinstance(metrics_scorer, unicode):
-            metrics_scorer = metrics_scorer.encode()  # since parsing of pyhocon config returns unicode
+
+    if isinstance(metrics_scorer, six.string_types):
+        if sys.version_info.major == 2:
+            return metrics_scorer.encode()  # since parsing of pyhocon config returns unicode
+        else:  # sys.version_info.major == 3:
             return metrics_scorer
-        else:
-            raise TypeError('Type of metrics_scorer should be either str or unicode. '
-                            'Instead received {0}.'.format(type(metrics_scorer)))
-    elif sys.version_info.major == 3:
-        if isinstance(metrics_scorer, str):
-            return metrics_scorer
-        else:
-            raise TypeError('Type of metrics_scorer should be either str or unicode. '
-                            'Instead received {0}.'.format(type(metrics_scorer)))
+    else:
+        raise TypeError('Type of metrics_scorer should be either str or unicode. '
+                        'Instead received {0}.'.format(type(metrics_scorer)))
 
 
 def get_metrics_scorer(metrics_scorer):  # type: (str) -> metrics
