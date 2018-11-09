@@ -83,7 +83,7 @@ class BaseEstimator(object):
         self.train_df = train_df  # type: pd.DataFrame
         self.test_df = test_df  # type: pd.DataFrame
         self.target_column = target_column  # type: str
-        self.index_column = index_column  # type: str
+        self.index_column = index_column  # type: (str, None)
 
         # Model data
         self.model = model  # type: ModelWrapper
