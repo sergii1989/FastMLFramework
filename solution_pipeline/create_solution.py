@@ -677,20 +677,28 @@ class InitializeBlender(luigi.Task):
 
         # Extracting settings from config
         blend_bagged_results = config.get_bool('modeling_settings.blend_bagged_results')
-        blender_metrics_scorer = get_metrics_scorer(config.get('blender.%s.metrics_scorer' % self.blending_method))
-        blender_metrics_decimals = config.get_int('blender.%s.metrics_decimals' % self.blending_method)
-        blender_target_decimals = config.get_int('blender.%s.target_decimals' % self.blending_method)
         blender_init_points = config.get_int('blender.%s.init_points' % self.blending_method)
         blender_n_iter = config.get_int('blender.%s.n_iter' % self.blending_method)
         blender_seed_val = config.get_int('modeling_settings.blender_seed')
+        class_label = config.get('blender.%s.class_label' % self.blending_method)
+        predict_probability = config.get_bool('blender.%s.predict_probability' % self.blending_method)
+        stratified = config.get_bool('blender.%s.stratified' % self.blending_method)
+        num_folds = config.get_int('blender.%s.num_folds' % self.blending_method)
+        kfolds_shuffle = config.get_bool('blender.%s.kfolds_shuffle' % self.blending_method)
+        metrics_scorer = get_metrics_scorer(config.get('blender.%s.metrics_scorer' % self.blending_method))
+        metrics_decimals = config.get_int('blender.%s.metrics_decimals' % self.blending_method)
+        target_decimals = config.get_int('blender.%s.target_decimals' % self.blending_method)
+        data_split_seed = config.get_int('blender.%s.data_split_seed' % self.blending_method)
 
         # Initializing blender
         bayes_blender = BayesOptimizationBlender(
             oof_input_files=oof_input_files, train_df=train_data, test_df=test_data,
             target_column=target_column, index_column=index_column, blend_bagged_results=blend_bagged_results,
-            metrics_scorer=blender_metrics_scorer, metrics_decimals=blender_metrics_decimals,
-            target_decimals=blender_target_decimals, init_points=blender_init_points, n_iter=blender_n_iter,
-            seed_val=blender_seed_val, project_location=project_location, output_dirname=self.blending_output_dir
+            predict_probability=predict_probability, class_label=class_label, init_points=blender_init_points,
+            n_iter=blender_n_iter, blender_seed_val=blender_seed_val, metrics_scorer=metrics_scorer,
+            metrics_decimals=metrics_decimals, target_decimals=target_decimals, num_folds=num_folds,
+            stratified=stratified, kfolds_shuffle=kfolds_shuffle, data_split_seed=data_split_seed,
+            project_location=project_location, output_dirname=self.blending_output_dir
         )
 
         full_path_to_file = os.path.join(self.project_location, self.blending_output_dir, self.output_pickle_file)
