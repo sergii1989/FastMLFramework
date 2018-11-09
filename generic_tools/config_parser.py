@@ -299,7 +299,7 @@ class ConfigFileHandler(object):
                 luigi_pipeline_input_parameters.append(input_parameters)
             return luigi_pipeline_input_parameters
 
-        elif isinstance(blender_methods, basestring):
+        elif isinstance(blender_methods, six.string_types):
             input_parameters = self._prepare_blender_input_parameters_for_luigi(blender_methods)
             return [input_parameters]
         else:
