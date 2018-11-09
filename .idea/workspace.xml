@@ -4,8 +4,7 @@
     <list default="true" id="f445f148-be77-4f8b-81ff-ecf6f9ca60fc" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/dictionaries/sergii.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/sergii.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/generic_tools/config_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/generic_tools/config_parser.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/solution_pipeline/create_solution.py" beforeDir="false" afterPath="$PROJECT_DIR$/solution_pipeline/create_solution.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -28,99 +27,49 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="Python Console" value="2218" />
-          <entry key="conf" value="2411" />
-          <entry key="md" value="68" />
-          <entry key="py" value="12870" />
+          <entry key="Python Console" value="2486" />
+          <entry key="conf" value="2711" />
+          <entry key="md" value="1626" />
+          <entry key="py" value="15939" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Markdown" value="68" />
-          <entry key="PLAIN_TEXT" value="2411" />
-          <entry key="Python" value="15088" />
+          <entry key="Markdown" value="1626" />
+          <entry key="PLAIN_TEXT" value="2711" />
+          <entry key="Python" value="18425" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="conf" value="18" />
-          <entry key="md" value="1" />
-          <entry key="py" value="117" />
+          <entry key="conf" value="22" />
+          <entry key="md" value="2" />
+          <entry key="py" value="131" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="Markdown" value="1" />
-          <entry key="PLAIN_TEXT" value="18" />
-          <entry key="Python" value="117" />
+          <entry key="Markdown" value="2" />
+          <entry key="PLAIN_TEXT" value="22" />
+          <entry key="Python" value="131" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/solution_pipeline/create_solution.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="186">
-              <caret line="847" column="26" selection-start-line="847" selection-start-column="26" selection-end-line="847" selection-end-column="26" />
+            <state relative-caret-position="160">
+              <caret line="855" column="26" selection-start-line="855" selection-start-column="26" selection-end-line="855" selection-end-column="26" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
-                <marker date="1541706468852" expanded="true" signature="23637:23638" ph="..." />
-                <marker date="1541706468852" expanded="true" signature="43763:45231" ph="..." />
-                <marker date="1541706468852" expanded="true" signature="46461:46466" ph="..." />
-                <marker date="1541706468852" expanded="true" signature="46461:47041" ph="..." />
-                <marker date="1541706468852" expanded="true" signature="47134:47780" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="198">
-              <caret line="341" column="84" selection-start-line="341" selection-start-column="73" selection-end-line="341" selection-end-column="84" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-                <marker date="1541693537816" expanded="true" signature="7444:7450" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="663">
-              <caret line="42" column="21" selection-start-line="42" selection-start-column="21" selection-end-line="42" selection-end-column="21" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ensembling/ensembler.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="141">
-              <caret line="96" selection-start-line="96" selection-end-line="96" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="113">
-              <caret line="350" column="20" selection-start-line="350" selection-start-column="20" selection-end-line="350" selection-end-column="20" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-                <marker date="1541703426370" expanded="true" signature="11478:11483" ph="..." />
+                <marker date="1541789906472" expanded="true" signature="23637:23638" ph="..." />
+                <marker date="1541789906472" expanded="true" signature="44460:45928" ph="..." />
+                <marker date="1541789906472" expanded="true" signature="47158:47163" ph="..." />
+                <marker date="1541789906472" expanded="true" signature="47158:47738" ph="..." />
+                <marker date="1541789906472" expanded="true" signature="47831:48477" ph="..." />
               </folding>
             </state>
           </provider>
@@ -129,26 +78,55 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/examples/classification/multiclass/iris/configs/solution.conf">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="304">
-              <caret line="244" selection-start-line="244" selection-end-line="246" selection-end-column="69" />
+            <state relative-caret-position="73">
+              <caret line="233" column="33" selection-start-line="233" selection-start-column="33" selection-end-line="233" selection-end-column="33" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/examples/classification/binary/credit_scoring/configs/solution.conf">
+        <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="186">
-              <caret line="246" column="69" selection-start-line="246" selection-start-column="69" selection-end-line="246" selection-end-column="69" />
+            <state relative-caret-position="104">
+              <caret line="47" column="104" lean-forward="true" selection-start-line="47" selection-start-column="36" selection-end-line="47" selection-end-column="104" />
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+                <marker date="1541761680228" expanded="true" signature="7452:7458" ph="..." />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ensembling/stacking/stacker.py">
+        <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="211">
-              <caret line="25" column="94" selection-start-line="25" selection-start-column="74" selection-end-line="25" selection-end-column="94" />
+            <state relative-caret-position="255">
+              <caret line="117" column="30" selection-start-line="117" selection-start-column="6" selection-end-line="117" selection-end-column="30" />
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+                <marker date="1541789621922" expanded="true" signature="13593:13598" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/README.md">
+          <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+            <state split_layout="SPLIT">
+              <first_editor relative-caret-position="318">
+                <caret line="88" column="104" lean-forward="true" selection-start-line="88" selection-start-column="104" selection-end-line="88" selection-end-column="104" />
+              </first_editor>
+              <second_editor />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="109">
+              <caret line="39" selection-start-line="39" selection-end-line="39" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -157,12 +135,12 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/generic_tools/config_parser.py">
+        <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="325">
-              <caret line="281" column="16" selection-start-line="281" selection-start-column="16" selection-end-line="281" selection-end-column="16" />
+            <state relative-caret-position="44">
+              <caret line="121" column="8" selection-start-line="121" selection-start-column="8" selection-end-line="121" selection-end-column="8" />
               <folding>
-                <marker date="1541690811269" expanded="true" signature="16523:17461" ph="..." />
+                <element signature="e#0#9#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -180,48 +158,38 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>int</find>
-      <find>predict_pro</find>
-      <find>test_file_blended</find>
-      <find>columns_unique_dtypes</find>
-      <find>path_output_dir</find>
-      <find>save_config</find>
-      <find>blended_test_oof</find>
-      <find>prepare_</find>
-      <find>copyf</find>
-      <find>blended_train_oof</find>
-      <find>save_oof_results</find>
-      <find># Input data</find>
-      <find>FILENAME_TRAIN_OOF_RESULTS</find>
-      <find>get_</find>
-      <find>plot_confusion_matrix</find>
-      <find>name_stacking_dir</find>
-      <find>blender_seed</find>
-      <find>blend_stacked_results</find>
-      <find>bagged_results</find>
-      <find>solution_details['files']</find>
-      <find>bayes_opt_blender</find>
-      <find>blend_bagged_results</find>
-      <find>stack_</find>
-      <find>use_bagged_results</find>
-      <find>in</find>
-      <find>self.class_label</find>
-      <find>0.0215</find>
-      <find>stack_bagged_results</find>
       <find>stacker_bagging</find>
+      <find>use_bagged_results</find>
       <find>save_submission_results</find>
+      <find>self.train_df</find>
+      <find>in</find>
+      <find>zeros</find>
+      <find>self.test_df</find>
+      <find>self.optimal_weights_df</find>
+      <find>index</find>
+      <find>blended_train_score</find>
+      <find>cv_</find>
+      <find>save_hpo_history</find>
+      <find>save_</find>
+      <find>self.oof_preds</find>
+      <find>feats</find>
+      <find>self._valid_x</find>
+      <find>self._valid_y</find>
+      <find>n_fold, (train_idx, valid_idx</find>
+      <find>FILENAME_CV_RESULTS</find>
+      <find>self._feats</find>
+      <find>self.oof_eval_results</find>
+      <find>oof_eval_results</find>
+      <find>cv_results.csv</find>
+      <find>class_l</find>
+      <find>data_split_seed</find>
+      <find>class_label</find>
+      <find>oof_eval_result</find>
+      <find>predict_probability</find>
+      <find>stratified</find>
+      <find>seed_val</find>
     </findStrings>
     <replaceStrings>
-      <replace>feats_selection_output_dir</replace>
-      <replace>feats_selection_results_dir_path</replace>
-      <replace>feats_generation_results_dir_path</replace>
-      <replace>single_model_solution_output_dir</replace>
-      <replace>a path to sub-directory</replace>
-      <replace>SUBDIR_NO_HYPER_PARAMS_OPTIM</replace>
-      <replace>FILENAME_CV_RESULTS</replace>
-      <replace>self.FILENAME_FEATS_IMPORT</replace>
-      <replace>self.FILENAME_TRAIN_OOF_RESULTS</replace>
-      <replace>self.FILENAME_TRAIN_OOF_RESULTS_BAGGED</replace>
       <replace>self.FILENAME_TEST_RESULTS</replace>
       <replace>FILENAME_CV_RESULTS_VS_FEATS_SCORE_THRESH</replace>
       <replace>FILENAME_FEATS_SCORE</replace>
@@ -238,10 +206,20 @@
       <replace>blended_train_oof</replace>
       <replace>blended_test</replace>
       <replace>sub_preds</replace>
+      <replace>self.train_oof</replace>
       <replace>float</replace>
+      <replace>self.test_oof</replace>
+      <replace>self.blending_opt_history</replace>
+      <replace>valid_y</replace>
+      <replace>valid_x</replace>
+      <replace>feats</replace>
+      <replace>best_train_score</replace>
+      <replace>cv_results</replace>
+      <replace>cv_result</replace>
+      <replace>oof_preds</replace>
       <replace>blended_test_oof</replace>
       <replace>blending_output_dir</replace>
-      <replace>oof_preds</replace>
+      <replace>self.blender_seed_val</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -266,20 +244,20 @@
         <option value="$PROJECT_DIR$/modeling/hyper_parameters_optimization.py" />
         <option value="$PROJECT_DIR$/modeling/feature_selection.py" />
         <option value="$PROJECT_DIR$/generic_tools/loggers.py" />
-        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/ensembling/stacking/stacker.py" />
         <option value="$PROJECT_DIR$/ensembling/ensembler.py" />
         <option value="$PROJECT_DIR$/examples/classification/multiclass/iris/kkk.py" />
         <option value="$PROJECT_DIR$/generic_tools/config_parser.py" />
         <option value="$PROJECT_DIR$/modeling/prediction.py" />
-        <option value="$PROJECT_DIR$/examples/classification/multiclass/iris/configs/solution.conf" />
-        <option value="$PROJECT_DIR$/ensembling/blending/blender.py" />
         <option value="$PROJECT_DIR$/examples/classification/binary/credit_scoring/configs/solution.conf" />
+        <option value="$PROJECT_DIR$/ensembling/blending/blender.py" />
+        <option value="$PROJECT_DIR$/examples/classification/multiclass/iris/configs/solution.conf" />
         <option value="$PROJECT_DIR$/solution_pipeline/create_solution.py" />
+        <option value="$PROJECT_DIR$/README.md" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="15" />
     <option name="width" value="3840" />
     <option name="height" value="2075" />
@@ -517,7 +495,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.blender">
+  <component name="RunManager" selected="Python.create_solution">
     <configuration name="blender" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="FastMLFramework" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -632,8 +610,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.blender" />
         <item itemvalue="Python.create_solution" />
+        <item itemvalue="Python.blender" />
         <item itemvalue="Python.kkk" />
         <item itemvalue="Python.stacker" />
         <item itemvalue="Python.prediction" />
@@ -663,15 +641,15 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-6" y="-6" width="1549" height="837" extended-state="7" />
+    <frame x="-6" y="-6" width="1549" height="837" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" />
       <window_info x="3941" y="222" width="324" height="466" id="Structure" order="1" sideWeight="0.47420636" side_tool="true" weight="0.19154558" />
-      <window_info content_ui="combo" x="3852" y="94" width="324" height="726" id="Project" order="2" sideWeight="0.5257937" side_tool="true" visible="true" weight="0.19154558" />
+      <window_info active="true" content_ui="combo" x="3852" y="94" width="324" height="726" id="Project" order="2" sideWeight="0.5257937" side_tool="true" visible="true" weight="0.19154558" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" sideWeight="0.730625" weight="0.32390383" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.6175" visible="true" weight="0.41301274" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.6175" visible="true" weight="0.31117398" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.828125" weight="0.42857143" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -867,48 +845,23 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ensembling/blending/blender.py</url>
-          <line>314</line>
+          <line>403</line>
           <option name="timeStamp" value="206" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ensembling/blending/blender.py</url>
-          <line>301</line>
-          <option name="timeStamp" value="215" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ensembling/blending/blender.py</url>
-          <line>307</line>
-          <option name="timeStamp" value="218" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ensembling/blending/blender.py</url>
-          <line>291</line>
-          <option name="timeStamp" value="226" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ensembling/blending/blender.py</url>
-          <line>285</line>
-          <option name="timeStamp" value="227" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ensembling/blending/blender.py</url>
-          <line>167</line>
-          <option name="timeStamp" value="231" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ensembling/blending/blender.py</url>
-          <line>273</line>
-          <option name="timeStamp" value="232" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ensembling/blending/blender.py</url>
-          <line>172</line>
-          <option name="timeStamp" value="234" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/solution_pipeline/create_solution.py</url>
-          <line>718</line>
+          <line>726</line>
           <option name="timeStamp" value="235" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ensembling/blending/blender.py</url>
+          <line>376</line>
+          <option name="timeStamp" value="252" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ensembling/blending/blender.py</url>
+          <line>260</line>
+          <option name="timeStamp" value="258" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -921,13 +874,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://C:/DCM/Work/dcm-intuition/processes/data_processing/commonlib/intuition_loggers.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="34">
-          <caret line="2" column="23" selection-start-line="2" selection-start-column="14" selection-end-line="2" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/luigi/configuration.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="296">
@@ -976,16 +922,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2805">
-          <caret line="165" column="11" selection-start-line="165" selection-start-column="11" selection-end-line="165" selection-end-column="11" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/generic_tools/loggers.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="272">
@@ -993,16 +929,6 @@
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/README.md">
-      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-        <state split_layout="SPLIT">
-          <first_editor relative-caret-position="-820">
-            <caret line="4" selection-start-line="4" selection-end-line="4" />
-          </first_editor>
-          <second_editor />
         </state>
       </provider>
     </entry>
@@ -1142,27 +1068,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="126">
-          <caret line="101" selection-start-line="101" selection-end-line="101" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.PyCharmCE2018.2/system/python_stubs/2093854831/__builtin__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="23">
           <caret line="45" column="4" selection-start-line="45" selection-start-column="4" selection-end-line="45" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/bayes_opt/bayesian_optimization.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-272">
-          <caret line="193" column="8" selection-start-line="193" selection-start-column="8" selection-end-line="193" selection-end-column="8" />
         </state>
       </provider>
     </entry>
@@ -1194,13 +1103,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/pandas/core/common.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="236">
-          <caret line="409" selection-start-line="409" selection-end-line="409" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/numpy/testing/_private/utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="125">
@@ -1218,64 +1120,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/.PyCharmCE2018.2/system/python_stubs/2093854831/numpy/core/multiarray.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-480">
-          <caret line="2498" column="4" selection-start-line="2498" selection-start-column="4" selection-end-line="2498" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/generic_tools/config_parser.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="325">
           <caret line="281" column="16" selection-start-line="281" selection-start-column="16" selection-end-line="281" selection-end-column="16" />
           <folding>
             <marker date="1541690811269" expanded="true" signature="16523:17461" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/bayes_opt/target_space.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="125">
-          <caret line="138" selection-start-line="138" selection-end-line="138" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/pandas/core/frame.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="279">
-          <caret line="2664" selection-start-line="2664" selection-end-line="2664" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ensembling/ensembler.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="141">
-          <caret line="96" selection-start-line="96" selection-end-line="96" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="663">
-          <caret line="42" column="21" selection-start-line="42" selection-start-column="21" selection-end-line="42" selection-end-column="21" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="198">
-          <caret line="341" column="84" selection-start-line="341" selection-start-column="73" selection-end-line="341" selection-end-column="84" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-            <marker date="1541693537816" expanded="true" signature="7444:7450" ph="..." />
           </folding>
         </state>
       </provider>
@@ -1290,43 +1140,149 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
+    <entry file="file://$PROJECT_DIR$/ensembling/ensembler.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="113">
-          <caret line="350" column="20" selection-start-line="350" selection-start-column="20" selection-end-line="350" selection-end-column="20" />
+        <state relative-caret-position="968">
+          <caret line="96" selection-start-line="96" selection-end-line="96" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
-            <marker date="1541703426370" expanded="true" signature="11478:11483" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="279">
+          <caret line="101" selection-start-line="101" selection-end-line="101" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.PyCharmCE2018.2/system/python_stubs/2093854831/numpy/core/multiarray.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="2533" column="12" lean-forward="true" selection-start-line="2533" selection-start-column="12" selection-end-line="2534" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/pandas/core/common.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="287">
+          <caret line="409" selection-start-line="409" selection-end-line="409" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/bayes_opt/bayesian_optimization.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="117">
+          <caret line="193" column="8" selection-start-line="193" selection-start-column="8" selection-end-line="193" selection-end-column="8" />
+          <folding>
+            <element signature="e#0#37#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/bayes_opt/target_space.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17">
+          <caret line="138" selection-start-line="138" selection-end-line="138" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/pandas/core/frame.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="279">
+          <caret line="2664" selection-start-line="2664" selection-end-line="2664" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="109">
+          <caret line="39" selection-start-line="39" selection-end-line="39" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/pandas/core/indexing.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="125">
+          <caret line="182" selection-start-line="182" selection-end-line="182" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/classification/binary/credit_scoring/configs/solution.conf">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="47">
+          <caret line="721" column="30" selection-start-line="721" selection-start-column="30" selection-end-line="721" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="44">
+          <caret line="121" column="8" selection-start-line="121" selection-start-column="8" selection-end-line="121" selection-end-column="8" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="104">
+          <caret line="47" column="104" lean-forward="true" selection-start-line="47" selection-start-column="36" selection-end-line="47" selection-end-column="104" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+            <marker date="1541761680228" expanded="true" signature="7452:7458" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/examples/classification/multiclass/iris/configs/solution.conf">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="304">
-          <caret line="244" selection-start-line="244" selection-end-line="246" selection-end-column="69" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/examples/classification/binary/credit_scoring/configs/solution.conf">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="186">
-          <caret line="246" column="69" selection-start-line="246" selection-start-column="69" selection-end-line="246" selection-end-column="69" />
+        <state relative-caret-position="73">
+          <caret line="233" column="33" selection-start-line="233" selection-start-column="33" selection-end-line="233" selection-end-column="33" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/solution_pipeline/create_solution.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="186">
-          <caret line="847" column="26" selection-start-line="847" selection-start-column="26" selection-end-line="847" selection-end-column="26" />
+        <state relative-caret-position="160">
+          <caret line="855" column="26" selection-start-line="855" selection-start-column="26" selection-end-line="855" selection-end-column="26" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
-            <marker date="1541706468852" expanded="true" signature="23637:23638" ph="..." />
-            <marker date="1541706468852" expanded="true" signature="43763:45231" ph="..." />
-            <marker date="1541706468852" expanded="true" signature="46461:46466" ph="..." />
-            <marker date="1541706468852" expanded="true" signature="46461:47041" ph="..." />
-            <marker date="1541706468852" expanded="true" signature="47134:47780" ph="..." />
+            <marker date="1541789906472" expanded="true" signature="23637:23638" ph="..." />
+            <marker date="1541789906472" expanded="true" signature="44460:45928" ph="..." />
+            <marker date="1541789906472" expanded="true" signature="47158:47163" ph="..." />
+            <marker date="1541789906472" expanded="true" signature="47158:47738" ph="..." />
+            <marker date="1541789906472" expanded="true" signature="47831:48477" ph="..." />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="117" column="30" selection-start-line="117" selection-start-column="6" selection-end-line="117" selection-end-column="30" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+            <marker date="1541789621922" expanded="true" signature="13593:13598" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="318">
+            <caret line="88" column="104" lean-forward="true" selection-start-line="88" selection-start-column="104" selection-end-line="88" selection-end-column="104" />
+          </first_editor>
+          <second_editor />
         </state>
       </provider>
     </entry>

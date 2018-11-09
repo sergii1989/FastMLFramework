@@ -1,6 +1,6 @@
 ## FastMLFramework
 
-[![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/minerva-ml/open-solution-home-credit/blob/master/LICENSE)  
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/minerva-ml/open-solution-home-credit/blob/master/LICENSE) ![Python 2.7](https://img.shields.io/badge/python-2.7-blue.svg) ![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)
 
 ![FastMLFramework](docs/images/fastml_pipeline.png)
 -----------------------
@@ -69,3 +69,21 @@ The typical work-flow consists of the following steps:
     ```luigi.build([BuildSolution(project_location, config_directory, config_file)], local_scheduler=False)```
   
     ![FastMLFramework](docs/images/workflow.png)  
+
+## TODO
+
+This table is continiously updating.
+
+Items                                                                                               | Status
+----------------------------------------------------------------------------------------------------| :-----:
+Compatibility check (Python 2.7 / 3.6; Linux / Windows)                                             | :heavy_check_mark:
+Add stacking and blending classes to the solution pipeline                                          | :heavy_check_mark:
+Stacking class to handle both situations: OOF are either probabilities or class labels              | :heavy_check_mark:
+Bayes optimized weights in CV for voting ensembler                                                  | :heavy_check_mark:
+Complement pipeline with the raw data ingestion class                                               | :x:
+Complement pipeline with the features generation class                                              | :x:
+Complement pipeline with the features transformation class (categorical encoders, skewed data etc.) | :x:
+Adapt FastML implementation to be able to handle multi-class with multi-output ML tasks             | :x:
+Transformations on top of the OOF predictions (ranking, scaling, etc.)                              | :x:
+Greedy feed-forward algorithm for adding raw features into stacker                                  | :x:
+Generation of automatic meta-features for stacking                                                  | :x:
