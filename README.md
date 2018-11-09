@@ -74,16 +74,16 @@ The typical work-flow consists of the following steps:
 
 This table is continiously updating.
 
-Items                                                                                                          | Status
----------------------------------------------------------------------------------------------------------------| :-----:
-Compatibility check (Python 2.7 / 3.6; Linux / Windows)                                                        | :heavy_check_mark:
-Add stacking and blending classes to the solution pipeline                                                     | :heavy_check_mark:
-Stacking class to handle both situations: OOF are either probabilities or class labels                         | :heavy_check_mark:
-Bayes optimized weights in CV for voting ensembler                                                             | :heavy_check_mark:
-Complement pipeline with the raw data ingestion class                                                          | :x:
-Complement pipeline with the features generation class                                                         | :x:
-Complement pipeline with the features transformation class (categorical encoders, embeddings, skewed data etc.)| :x:
-Adapt FastML implementation to be able to handle multi-class with multi-output ML tasks                        | :x:
-Transformations on top of the OOF predictions (ranking, scaling, etc.)                                         | :x:
-Greedy feed-forward algorithm for adding raw features into stacker                                             | :x:
-Generation of automatic meta-features for stacking                                                             | :x:
+Items                                                                                               | Status
+----------------------------------------------------------------------------------------------------| :-----:
+Compatibility check (Python 2.7 / 3.6; Linux / Windows)                                             | :heavy_check_mark:
+Add stacking and blending classes to the solution pipeline                                          | :heavy_check_mark:
+Stacking class to handle both situations: OOF are either probabilities or class labels              | :heavy_check_mark:
+Bayes optimized weights in CV for voting ensembler                                                  | :heavy_check_mark:
+Complement pipeline with the raw data ingestion class                                               | :x:
+Complement pipeline with the features generation class                                              | :x:
+Complement pipeline with the features transformation class (categorical encoders, skewed data etc.) | :x:
+Adapt FastML implementation to be able to handle multi-class with multi-output ML tasks             | :x:
+Transformations on top of the OOF predictions (ranking, scaling, etc.)                              | :x:
+Greedy feed-forward algorithm for adding raw features into stacker                                  | :x:
+Generation of automatic meta-features for stacking                                                  | :x:
