@@ -72,6 +72,27 @@ def run_stacker_kaggle_example(stacker_model='logistic_regression', debug=True):
         }
     }
 
+    oof_input_files = {
+        "lgbm_1953": {
+            "files": [
+                "train_OOF.csv",
+                "test.csv",
+                "train_OOF_bagged.csv",
+                "test_bagged.csv"
+            ],
+            "path": r"c:\Kaggle\home_credit_default_risk\single_model_solution\lightgbm\features_dataset_001\target_permutation_fs_001\bayes_hpo_001\bagging_on"
+        },
+        "xgb_4750": {
+            "files": [
+                "train_OOF.csv",
+                "test.csv",
+                "train_OOF_bagged.csv",
+                "test_bagged.csv"
+            ],
+            "path": r"c:\Kaggle\home_credit_default_risk\single_model_solution\xgboost\features_dataset_001\target_permutation_fs_001\bayes_hpo_001\bagging_on"
+        }
+    }
+
     # Parameters
     class_label = 1  # in Target
     project_location = 'c:\Kaggle\home_credit_default_risk'  # ''

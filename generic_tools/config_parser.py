@@ -199,13 +199,20 @@ class ConfigFileHandler(object):
     def _get_stacked_solution_output_dir(self, stacker_model, run_stacker_hpo, run_bagging):
         config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
         project_structure = dict(config.get_config('project_structure'))
+        stacker_dir_name = config.get_string('stacker.name_stacking_dir')
+        use_provided_oof_input_files = config.get_bool('stacker.use_provided_oof_input_files')
+
+        if use_provided_oof_input_files:
+            stacker_dir_name = '_'.join([stacker_dir_name, 'external_oof_preds'])
+        else:
+            stacker_dir_name = '_'.join([stacker_dir_name, 'pipeline_oof_preds'])
 
         if run_stacker_hpo:
             hpo_method = config.get_string('stacker.%s.hpo_method' % stacker_model)
             hpo_name_dir = config.get_string('hp_optimization.name_hpo_dir')
-            stacker_output_dir = os.path.join(stacker_model, '_'.join([hpo_method, hpo_name_dir]))
+            stacker_output_dir = os.path.join(stacker_dir_name, stacker_model, '_'.join([hpo_method, hpo_name_dir]))
         else:
-            stacker_output_dir = os.path.join(stacker_model, self.SUBDIR_NO_HYPER_PARAMS_OPTIM)
+            stacker_output_dir = os.path.join(stacker_dir_name, stacker_model, self.SUBDIR_NO_HYPER_PARAMS_OPTIM)
 
         stacker_results_dir_path = os.path.join(project_structure['ENSEMBLE_DIR'],
                                                 project_structure['STACKER_SUBDIR'],
@@ -253,3 +260,47 @@ class ConfigFileHandler(object):
         else:
             raise TypeError("stacker.meta_models in config file should be either list or string. "
                             "Instead got %s" % type(stacker_models))
+
+    def _get_blended_solution_output_dir(self, blending_method):
+        config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        project_structure = dict(config.get_config('project_structure'))
+        blender_dir_name = config.get_string('blender.name_blending_dir')
+        use_provided_oof_input_files = config.get_bool('blender.use_provided_oof_input_files')
+
+        if use_provided_oof_input_files:
+            blender_output_dir = '_'.join([blender_dir_name, 'external_oof_preds'])
+        else:
+            blender_output_dir = '_'.join([blender_dir_name, 'pipeline_oof_preds'])
+
+        blender_results_dir_path = os.path.join(project_structure['ENSEMBLE_DIR'],
+                                                project_structure['BLENDER_SUBDIR'],
+                                                blending_method,
+                                                blender_output_dir)
+        return blender_output_dir, blender_results_dir_path
+
+    def _prepare_blender_input_parameters_for_luigi(self, blending_method):
+        return {
+            'project_location': self.project_location,
+            'config_directory': self.config_directory,
+            'config_file': self.config_file,
+            'blending_method': blending_method,
+            'fg_output_dir': self._get_features_input_dir_for_stacking(),
+            'blending_output_dir': self._get_blended_solution_output_dir(blending_method)[1]}
+
+    def pipeline_parameters_for_blending_solutions(self):
+        config = self.parse_config_file(self.project_location, self.config_directory, self.config_file)
+        blender_methods = config.get('modeling_settings.blender_method')
+
+        if isinstance(blender_methods, list):
+            luigi_pipeline_input_parameters = []
+            for method in blender_methods:
+                input_parameters = self._prepare_blender_input_parameters_for_luigi(method)
+                luigi_pipeline_input_parameters.append(input_parameters)
+            return luigi_pipeline_input_parameters
+
+        elif isinstance(blender_methods, basestring):
+            input_parameters = self._prepare_blender_input_parameters_for_luigi(blender_methods)
+            return [input_parameters]
+        else:
+            raise TypeError("stacker.meta_models in config file should be either list or string. "
+                            "Instead got %s" % type(blender_methods))

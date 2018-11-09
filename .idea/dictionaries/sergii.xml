@@ -3,6 +3,7 @@
     <words>
       <w>algo</w>
       <w>annot</w>
+      <w>argmax</w>
       <w>asctime</w>
       <w>automat</w>
       <w>barplot</w>
@@ -94,12 +95,14 @@
       <w>softmax</w>
       <w>softprob</w>
       <w>sqrt</w>
+      <w>stackers</w>
       <w>stds</w>
       <w>stdv</w>
       <w>subm</w>
       <w>targer</w>
       <w>thres</w>
       <w>tweedie</w>
+      <w>uint</w>
       <w>vmax</w>
       <w>vmin</w>
       <w>xgboost</w>

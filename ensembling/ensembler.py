@@ -33,10 +33,10 @@ class Ensembler(object):
         assert meta_data.shape[0] == model_data.shape[0]
         if 'train_OOF' in filename:
             assert target_column in meta_data, ('Please add {0} column to the {1}'.format(target_column, filename))
-            pdt.assert_series_equal(meta_data[target_column], model_data[target_column])
+            pdt.assert_series_equal(meta_data[target_column], model_data[target_column], check_dtype=False)
         if Predictor.verify_index_column_is_defined(index_column):
             assert index_column in meta_data, ('Please add {0} column to the {1}'.format(index_column, filename))
-            pdt.assert_series_equal(meta_data[index_column], model_data[index_column])
+            pdt.assert_series_equal(meta_data[index_column], model_data[index_column], check_dtype=False)
 
     @staticmethod
     def _join_oof_results(main_df, index_column, target_column, list_preds_df, target_decimals):
