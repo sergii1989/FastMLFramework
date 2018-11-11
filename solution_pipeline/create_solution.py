@@ -698,7 +698,7 @@ class InitializeBlender(luigi.Task):
             n_iter=blender_n_iter, blender_seed_val=blender_seed_val, metrics_scorer=metrics_scorer,
             metrics_decimals=metrics_decimals, target_decimals=target_decimals, num_folds=num_folds,
             stratified=stratified, kfolds_shuffle=kfolds_shuffle, data_split_seed=data_split_seed,
-            project_location=project_location, output_dirname=self.blending_output_dir
+            project_location=self.project_location, output_dirname=self.blending_output_dir
         )
 
         full_path_to_file = os.path.join(self.project_location, self.blending_output_dir, self.output_pickle_file)
