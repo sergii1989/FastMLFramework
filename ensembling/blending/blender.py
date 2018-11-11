@@ -7,6 +7,7 @@ import numpy.testing as npt
 
 from scipy import stats
 from shutil import copyfile
+from future.utils import itervalues
 from collections import OrderedDict
 from modeling.prediction import Predictor
 from bayes_opt import BayesianOptimization
@@ -254,8 +255,8 @@ class BayesOptimizationBlender(Blender):
         if s != 0.0:  # if all weights in dict are zeros...
             weights = [params[feat] / s for feat in feats]  # this is needed because **params not preserves order p2.7
         else:
-            n_keys = len(params.keys())
-            weights = [1.0 / n_keys for _ in params.keys()]
+            n_keys = len(params)
+            weights = [1.0 / n_keys for _ in params]
 
         train_pred = self._run_voting(oof_data=self._train_x, weights=weights)
         return self.metrics_scorer(self._train_y, train_pred)
@@ -353,12 +354,12 @@ class BayesOptimizationBlender(Blender):
             optimal_weights = self._normalize_weights(best_params)
 
             # Out-of-fold prediction
-            oof_preds[valid_idx] = self._run_voting(oof_data=valid_x[optimal_weights.keys()],
-                                                    weights=optimal_weights.values())
+            oof_preds[valid_idx] = self._run_voting(oof_data=valid_x[list(optimal_weights)],
+                                                    weights=list(itervalues(optimal_weights)))
 
             # Make a prediction for test data
-            sub_preds.append(self._run_voting(oof_data=self.test_oof[optimal_weights.keys()],
-                                              weights=optimal_weights.values()))
+            sub_preds.append(self._run_voting(oof_data=self.test_oof[list(optimal_weights)],
+                                              weights=list(itervalues(optimal_weights))))
 
             # CV score in each fold
             cv_result = round(self.metrics_scorer(valid_y, oof_preds[valid_idx]), self.metrics_decimals)

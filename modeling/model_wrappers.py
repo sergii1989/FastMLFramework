@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from future.utils import itervalues
+
 
 class ModelWrapper(object):
     def __init__(self, model, params=None, seed=27, model_name=None):
@@ -232,8 +234,8 @@ class XGBWrapper(ModelWrapper):
         'Gain' is slightly more informative than the 'split' (thus it is proposed to be used in here by default).
         :return: features_names, features_importances
         """
-        features_names = self.estimator.get_booster().get_score(importance_type='gain').keys()
-        features_importances = self.estimator.get_booster().get_score(importance_type='gain').values()
+        features_names = list(self.estimator.get_booster().get_score(importance_type='gain'))
+        features_importances = list(itervalues(self.estimator.get_booster().get_score(importance_type='gain')))
         return features_names, features_importances
 
 

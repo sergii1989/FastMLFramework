@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f445f148-be77-4f8b-81ff-ecf6f9ca60fc" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/solution_pipeline/create_solution.py" beforeDir="false" afterPath="$PROJECT_DIR$/solution_pipeline/create_solution.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ensembling/blending/blender.py" beforeDir="false" afterPath="$PROJECT_DIR$/ensembling/blending/blender.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeling/model_wrappers.py" beforeDir="false" afterPath="$PROJECT_DIR$/modeling/model_wrappers.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -28,39 +29,39 @@
           <entry key="Python Console" value="2486" />
           <entry key="conf" value="2711" />
           <entry key="md" value="1626" />
-          <entry key="py" value="16041" />
+          <entry key="py" value="16100" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="Markdown" value="1626" />
           <entry key="PLAIN_TEXT" value="2711" />
-          <entry key="Python" value="18527" />
+          <entry key="Python" value="18586" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="conf" value="22" />
           <entry key="md" value="2" />
-          <entry key="py" value="141" />
+          <entry key="py" value="143" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="Markdown" value="2" />
           <entry key="PLAIN_TEXT" value="22" />
-          <entry key="Python" value="141" />
+          <entry key="Python" value="143" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/solution_pipeline/create_solution.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="143">
-              <caret line="695" column="78" lean-forward="true" selection-start-line="695" selection-start-column="78" selection-end-line="695" selection-end-column="78" />
+            <state relative-caret-position="1972">
+              <caret line="116" column="71" selection-start-line="116" selection-start-column="71" selection-end-line="116" selection-end-column="71" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
                 <marker date="1541940996098" expanded="true" signature="23637:23638" ph="..." />
@@ -76,8 +77,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="137">
-              <caret line="490" column="20" selection-start-line="490" selection-start-column="16" selection-end-line="490" selection-end-column="20" />
+            <state relative-caret-position="239">
+              <caret line="722" column="114" selection-start-line="722" selection-start-column="106" selection-end-line="722" selection-end-column="114" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
                 <marker date="1541761680228" expanded="true" signature="7452:7458" ph="..." />
@@ -89,35 +90,20 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="254">
-              <caret line="101" selection-start-line="101" selection-end-line="101" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="51">
+              <caret line="3" selection-start-line="3" selection-end-line="3" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="137">
-              <caret line="120" column="8" selection-start-line="120" selection-start-column="8" selection-end-line="120" selection-end-column="8" />
+            <state relative-caret-position="289">
+              <caret line="17" lean-forward="true" selection-start-line="17" selection-end-line="17" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
-                <marker date="1541789621922" expanded="true" signature="13593:13598" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/data_processing/preprocessing.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-17">
-              <caret line="8" selection-start-line="8" selection-end-line="8" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
+                <marker date="1541942599814" expanded="true" signature="13629:13634" ph="..." />
               </folding>
             </state>
           </provider>
@@ -126,8 +112,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/generic_tools/config_parser.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="154">
-              <caret line="184" column="97" lean-forward="true" selection-start-line="184" selection-start-column="97" selection-end-line="184" selection-end-column="97" />
+            <state relative-caret-position="137">
+              <caret line="203" column="16" selection-start-line="203" selection-start-column="16" selection-end-line="203" selection-end-column="16" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
                 <marker date="1541801254748" expanded="true" signature="16546:17484" ph="..." />
@@ -140,7 +126,10 @@
         <entry file="file://$PROJECT_DIR$/modeling/feature_selection.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="137">
-              <caret line="12" column="31" selection-start-line="12" selection-start-column="26" selection-end-line="12" selection-end-column="31" />
+              <caret line="231" column="62" selection-start-line="231" selection-start-column="55" selection-end-line="231" selection-end-column="62" />
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -148,8 +137,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ensembling/stacking/stacker.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="186">
-              <caret line="25" column="94" selection-start-line="25" selection-start-column="74" selection-end-line="25" selection-end-column="94" />
+            <state relative-caret-position="137">
+              <caret line="152" column="14" selection-start-line="152" selection-start-column="12" selection-end-line="152" selection-end-column="14" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -161,7 +150,7 @@
         <entry file="file://$PROJECT_DIR$/ensembling/ensembler.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="137">
-              <caret line="59" column="67" selection-start-line="59" selection-start-column="67" selection-end-line="59" selection-end-column="67" />
+              <caret line="35" column="94" selection-start-line="35" selection-start-column="94" selection-end-line="35" selection-end-column="94" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -193,14 +182,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>blended_train_score</find>
-      <find>cv_</find>
-      <find>save_hpo_history</find>
-      <find>save_</find>
-      <find>self.oof_preds</find>
-      <find>feats</find>
-      <find>self._valid_x</find>
-      <find>self._valid_y</find>
       <find>n_fold, (train_idx, valid_idx</find>
       <find>FILENAME_CV_RESULTS</find>
       <find>self._feats</find>
@@ -223,6 +204,14 @@
       <find>filter</find>
       <find>base</find>
       <find>bases</find>
+      <find>.keys</find>
+      <find>iterv</find>
+      <find>.values)</find>
+      <find>.values</find>
+      <find>values(</find>
+      <find>keys(</find>
+      <find>.keys()</find>
+      <find>itervalues</find>
     </findStrings>
     <replaceStrings>
       <replace>self.FILENAME_TEST_RESULTS</replace>
@@ -253,8 +242,8 @@
       <replace>oof_preds</replace>
       <replace>float</replace>
       <replace>blended_test_oof</replace>
-      <replace>blending_output_dir</replace>
       <replace>self.blender_seed_val</replace>
+      <replace>blending_output_dir</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -271,7 +260,6 @@
         <option value="$PROJECT_DIR$/modeling/cross_validation.py" />
         <option value="$PROJECT_DIR$/../copy/FastMLFramework/ensembling/stacking/stacker.py" />
         <option value="$PROJECT_DIR$/ensembling/stacker.py" />
-        <option value="$PROJECT_DIR$/modeling/model_wrappers.py" />
         <option value="$PROJECT_DIR$/modeling/hyper_parameters_optimization.py" />
         <option value="$PROJECT_DIR$/generic_tools/loggers.py" />
         <option value="$PROJECT_DIR$/ensembling/stacking/stacker.py" />
@@ -279,7 +267,6 @@
         <option value="$PROJECT_DIR$/examples/classification/multiclass/iris/kkk.py" />
         <option value="$PROJECT_DIR$/modeling/prediction.py" />
         <option value="$PROJECT_DIR$/examples/classification/binary/credit_scoring/configs/solution.conf" />
-        <option value="$PROJECT_DIR$/ensembling/blending/blender.py" />
         <option value="$PROJECT_DIR$/examples/classification/multiclass/iris/configs/solution.conf" />
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/generic_tools/utils.py" />
@@ -289,10 +276,12 @@
         <option value="$PROJECT_DIR$/modeling/feature_selection.py" />
         <option value="$PROJECT_DIR$/generic_tools/config_parser.py" />
         <option value="$PROJECT_DIR$/solution_pipeline/create_solution.py" />
+        <option value="$PROJECT_DIR$/modeling/model_wrappers.py" />
+        <option value="$PROJECT_DIR$/ensembling/blending/blender.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
+  <component name="ProjectFrameBounds" extendedState="7">
     <option name="x" value="15" />
     <option name="width" value="3840" />
     <option name="height" value="2075" />
@@ -676,7 +665,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-6" y="-6" width="1549" height="837" extended-state="6" />
+    <frame x="-6" y="-6" width="1549" height="837" extended-state="7" />
     <editor active="true" />
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" />
@@ -880,7 +869,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ensembling/blending/blender.py</url>
-          <line>403</line>
+          <line>404</line>
           <option name="timeStamp" value="206" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -890,12 +879,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ensembling/blending/blender.py</url>
-          <line>376</line>
+          <line>377</line>
           <option name="timeStamp" value="252" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ensembling/blending/blender.py</url>
-          <line>260</line>
+          <line>261</line>
           <option name="timeStamp" value="258" />
         </line-breakpoint>
       </breakpoints>
@@ -909,13 +898,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/site-packages/luigi/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="313">
-          <caret line="43" column="23" selection-start-line="43" selection-start-column="23" selection-end-line="43" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://C:/DCM/Work/dcm-intuition/integration/broker/flextrade/util.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="221">
@@ -1227,34 +1209,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="137">
-          <caret line="490" column="20" selection-start-line="490" selection-start-column="16" selection-end-line="490" selection-end-column="20" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-            <marker date="1541761680228" expanded="true" signature="7452:7458" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ensembling/stacking/stacker.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="186">
-          <caret line="25" column="94" selection-start-line="25" selection-start-column="74" selection-end-line="25" selection-end-column="94" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/feature_selection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="137">
-          <caret line="12" column="31" selection-start-line="12" selection-start-column="26" selection-end-line="12" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="325">
@@ -1265,30 +1219,35 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
+    <entry file="file://$USER_HOME$/AppData/Roaming/Python/Python27/site-packages/xgboost/core.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="254">
-          <caret line="101" selection-start-line="101" selection-end-line="101" />
+        <state relative-caret-position="-442">
+          <caret line="1357" column="8" selection-start-line="1357" selection-start-column="8" selection-end-line="1357" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="239">
+          <caret line="722" column="114" selection-start-line="722" selection-start-column="106" selection-end-line="722" selection-end-column="114" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="true" />
+            <marker date="1541761680228" expanded="true" signature="7452:7458" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ensembling/ensembler.py">
+    <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="137">
-          <caret line="59" column="67" selection-start-line="59" selection-start-column="67" selection-end-line="59" selection-end-column="67" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="51">
+          <caret line="3" selection-start-line="3" selection-end-line="3" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/generic_tools/config_parser.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="154">
-          <caret line="184" column="97" lean-forward="true" selection-start-line="184" selection-start-column="97" selection-end-line="184" selection-end-column="97" />
+        <state relative-caret-position="137">
+          <caret line="203" column="16" selection-start-line="203" selection-start-column="16" selection-end-line="203" selection-end-column="16" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
             <marker date="1541801254748" expanded="true" signature="16546:17484" ph="..." />
@@ -1296,21 +1255,40 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
+    <entry file="file://$PROJECT_DIR$/modeling/feature_selection.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="137">
-          <caret line="120" column="8" selection-start-line="120" selection-start-column="8" selection-end-line="120" selection-end-column="8" />
+          <caret line="231" column="62" selection-start-line="231" selection-start-column="55" selection-end-line="231" selection-end-column="62" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
-            <marker date="1541789621922" expanded="true" signature="13593:13598" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ensembling/stacking/stacker.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="137">
+          <caret line="152" column="14" selection-start-line="152" selection-start-column="12" selection-end-line="152" selection-end-column="14" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ensembling/ensembler.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="137">
+          <caret line="35" column="94" selection-start-line="35" selection-start-column="94" selection-end-line="35" selection-end-column="94" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/solution_pipeline/create_solution.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="143">
-          <caret line="695" column="78" lean-forward="true" selection-start-line="695" selection-start-column="78" selection-end-line="695" selection-end-column="78" />
+        <state relative-caret-position="1972">
+          <caret line="116" column="71" selection-start-line="116" selection-start-column="71" selection-end-line="116" selection-end-column="71" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
             <marker date="1541940996098" expanded="true" signature="23637:23638" ph="..." />
@@ -1318,6 +1296,17 @@
             <marker date="1541940996098" expanded="true" signature="47163:47168" ph="..." />
             <marker date="1541940996098" expanded="true" signature="47163:47743" ph="..." />
             <marker date="1541940996098" expanded="true" signature="47836:48482" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="289">
+          <caret line="17" lean-forward="true" selection-start-line="17" selection-end-line="17" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+            <marker date="1541942599814" expanded="true" signature="13629:13634" ph="..." />
           </folding>
         </state>
       </provider>
