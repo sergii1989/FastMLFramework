@@ -1,6 +1,6 @@
 ## FastMLFramework
 
-[![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/minerva-ml/open-solution-home-credit/blob/master/LICENSE) ![Python 2.7](https://img.shields.io/badge/python-2.7-blue.svg) ![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/minerva-ml/open-solution-home-credit/blob/master/LICENSE) ![Python Versions](https://img.shields.io/pypi/pyversions/luigi-monitor.svg)
 
 ![FastMLFramework](docs/images/fastml_pipeline.png)
 -----------------------
