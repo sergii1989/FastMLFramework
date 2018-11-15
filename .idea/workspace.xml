@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f445f148-be77-4f8b-81ff-ecf6f9ca60fc" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/ensembling/blending/blender.py" beforeDir="false" afterPath="$PROJECT_DIR$/ensembling/blending/blender.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modeling/model_wrappers.py" beforeDir="false" afterPath="$PROJECT_DIR$/modeling/model_wrappers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/solution_pipeline/create_solution.py" beforeDir="false" afterPath="$PROJECT_DIR$/solution_pipeline/create_solution.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -15,42 +16,46 @@
     <session id="1802728238">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="6" />
+          <entry key="project.closed" value="10" />
           <entry key="project.open.time.3" value="1" />
           <entry key="project.open.time.4" value="1" />
           <entry key="project.open.time.5" value="3" />
+          <entry key="project.open.time.6" value="2" />
           <entry key="project.open.time.7" value="1" />
+          <entry key="project.open.time.8" value="1" />
           <entry key="project.open.time.9" value="1" />
-          <entry key="project.opened" value="7" />
+          <entry key="project.opened" value="10" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="Python Console" value="2486" />
           <entry key="conf" value="2711" />
-          <entry key="md" value="1626" />
-          <entry key="py" value="16100" />
+          <entry key="md" value="1634" />
+          <entry key="py" value="16133" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Markdown" value="1626" />
+          <entry key="Markdown" value="1634" />
           <entry key="PLAIN_TEXT" value="2711" />
-          <entry key="Python" value="18586" />
+          <entry key="Python" value="18619" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="conf" value="22" />
-          <entry key="md" value="2" />
-          <entry key="py" value="143" />
+          <entry key="ipynb" value="2" />
+          <entry key="md" value="3" />
+          <entry key="py" value="146" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="Markdown" value="2" />
+          <entry key="IPNB" value="2" />
+          <entry key="Markdown" value="3" />
           <entry key="PLAIN_TEXT" value="22" />
-          <entry key="Python" value="143" />
+          <entry key="Python" value="146" />
         </counts>
       </usages-collector>
     </session>
@@ -60,15 +65,14 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/solution_pipeline/create_solution.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1972">
-              <caret line="116" column="71" selection-start-line="116" selection-start-column="71" selection-end-line="116" selection-end-column="71" />
+            <state relative-caret-position="119">
+              <caret line="7" column="19" selection-start-line="7" selection-start-column="19" selection-end-line="7" selection-end-column="19" />
               <folding>
-                <element signature="e#0#9#0" expanded="true" />
-                <marker date="1541940996098" expanded="true" signature="23637:23638" ph="..." />
-                <marker date="1541940996098" expanded="true" signature="44465:45933" ph="..." />
-                <marker date="1541940996098" expanded="true" signature="47163:47168" ph="..." />
-                <marker date="1541940996098" expanded="true" signature="47163:47743" ph="..." />
-                <marker date="1541940996098" expanded="true" signature="47836:48482" ph="..." />
+                <marker date="1542151983189" expanded="true" signature="23637:23638" ph="..." />
+                <marker date="1542151983189" expanded="true" signature="44465:45933" ph="..." />
+                <marker date="1542151983189" expanded="true" signature="47163:47168" ph="..." />
+                <marker date="1542151983189" expanded="true" signature="47163:47743" ph="..." />
+                <marker date="1542151983189" expanded="true" signature="47836:48482" ph="..." />
               </folding>
             </state>
           </provider>
@@ -77,7 +81,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="239">
+            <state relative-caret-position="11968">
               <caret line="722" column="114" selection-start-line="722" selection-start-column="106" selection-end-line="722" selection-end-column="114" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
@@ -87,20 +91,23 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="51">
-              <caret line="3" selection-start-line="3" selection-end-line="3" />
+            <state relative-caret-position="384">
+              <caret line="396" column="57" lean-forward="true" selection-start-line="396" selection-start-column="57" selection-end-line="396" selection-end-column="57" />
+              <folding>
+                <element signature="e#0#18#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="289">
-              <caret line="17" lean-forward="true" selection-start-line="17" selection-end-line="17" />
+            <state relative-caret-position="17">
+              <caret line="17" selection-start-line="17" selection-end-line="17" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
                 <marker date="1541942599814" expanded="true" signature="13629:13634" ph="..." />
@@ -112,7 +119,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/generic_tools/config_parser.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="137">
+            <state relative-caret-position="3366">
               <caret line="203" column="16" selection-start-line="203" selection-start-column="16" selection-end-line="203" selection-end-column="16" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
@@ -125,8 +132,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/modeling/feature_selection.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="137">
-              <caret line="231" column="62" selection-start-line="231" selection-start-column="55" selection-end-line="231" selection-end-column="62" />
+            <state relative-caret-position="782">
+              <caret line="61" selection-start-line="61" selection-end-line="61" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -135,9 +142,18 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2057">
+              <caret line="134" column="47" selection-start-line="134" selection-start-column="47" selection-end-line="134" selection-end-column="47" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ensembling/stacking/stacker.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="137">
+            <state relative-caret-position="2482">
               <caret line="152" column="14" selection-start-line="152" selection-start-column="12" selection-end-line="152" selection-end-column="14" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
@@ -149,7 +165,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ensembling/ensembler.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="137">
+            <state relative-caret-position="442">
               <caret line="35" column="94" selection-start-line="35" selection-start-column="94" selection-end-line="35" selection-end-column="94" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
@@ -161,7 +177,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="325">
+            <state relative-caret-position="2159">
               <caret line="136" column="23" selection-start-line="136" selection-start-column="23" selection-end-line="136" selection-end-column="23" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
@@ -182,10 +198,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>n_fold, (train_idx, valid_idx</find>
-      <find>FILENAME_CV_RESULTS</find>
-      <find>self._feats</find>
-      <find>self.oof_eval_results</find>
       <find>oof_eval_results</find>
       <find>cv_results.csv</find>
       <find>class_l</find>
@@ -212,6 +224,10 @@
       <find>keys(</find>
       <find>.keys()</find>
       <find>itervalues</find>
+      <find>categori</find>
+      <find>cat_features</find>
+      <find>cols_to_exclude</find>
+      <find>xgboos</find>
     </findStrings>
     <replaceStrings>
       <replace>self.FILENAME_TEST_RESULTS</replace>
@@ -242,8 +258,8 @@
       <replace>oof_preds</replace>
       <replace>float</replace>
       <replace>blended_test_oof</replace>
-      <replace>self.blender_seed_val</replace>
       <replace>blending_output_dir</replace>
+      <replace>self.blender_seed_val</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -268,23 +284,25 @@
         <option value="$PROJECT_DIR$/modeling/prediction.py" />
         <option value="$PROJECT_DIR$/examples/classification/binary/credit_scoring/configs/solution.conf" />
         <option value="$PROJECT_DIR$/examples/classification/multiclass/iris/configs/solution.conf" />
-        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/generic_tools/utils.py" />
         <option value="$PROJECT_DIR$/setup.py" />
         <option value="$PROJECT_DIR$/data_vis/visualization.py" />
         <option value="$PROJECT_DIR$/data_processing/preprocessing.py" />
         <option value="$PROJECT_DIR$/modeling/feature_selection.py" />
         <option value="$PROJECT_DIR$/generic_tools/config_parser.py" />
-        <option value="$PROJECT_DIR$/solution_pipeline/create_solution.py" />
         <option value="$PROJECT_DIR$/modeling/model_wrappers.py" />
         <option value="$PROJECT_DIR$/ensembling/blending/blender.py" />
+        <option value="$PROJECT_DIR$/examples/classification/binary/credit_scoring/run_solution.ipynb" />
+        <option value="$PROJECT_DIR$/README.md" />
+        <option value="$PROJECT_DIR$/solution_pipeline/create_solution.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="7">
-    <option name="x" value="15" />
-    <option name="width" value="3840" />
-    <option name="height" value="2075" />
+    <option name="x" value="-15" />
+    <option name="y" value="-15" />
+    <option name="width" value="3875" />
+    <option name="height" value="2095" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -292,6 +310,27 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope">
+        <subPane subId="Project Files">
+          <expand>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="FastMLFramework" type="cbb8eebc:String" user="FastMLFramework" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="FastMLFramework" type="cbb8eebc:String" user="FastMLFramework" />
+              <item name="data_processing" type="cbb8eebc:String" user="data_processing" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="FastMLFramework" type="cbb8eebc:String" user="FastMLFramework" />
+              <item name="modeling" type="cbb8eebc:String" user="modeling" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -357,15 +396,6 @@
               <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
               <item name="examples" type="462c0819:PsiDirectoryNode" />
               <item name="classification" type="462c0819:PsiDirectoryNode" />
-              <item name="binary" type="462c0819:PsiDirectoryNode" />
-              <item name="credit_scoring" type="462c0819:PsiDirectoryNode" />
-              <item name="configs" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
-              <item name="examples" type="462c0819:PsiDirectoryNode" />
-              <item name="classification" type="462c0819:PsiDirectoryNode" />
               <item name="multiclass" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -408,89 +438,6 @@
               <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
               <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
               <item name="&lt; Python 2.7 (dcm-intuition) &gt;" type="70bed36:NamedLibraryElementNode" />
-            </path>
-            <path>
-              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="&lt; Python 2.7 (dcm-intuition) &gt;" type="70bed36:NamedLibraryElementNode" />
-              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="&lt; Python 2.7 (dcm-intuition) &gt;" type="70bed36:NamedLibraryElementNode" />
-              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
-              <item name="docs" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="&lt; Python 2.7 (dcm-intuition) &gt;" type="70bed36:NamedLibraryElementNode" />
-              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
-              <item name="docs" type="462c0819:PsiDirectoryNode" />
-              <item name="images" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="&lt; Python 2.7 (dcm-intuition) &gt;" type="70bed36:NamedLibraryElementNode" />
-              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
-              <item name="examples" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="&lt; Python 2.7 (dcm-intuition) &gt;" type="70bed36:NamedLibraryElementNode" />
-              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
-              <item name="examples" type="462c0819:PsiDirectoryNode" />
-              <item name="classification" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="&lt; Python 2.7 (dcm-intuition) &gt;" type="70bed36:NamedLibraryElementNode" />
-              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
-              <item name="examples" type="462c0819:PsiDirectoryNode" />
-              <item name="classification" type="462c0819:PsiDirectoryNode" />
-              <item name="multiclass" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="&lt; Python 2.7 (dcm-intuition) &gt;" type="70bed36:NamedLibraryElementNode" />
-              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
-              <item name="examples" type="462c0819:PsiDirectoryNode" />
-              <item name="classification" type="462c0819:PsiDirectoryNode" />
-              <item name="multiclass" type="462c0819:PsiDirectoryNode" />
-              <item name="iris" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="FastMLFramework" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="&lt; Python 2.7 (dcm-intuition) &gt;" type="70bed36:NamedLibraryElementNode" />
-              <item name="FastMLFramework" type="462c0819:PsiDirectoryNode" />
-              <item name="generic_tools" type="462c0819:PsiDirectoryNode" />
-            </path>
-          </expand>
-          <select />
-        </subPane>
-      </pane>
-      <pane id="Scope">
-        <subPane subId="Project Files">
-          <expand>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="FastMLFramework" type="cbb8eebc:String" user="FastMLFramework" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="FastMLFramework" type="cbb8eebc:String" user="FastMLFramework" />
-              <item name="data_processing" type="cbb8eebc:String" user="data_processing" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="FastMLFramework" type="cbb8eebc:String" user="FastMLFramework" />
-              <item name="modeling" type="cbb8eebc:String" user="modeling" />
             </path>
           </expand>
           <select />
@@ -670,10 +617,10 @@
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" />
       <window_info x="3941" y="222" width="324" height="466" id="Structure" order="1" sideWeight="0.47420636" side_tool="true" weight="0.19154558" />
-      <window_info active="true" content_ui="combo" x="3852" y="94" width="324" height="726" id="Project" order="2" sideWeight="0.5257937" side_tool="true" visible="true" weight="0.19154558" />
+      <window_info active="true" content_ui="combo" x="3852" y="94" width="324" height="726" id="Project" order="2" sideWeight="0.5257937" side_tool="true" visible="true" weight="0.18956406" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" sideWeight="0.730625" weight="0.32390383" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.6175" visible="true" weight="0.31117398" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.6175" weight="0.3182461" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.828125" weight="0.42857143" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -898,16 +845,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://C:/DCM/Work/dcm-intuition/integration/broker/flextrade/util.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="31" column="61" selection-start-line="31" selection-start-column="44" selection-end-line="31" selection-end-column="61" />
-          <folding>
-            <element signature="e#0#14#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/Anaconda2/envs/dcm-intuition/Lib/logging/config.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="290">
@@ -1111,9 +1048,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="117">
           <caret line="193" column="8" selection-start-line="193" selection-start-column="8" selection-end-line="193" selection-end-column="8" />
-          <folding>
-            <element signature="e#0#37#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1152,23 +1086,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/README.md">
-      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-        <state split_layout="SPLIT">
-          <first_editor relative-caret-position="369">
-            <caret line="88" column="104" lean-forward="true" selection-start-line="88" selection-start-column="104" selection-end-line="88" selection-end-column="104" />
-          </first_editor>
-          <second_editor />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/generic_tools/loggers.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="272">
           <caret line="16" column="39" selection-start-line="16" selection-start-column="39" selection-end-line="16" selection-end-column="39" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1179,23 +1100,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="137">
-          <caret line="121" column="59" selection-start-line="121" selection-start-column="59" selection-end-line="121" selection-end-column="59" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/data_vis/visualization.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="901">
           <caret line="53" column="56" selection-start-line="53" selection-start-column="56" selection-end-line="53" selection-end-column="56" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1203,19 +1111,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-17">
           <caret line="8" selection-start-line="8" selection-end-line="8" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="325">
-          <caret line="136" column="23" selection-start-line="136" selection-start-column="23" selection-end-line="136" selection-end-column="23" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1226,9 +1121,40 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="34">
+            <caret line="2" column="242" selection-start-line="2" selection-start-column="242" selection-end-line="2" selection-end-column="242" />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/classification/binary/credit_scoring/run_solution.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/solution_pipeline/create_solution.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="119">
+          <caret line="7" column="19" selection-start-line="7" selection-start-column="19" selection-end-line="7" selection-end-column="19" />
+          <folding>
+            <marker date="1542151983189" expanded="true" signature="23637:23638" ph="..." />
+            <marker date="1542151983189" expanded="true" signature="44465:45933" ph="..." />
+            <marker date="1542151983189" expanded="true" signature="47163:47168" ph="..." />
+            <marker date="1542151983189" expanded="true" signature="47163:47743" ph="..." />
+            <marker date="1542151983189" expanded="true" signature="47836:48482" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/modeling/prediction.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="239">
+        <state relative-caret-position="11968">
           <caret line="722" column="114" selection-start-line="722" selection-start-column="106" selection-end-line="722" selection-end-column="114" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
@@ -1237,16 +1163,20 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
+    <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="51">
-          <caret line="3" selection-start-line="3" selection-end-line="3" />
+        <state relative-caret-position="17">
+          <caret line="17" selection-start-line="17" selection-end-line="17" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+            <marker date="1541942599814" expanded="true" signature="13629:13634" ph="..." />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/generic_tools/config_parser.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="137">
+        <state relative-caret-position="3366">
           <caret line="203" column="16" selection-start-line="203" selection-start-column="16" selection-end-line="203" selection-end-column="16" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
@@ -1257,17 +1187,24 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/modeling/feature_selection.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="137">
-          <caret line="231" column="62" selection-start-line="231" selection-start-column="55" selection-end-line="231" selection-end-column="62" />
+        <state relative-caret-position="782">
+          <caret line="61" selection-start-line="61" selection-end-line="61" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/generic_tools/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2057">
+          <caret line="134" column="47" selection-start-line="134" selection-start-column="47" selection-end-line="134" selection-end-column="47" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/ensembling/stacking/stacker.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="137">
+        <state relative-caret-position="2482">
           <caret line="152" column="14" selection-start-line="152" selection-start-column="12" selection-end-line="152" selection-end-column="14" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
@@ -1277,7 +1214,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ensembling/ensembler.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="137">
+        <state relative-caret-position="442">
           <caret line="35" column="94" selection-start-line="35" selection-start-column="94" selection-end-line="35" selection-end-column="94" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
@@ -1285,28 +1222,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/solution_pipeline/create_solution.py">
+    <entry file="file://$PROJECT_DIR$/modeling/hyper_parameters_optimization.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1972">
-          <caret line="116" column="71" selection-start-line="116" selection-start-column="71" selection-end-line="116" selection-end-column="71" />
+        <state relative-caret-position="2159">
+          <caret line="136" column="23" selection-start-line="136" selection-start-column="23" selection-end-line="136" selection-end-column="23" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
-            <marker date="1541940996098" expanded="true" signature="23637:23638" ph="..." />
-            <marker date="1541940996098" expanded="true" signature="44465:45933" ph="..." />
-            <marker date="1541940996098" expanded="true" signature="47163:47168" ph="..." />
-            <marker date="1541940996098" expanded="true" signature="47163:47743" ph="..." />
-            <marker date="1541940996098" expanded="true" signature="47836:48482" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ensembling/blending/blender.py">
+    <entry file="file://$PROJECT_DIR$/modeling/model_wrappers.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="289">
-          <caret line="17" lean-forward="true" selection-start-line="17" selection-end-line="17" />
+        <state relative-caret-position="384">
+          <caret line="396" column="57" lean-forward="true" selection-start-line="396" selection-start-column="57" selection-end-line="396" selection-end-column="57" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
-            <marker date="1541942599814" expanded="true" signature="13629:13634" ph="..." />
+            <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>
