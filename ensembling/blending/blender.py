@@ -348,8 +348,8 @@ class BayesOptimizationBlender(Blender):
             bo.maximize(init_points=self.init_points, n_iter=self.n_iter)
 
             # Extracting training max score and optimal weights (the raw ones, not normalized)
-            best_params = OrderedDict((c, bo.res['max']['max_params'][c]) for c in feats)
-            best_train_score = round(bo.res['max']['max_val'], self.metrics_decimals)
+            best_params = OrderedDict((c, bo.max['params'][c]) for c in feats)
+            best_train_score = round(bo.max['target'], self.metrics_decimals)
             train_eval_results.append(best_train_score)
             optimal_weights = self._normalize_weights(best_params)
 

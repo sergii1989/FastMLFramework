@@ -148,9 +148,9 @@ class BayesHyperParamsOptimization(HyperParamsOptimization):
         bo = BayesianOptimization(f=self.hp_optimizer, pbounds=self.hp_optimization_space, random_state=self.seed_val)
         bo.maximize(init_points=self.init_points, n_iter=self.n_iter)
 
-        best_params = self._adjust_hyperparameters_datatypes(bo.res['max']['max_params'])
+        best_params = self._adjust_hyperparameters_datatypes(bo.max['params'])
         self.best_params = self._complete_missing_hyperparameters_from_init_params(best_params)
-        self.best_score = round(bo.res['max']['max_val'], self.predictor.metrics_decimals)
+        self.best_score = round(bo.max['target'], self.predictor.metrics_decimals)
         _logger.info('Max CV score: {0}'.format(self.best_score))
         _logger.info('Optimal parameters:\n{0}'.format(self.best_params))
 
