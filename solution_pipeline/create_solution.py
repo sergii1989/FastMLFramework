@@ -86,17 +86,6 @@ class FeatureSelection(luigi.Task):
         # Load train data set from feature generation pool
         train_data = pd.read_csv(self.input()['train_data'].path)
 
-        # Categorical features for lgbm in feature_selection process
-        categorical_feats = [f for f in train_data.columns if train_data[f].dtype == 'object']
-        _logger.info('Number of categorical features: {0}'.format(len(categorical_feats)))
-        for cat_feat in categorical_feats:
-            train_data[cat_feat], _ = pd.factorize(train_data[cat_feat])
-            train_data[cat_feat] = train_data[cat_feat].astype('category')
-
-        # TODO: how to improve this situation: if cat_features=None, an automatic algo will be used to find cat_features
-        # If cat_features = categorical_feats -> categorical feature are only those with dtype = 'object'
-        cat_features = categorical_feats  # None
-
         # Extracting settings from config
         feature_selector = load_feature_selector_class(self.feats_select_method)
         target_column = config.get_string('raw_data_settings.target_column')
@@ -120,6 +109,19 @@ class FeatureSelection(luigi.Task):
                                                                'feats_exploration' % self.feats_select_method))
         lgbm_params_feats_selection = dict(config.get_config('features_selection.%s.lgbm_params.'
                                                              'feats_selection' % self.feats_select_method))
+
+        # Categorical features for lgbm in feature_selection process
+        feat_cols = [f for f in train_data.columns if f not in [target_column, index_column]]
+        categorical_feats = [f for f in feat_cols if train_data[f].dtype == 'object']
+        _logger.info('Number of categorical features: {0}'.format(len(categorical_feats)))
+        for cat_feat in categorical_feats:
+            train_data[cat_feat], _ = pd.factorize(train_data[cat_feat])
+            train_data[cat_feat] = train_data[cat_feat].astype('category')
+
+        # TODO: how to improve this situation: if cat_features=None, an automatic algo will be used to find cat_features
+        # If cat_features = categorical_feats -> categorical feature are only those with dtype = 'object'
+        cat_features = categorical_feats  # None
+
         # Initialize feature selection procedure
         features_selection = feature_selector(
             train_df=train_data, target_column=target_column, index_column=index_column,
