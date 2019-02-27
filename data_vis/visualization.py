@@ -27,7 +27,7 @@ def plot_features_corr_heatmap(df, vmin=-1, vmax=1, center=0, square=True, figsi
     :param figsize_y: size of figure in y-direction
     :return: None
     """
-    dtypes_to_include = ['float64', 'float32', 'int64', 'int32', 'int16', 'int8']
+    dtypes_to_include = ['float64', 'float32', 'float16', 'int64', 'int32', 'int16', 'int8']
     corr = df.select_dtypes(include=dtypes_to_include).iloc[:, 1:].corr()
     fig, ax = plt.subplots(figsize=(figsize_x, figsize_y))
     sns.heatmap(corr, vmin=vmin, vmax=vmax, center=center, square=square)
