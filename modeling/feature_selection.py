@@ -516,17 +516,9 @@ def main_feat_selector_by_target_permutation():
     data = downcast_datatypes(pd.read_csv(full_path_to_file)).reset_index(drop=True)
     print('df_train shape: {0}'.format(data.shape))
 
-    categorical_feats = [f for f in data.columns if data[f].dtype == 'object']
-    print('Number of categorical features: {0}'.format(len(categorical_feats)))
-
-    for f_ in categorical_feats:
-        data[f_], _ = pd.factorize(data[f_])
-        data[f_] = data[f_].astype('category')
-
     # Parameters
     target_column = 'TARGET'
     index_column = 'SK_ID_CURR'
-    cat_features = categorical_feats  # None (if None -> will be detected automatically)
     eval_metric = 'auc'
     metrics_scorer = roc_auc_score
     metrics_decimals = 4
@@ -535,6 +527,18 @@ def main_feat_selector_by_target_permutation():
     kfolds_shuffle = True
     int_threshold = 9
     seed_val = 27
+
+    feat_cols = [f for f in data.columns if f not in [target_column, index_column]]
+    categorical_feats = [f for f in feat_cols if data[f].dtype == 'object']
+    print('Number of categorical features: {0}'.format(len(categorical_feats)))
+
+    if len(categorical_feats):
+        for f_ in categorical_feats:
+            data[f_], _ = pd.factorize(data[f_])
+            data[f_] = data[f_].astype('category')
+        cat_features = categorical_feats
+    else:
+        cat_features = 'auto'  # (if None -> will be detected automatically)
 
     lgbm_params_feats_exploration = {
         'objective': 'binary',
