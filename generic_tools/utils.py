@@ -139,7 +139,8 @@ def auto_selector_of_categorical_features(df, cols_exclude=[],
     for int8_col in int8_cols:
         if abs(df_temp[int8_col].min()) <= int_threshold and abs(df_temp[int8_col].max()) <= int_threshold:
             int8_cat_cols.append(int8_col)
-    return sorted(set(cat_object_cols).union(set(int8_cat_cols)))
+    result = sorted(set(cat_object_cols).union(set(int8_cat_cols)))
+    return result if len(result) else 'auto'
 
 
 def create_output_dir(path_output_dir, silent=False):  # type: (str, bool) -> None
