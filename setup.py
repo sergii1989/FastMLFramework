@@ -18,7 +18,7 @@ requirements = [
     "six==1.12.0",
     "bayesian-optimization==1.0.1",
     "seaborn==0.9.0",
-    "luigi==2.8.3"
+    "luigi"
 ]
 
 
