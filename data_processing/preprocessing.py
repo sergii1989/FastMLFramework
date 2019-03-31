@@ -23,7 +23,7 @@ def downcast_datatypes(df):  # type: (pd.DataFrame) -> pd.DataFrame
     print('Memory usage of dataframe is {:.2f} MB'.format(start_mem))
     for col in df.columns:
         col_type = df[col].dtype
-        if col_type != object:
+        if col_type != object and col_type != 'datetime64[ns]':
             c_min = df[col].min()
             c_max = df[col].max()
             if str(col_type)[:3] == 'int':
